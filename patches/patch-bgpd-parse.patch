@@ -1,0 +1,10 @@
+--- openbsd/src/usr.sbin/bgpd/parse.y	Sun Jan 20 12:27:01 2019
++++ src/bgpd/parse.y	Sun Jan 20 12:42:15 2019
+@@ -39,6 +39,7 @@
+ #include <limits.h>
+ #include <stdarg.h>
+ #include <stdio.h>
++#include <stdlib.h>
+ #include <string.h>
+ #include <syslog.h>
+ 
