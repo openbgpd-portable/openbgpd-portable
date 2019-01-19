@@ -7,6 +7,6 @@ matrix:
       os: linux
 
 script:
-  ./autogen.sh
-  ./configure
-  make -j 4 distcheck
+  ./autogen.sh;
+  ./configure;
+  make distcheck
