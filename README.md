@@ -11,4 +11,4 @@ Platform Requirements
 
 At the time of writing the Portable version is known to build and work on:
 
- - OpenBSD 6.5
+ - OpenBSD-current
