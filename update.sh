@@ -65,9 +65,8 @@ for j in bgpd bgpctl ; do
 	done
 done
 
-#(cd src
-#for i in ../patches/*.patch; do
-#	echo Patching ${i}
-#	${PATCH} -p4 < "${i}"
-#done
-#)
+(for i in patches/*.patch; do
+	echo Patching ${i}
+	${PATCH} < "${i}"
+done
+)
