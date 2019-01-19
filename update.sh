@@ -7,10 +7,10 @@ openbgpd_version=`cat VERSION`
 # pull in latest upstream code
 echo "pulling upstream openbsd source"
 if [ ! -d openbsd ]; then
-	if [ -z "${OPENNTPD_GIT}" ]; then
+	if [ -z "${OPENBGPD_GIT}" ]; then
 		git clone https://github.com/openbgpd-portable/openbgpd-openbsd.git openbsd
 	else
-		git clone "${OPENNTPD_GIT}/openbsd"
+		git clone "${OPENBGPD_GIT}/openbsd"
 	fi
 fi
 (cd openbsd
