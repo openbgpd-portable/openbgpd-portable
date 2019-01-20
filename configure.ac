@@ -92,7 +92,7 @@ LDFLAGS="$LDFLAGS $CLANG_FLAGS"
 
 # check functions that are expected to be in libc
 AC_CHECK_FUNCS([adjfreq ntp_adjtime adjtimex])
-AC_CHECK_FUNCS([arc4random arc4random_uniform asprintf explicit_bzero])
+AC_CHECK_FUNCS([arc4random asprintf explicit_bzero])
 AC_CHECK_FUNCS([getentropy reallocarray])
 AC_CHECK_FUNCS([setproctitle setgroups])
 AC_CHECK_FUNCS([setregid setresgid setreuid setresuid])
@@ -112,7 +112,6 @@ AC_CHECK_FUNCS([clock_gettime clock_getres])
 # Share test results with automake
 AM_CONDITIONAL([HAVE_ADJFREQ], [test "x$ac_cv_func_adjfreq" = xyes])
 AM_CONDITIONAL([HAVE_ARC4RANDOM], [test "x$ac_cv_func_arc4random" = xyes])
-AM_CONDITIONAL([HAVE_ARC4RANDOM_UNIFORM], [test "x$ac_cv_func_arc4random_uniform" = xyes])
 AM_CONDITIONAL([HAVE_ASPRINTF], [test "x$ac_cv_func_asprintf" = xyes])
 AM_CONDITIONAL([HAVE_CLOSEFROM], [test "x$ac_cv_func_closefrom" = xyes])
 AM_CONDITIONAL([HAVE_CLOCK_GETRES], [test "x$ac_cv_func_clock_getres" = xyes])
@@ -143,11 +142,6 @@ AM_CONDITIONAL([HAVE_ARC4RANDOM],
 	   -a "x$HOST_OS" != xfreebsd \
 	   -a "x$HOST_OS" != xnetbsd \
 	   -a "x$ac_cv_func_arc4random" = xyes])
-AM_CONDITIONAL([HAVE_ARC4RANDOM_UNIFORM],
-	[test "x$HOST_OS" != xdarwin \
-	   -a "x$HOST_OS" != xfreebsd \
-	   -a "x$HOST_OS" != xnetbsd \
-	   -a "x$ac_cv_func_arc4random_uniform" = xyes])
 
 AC_CACHE_CHECK([if libc defines __progname], ac_cv_libc_defines___progname, [
 	AC_LINK_IFELSE([AC_LANG_PROGRAM([[]],

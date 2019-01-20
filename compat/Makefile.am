@@ -102,10 +102,6 @@ endif
 endif
 endif
 
-if !HAVE_ARC4RANDOM_UNIFORM
-libcompat_la_SOURCES += arc4random_uniform.c
-endif
-
 noinst_HEADERS = arc4random.h
 noinst_HEADERS += arc4random_freebsd.h
 noinst_HEADERS += arc4random_linux.h
