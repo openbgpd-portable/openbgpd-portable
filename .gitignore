@@ -51,7 +51,9 @@ compat/strndup.c
 compat/strnlen.c
 compat/strtonum.c
 
+include/imsg.h
 include/sha2_openbsd.h
+include/util.h
 
 src/bgpctl
 src/bgpd
