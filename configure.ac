@@ -93,7 +93,7 @@ LDFLAGS="$LDFLAGS $CLANG_FLAGS"
 # check functions that are expected to be in libc
 AC_CHECK_FUNCS([adjfreq ntp_adjtime adjtimex])
 AC_CHECK_FUNCS([arc4random arc4random_uniform asprintf explicit_bzero])
-AC_CHECK_FUNCS([closefrom getentropy memmem poll reallocarray])
+AC_CHECK_FUNCS([getentropy reallocarray])
 AC_CHECK_FUNCS([setproctitle setgroups])
 AC_CHECK_FUNCS([setregid setresgid setreuid setresuid])
 AC_CHECK_FUNCS([strlcat strlcpy strtonum sysconf])
