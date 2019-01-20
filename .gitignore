@@ -53,6 +53,7 @@ compat/strtonum.c
 
 include/imsg.h
 include/sha2_openbsd.h
+include/siphash.h
 include/util.h
 
 src/bgpctl
