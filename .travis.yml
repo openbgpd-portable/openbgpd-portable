@@ -9,4 +9,5 @@ matrix:
 script:
   ./autogen.sh;
   ./configure;
+  make -k;
   make distcheck
