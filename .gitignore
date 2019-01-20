@@ -45,6 +45,7 @@ compat/md5.c
 compat/reallocarray.c
 compat/recallocarray.c
 compat/sha2.c
+compat/siphash.c
 compat/strlcat.c
 compat/strlcpy.c
 compat/strndup.c

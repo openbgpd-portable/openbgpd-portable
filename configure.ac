@@ -97,7 +97,8 @@ AC_CHECK_FUNCS([getentropy reallocarray])
 AC_CHECK_FUNCS([setproctitle setgroups])
 AC_CHECK_FUNCS([setregid setresgid setreuid setresuid])
 AC_CHECK_FUNCS([strlcat strlcpy strtonum sysconf])
-AC_CHECK_FUNCS([pledge])
+AC_CHECK_FUNCS([pledge unveil])
+AC_CHECK_FUNCS([SipHash])
 
 # check auxiliary libraries that might contain other functions
 AC_SEARCH_LIBS([arc4random], [crypto])
@@ -134,6 +135,7 @@ AM_CONDITIONAL([HAVE_STRLCAT], [test "x$ac_cv_func_strlcat" = xyes])
 AM_CONDITIONAL([HAVE_STRLCPY], [test "x$ac_cv_func_strlcpy" = xyes])
 AM_CONDITIONAL([HAVE_STRTONUM], [test "x$ac_cv_func_strtonum" = xyes])
 AM_CONDITIONAL([HAVE_SYSCONF], [test "x$ac_cv_func_sysconf" = xyes])
+AM_CONDITIONAL([HAVE_SIPHASH], [test "x$ac_cv_func_siphash" = xyes])
 
 # overrides for arc4random implementations with known issues
 AM_CONDITIONAL([HAVE_ARC4RANDOM],
