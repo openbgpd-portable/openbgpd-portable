@@ -37,6 +37,7 @@ PATCH='patch -p0 -s'
 
 ${CP} "${etc_src}/examples/bgpd.conf" ./
 sed '/DECLS/d' "${libc_inc}/sha2.h" > include/sha2_openbsd.h
+${CP} "${libutil_src}/util.h" include/
 ${CP} "${libutil_src}/imsg.h" include/
 ${CP} "${libutil_src}/imsg.c" compat/
 ${CP} "${libutil_src}/imsg-buffer.c" compat/
