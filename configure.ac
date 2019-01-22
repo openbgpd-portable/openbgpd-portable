@@ -100,6 +100,8 @@ AC_CHECK_FUNCS([strlcat strlcpy strtonum sysconf])
 AC_CHECK_FUNCS([pledge unveil])
 AC_CHECK_FUNCS([SipHash])
 
+AC_CHECK_HEADERS([endian.h])
+
 # check auxiliary libraries that might contain other functions
 AC_SEARCH_LIBS([arc4random], [crypto])
 AC_SEARCH_LIBS([clock_gettime],[rt posix4])
