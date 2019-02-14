@@ -1,11 +1,16 @@
 noinst_HEADERS =
+noinst_HEADERS += net/pfkeyv2.h
 noinst_HEADERS += sys/tree.h
 noinst_HEADERS += sys/queue.h
 noinst_HEADERS += sys/_null.h
 noinst_HEADERS += sys/types.h
+noinst_HEADERS += endian.h
 noinst_HEADERS += imsg.h
+noinst_HEADERS += siphash.h
 noinst_HEADERS += stdlib.h
-noinst_HEADERS += net/pfkeyv2.h
+noinst_HEADERS += sha2.h
+noinst_HEADERS += sha2_openbsd.h
 noinst_HEADERS += string.h
 noinst_HEADERS += unistd.h
 noinst_HEADERS += util.h
+
