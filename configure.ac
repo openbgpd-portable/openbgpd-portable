@@ -135,7 +135,7 @@ AM_CONDITIONAL([HAVE_STRLCAT], [test "x$ac_cv_func_strlcat" = xyes])
 AM_CONDITIONAL([HAVE_STRLCPY], [test "x$ac_cv_func_strlcpy" = xyes])
 AM_CONDITIONAL([HAVE_STRTONUM], [test "x$ac_cv_func_strtonum" = xyes])
 AM_CONDITIONAL([HAVE_SYSCONF], [test "x$ac_cv_func_sysconf" = xyes])
-AM_CONDITIONAL([HAVE_SIPHASH], [test "x$ac_cv_func_siphash" = xyes])
+AM_CONDITIONAL([HAVE_SIPHASH], [test "x$ac_cv_func_SipHash" = xyes])
 
 # overrides for arc4random implementations with known issues
 AM_CONDITIONAL([HAVE_ARC4RANDOM],
