@@ -42,6 +42,7 @@ case $host_os in
 		HOST_OS=netbsd
 		;;
 	*openbsd*)
+		HOST_OS=openbsd
 		AC_DEFINE([HAVE_ATTRIBUTE__BOUNDED__], [1], [OpenBSD has __bounded__])
 		AC_DEFINE([HAVE_ATTRIBUTE__DEAD], [1], [OpenBSD has __dead])
 		;;
@@ -57,6 +58,8 @@ AM_CONDITIONAL([HOST_FREEBSD], [test x$HOST_OS = xfreebsd])
 AM_CONDITIONAL([HOST_LINUX],   [test x$HOST_OS = xlinux])
 AM_CONDITIONAL([HOST_NETBSD],  [test x$HOST_OS = xnetbsd])
 AM_CONDITIONAL([HOST_SOLARIS], [test x$HOST_OS = xsolaris])
+
+AM_CONDITIONAL([HAVE_CARP], [test x$HOST_OS = xopenbsd])
 
 AC_CHECK_FUNC([dl_iterate_phdr],,
 	[AC_SEARCH_LIBS([dl_iterate_phdr],[dl])])
@@ -121,7 +124,6 @@ if test "x$ac_cv_libc_defines_optreset" = "xyes" ; then
 fi
 
 # Share test results with automake
-AM_CONDITIONAL([HAVE_ADJFREQ], [test "x$ac_cv_func_adjfreq" = xyes])
 AM_CONDITIONAL([HAVE_ARC4RANDOM], [test "x$ac_cv_func_arc4random" = xyes])
 AM_CONDITIONAL([HAVE_ASPRINTF], [test "x$ac_cv_func_asprintf" = xyes])
 AM_CONDITIONAL([HAVE_CLOSEFROM], [test "x$ac_cv_func_closefrom" = xyes])

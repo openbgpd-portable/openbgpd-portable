@@ -54,7 +54,11 @@ bgpd_SOURCES += rde_trie.c
 bgpd_SOURCES += pftable.c
 bgpd_SOURCES += name2id.c
 bgpd_SOURCES += util.c
+if HAVE_CARP
 bgpd_SOURCES += carp.c
+else
+bgpd_SOURCES += carp-disabled.c
+endif
 bgpd_SOURCES += timer.c
 
 noinst_HEADERS = bgpd.h
