@@ -55,7 +55,11 @@ bgpd_SOURCES += printconf.c
 bgpd_SOURCES += rde_filter.c
 bgpd_SOURCES += rde_sets.c
 bgpd_SOURCES += rde_trie.c
+if HAVE_PFTABLE
 bgpd_SOURCES += pftable.c
+else
+bgpd_SOURCES += pftable-disabled.c
+endif
 bgpd_SOURCES += name2id.c
 bgpd_SOURCES += util.c
 if HAVE_CARP
