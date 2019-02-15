@@ -60,6 +60,7 @@ AM_CONDITIONAL([HOST_NETBSD],  [test x$HOST_OS = xnetbsd])
 AM_CONDITIONAL([HOST_SOLARIS], [test x$HOST_OS = xsolaris])
 
 AM_CONDITIONAL([HAVE_CARP], [test x$HOST_OS = xopenbsd])
+AM_CONDITIONAL([HAVE_PFKEY], [test x$HOST_OS = xopenbsd])
 
 AC_CHECK_FUNC([dl_iterate_phdr],,
 	[AC_SEARCH_LIBS([dl_iterate_phdr],[dl])])

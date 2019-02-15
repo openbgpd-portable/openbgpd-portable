@@ -44,7 +44,11 @@ bgpd_SOURCES += rde_prefix.c
 bgpd_SOURCES += mrt.c
 bgpd_SOURCES += kroute.c
 bgpd_SOURCES += control.c
+if HAVE_PFKEY
 bgpd_SOURCES += pfkey.c
+else
+bgpd_SOURCES += pfkey-disabled.c
+endif
 bgpd_SOURCES += rde_update.c
 bgpd_SOURCES += rde_attr.c
 bgpd_SOURCES += printconf.c
