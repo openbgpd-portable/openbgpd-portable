@@ -106,6 +106,7 @@ AC_CHECK_FUNCS([SipHash])
 AC_CHECK_FUNCS([getrtable])
 
 AC_CHECK_HEADERS([endian.h])
+AC_CHECK_HEADERS([netinet/ip_ipsp.h], [], [], [[#include <sys/socket.h>]])
 
 # check auxiliary libraries that might contain other functions
 AC_SEARCH_LIBS([arc4random], [crypto])

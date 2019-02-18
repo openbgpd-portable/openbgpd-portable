@@ -1,6 +1,7 @@
 noinst_HEADERS =
 noinst_HEADERS += net/pfkeyv2.h
 noinst_HEADERS += net/route.h
+noinst_HEADERS += netinet/ip_ipsp.h
 noinst_HEADERS += sys/tree.h
 noinst_HEADERS += sys/queue.h
 noinst_HEADERS += sys/_null.h
