@@ -16,4 +16,4 @@ noinst_HEADERS += sha2_openbsd.h
 noinst_HEADERS += string.h
 noinst_HEADERS += unistd.h
 noinst_HEADERS += util.h
-
+noinst_HEADERS += vis.h

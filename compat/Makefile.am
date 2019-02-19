@@ -106,6 +106,10 @@ if !HAVE_GETRTABLE
 libcompat_la_SOURCES += getrtable.c
 endif
 
+if !HAVE_STRNVIS
+libcompat_la_SOURCES += vis.c
+endif
+
 noinst_HEADERS = arc4random.h
 noinst_HEADERS += arc4random_freebsd.h
 noinst_HEADERS += arc4random_linux.h

@@ -38,6 +38,7 @@ PATCH='patch -p0 -s'
 ${CP} "${etc_src}/examples/bgpd.conf" ./
 sed '/DECLS/d' "${libc_inc}/sha2.h" > include/sha2_openbsd.h
 ${CP} "${libc_inc}/siphash.h" include/
+${CP} "${libc_inc}/vis.h" include/
 ${CP} "${libutil_src}/util.h" include/
 ${CP} "${libutil_src}/imsg.h" include/
 ${CP} "${libutil_src}/imsg.c" compat/
@@ -56,6 +57,7 @@ ${CP_LIBC} "${libc_src}/crypt/chacha_private.h" compat
 ${CP_LIBC} "${libc_src}/hash/md5.c" compat
 ${CP_LIBC} "${libc_src}/hash/sha2.c" compat
 ${CP_LIBC} "${libc_src}/hash/siphash.c" compat
+${CP_LIBC} "${libc_src}/gen/vis.c" compat
 for i in "${arc4random_src}"/getentropy_*.c; do
 	sed -e 's/openssl\/sha.h/sha2.h/' < "${i}" > compat/`basename "${i}"`
 done

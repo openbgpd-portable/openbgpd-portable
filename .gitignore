@@ -51,11 +51,13 @@ compat/strlcpy.c
 compat/strndup.c
 compat/strnlen.c
 compat/strtonum.c
+compat/vis.c
 
 include/imsg.h
 include/sha2_openbsd.h
 include/siphash.h
 include/util.h
+include/vis.h
 
 src/bgpctl
 src/bgpd

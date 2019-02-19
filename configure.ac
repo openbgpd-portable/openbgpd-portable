@@ -104,6 +104,7 @@ AC_CHECK_FUNCS([strlcat strlcpy strtonum sysconf])
 AC_CHECK_FUNCS([pledge unveil])
 AC_CHECK_FUNCS([SipHash])
 AC_CHECK_FUNCS([getrtable])
+AC_CHECK_FUNCS([strnvis])
 
 AC_CHECK_HEADERS([endian.h])
 AC_CHECK_HEADERS([netinet/ip_ipsp.h], [], [], [[#include <sys/socket.h>]])
@@ -154,6 +155,7 @@ AM_CONDITIONAL([HAVE_STRTONUM], [test "x$ac_cv_func_strtonum" = xyes])
 AM_CONDITIONAL([HAVE_SYSCONF], [test "x$ac_cv_func_sysconf" = xyes])
 AM_CONDITIONAL([HAVE_SIPHASH], [test "x$ac_cv_func_SipHash" = xyes])
 AM_CONDITIONAL([HAVE_GETRTABLE], [test "x$ac_cv_func_getrtable" = xyes])
+AM_CONDITIONAL([HAVE_STRNVIS], [test "x$ac_cv_func_strnvis" = xyes])
 
 # overrides for arc4random implementations with known issues
 AM_CONDITIONAL([HAVE_ARC4RANDOM],
