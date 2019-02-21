@@ -115,9 +115,10 @@ AC_SEARCH_LIBS([arc4random], [crypto])
 AC_SEARCH_LIBS([clock_gettime],[rt posix4])
 AC_SEARCH_LIBS([ibuf_open], [util])
 AC_SEARCH_LIBS([SHA512Init], [md])
+AC_SEARCH_LIBS([inet_net_pton],[resolv])
 
 AC_CHECK_FUNCS([arc4random ibuf_open SHA512Init])
-AC_CHECK_FUNCS([clock_gettime clock_getres])
+AC_CHECK_FUNCS([clock_gettime])
 
 AC_CACHE_CHECK([if libc defines optreset], ac_cv_libc_defines_optreset, [
 	AC_LINK_IFELSE([AC_LANG_PROGRAM([[]],
