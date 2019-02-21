@@ -42,7 +42,11 @@ bgpd_SOURCES += rde_rib.c
 bgpd_SOURCES += rde_decide.c
 bgpd_SOURCES += rde_prefix.c
 bgpd_SOURCES += mrt.c
+if HAVE_KROUTE
 bgpd_SOURCES += kroute.c
+else
+bgpd_SOURCES += kroute-disabled.c
+endif
 bgpd_SOURCES += control.c
 if HAVE_PFKEY
 bgpd_SOURCES += pfkey.c
