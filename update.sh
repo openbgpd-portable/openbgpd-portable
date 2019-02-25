@@ -68,8 +68,9 @@ for j in bgpd bgpctl ; do
 	done
 done
 
-(for i in patches/*.patch; do
-	echo Patching ${i}
-	${PATCH} < "${i}"
-done
-)
+if [ -n "$(ls -A patches/*.patch 2>/dev/null)" ]; then
+	for i in patches/*.patch; do
+		echo Patching ${i}
+		${PATCH} < "${i}"
+	done
+fi
