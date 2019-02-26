@@ -106,6 +106,9 @@ if !HAVE_GETRTABLE
 libcompat_la_SOURCES += getrtable.c
 endif
 
+if !HAVE_FMT_SCALED
+libcompat_la_SOURCES += fmt_scaled.c
+endif
 if !HAVE_STRNVIS
 libcompat_la_SOURCES += vis.c
 endif

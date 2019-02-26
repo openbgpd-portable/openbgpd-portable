@@ -117,9 +117,10 @@ AC_SEARCH_LIBS([clock_gettime],[rt posix4])
 AC_SEARCH_LIBS([ibuf_open], [util])
 AC_SEARCH_LIBS([SHA512Init], [md])
 AC_SEARCH_LIBS([inet_net_pton],[resolv])
+AC_SEARCH_LIBS([fmt_scaled], [util])
 
-AC_CHECK_FUNCS([arc4random ibuf_open SHA512Init])
-AC_CHECK_FUNCS([clock_gettime])
+AC_CHECK_FUNCS([arc4random clock_gettime ibuf_open SHA512Init])
+AC_CHECK_FUNCS([inet_net_pton fmt_scaled])
 
 AC_CACHE_CHECK([if libc defines optreset], ac_cv_libc_defines_optreset, [
 	AC_LINK_IFELSE([AC_LANG_PROGRAM([[]],
@@ -158,6 +159,7 @@ AM_CONDITIONAL([HAVE_SYSCONF], [test "x$ac_cv_func_sysconf" = xyes])
 AM_CONDITIONAL([HAVE_SIPHASH], [test "x$ac_cv_func_SipHash" = xyes])
 AM_CONDITIONAL([HAVE_GETRTABLE], [test "x$ac_cv_func_getrtable" = xyes])
 AM_CONDITIONAL([HAVE_STRNVIS], [test "x$ac_cv_func_strnvis" = xyes])
+AM_CONDITIONAL([HAVE_FMT_SCALED], [test "x$ac_cv_func_fmt_scaled" = xyes])
 
 # overrides for arc4random implementations with known issues
 AM_CONDITIONAL([HAVE_ARC4RANDOM],

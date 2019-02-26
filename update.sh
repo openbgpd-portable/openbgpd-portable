@@ -41,6 +41,7 @@ ${CP} "${libc_inc}/siphash.h" include/
 ${CP} "${libc_inc}/vis.h" include/
 ${CP} "${libutil_src}/util.h" include/
 ${CP} "${libutil_src}/imsg.h" include/
+${CP} "${libutil_src}/fmt_scaled.c" compat/
 ${CP} "${libutil_src}/imsg.c" compat/
 ${CP} "${libutil_src}/imsg-buffer.c" compat/
 (cd compat; ${PATCH} < "${patches}/patch-imsg.c")
