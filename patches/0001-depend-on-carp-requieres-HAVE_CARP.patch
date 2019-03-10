@@ -1,0 +1,36 @@
+From 6fe0a798eb3f3c6a77f58618b67b68b1f1754cdc Mon Sep 17 00:00:00 2001
+From: Claudio Jeker <claudio@openbsd.org>
+Date: Thu, 14 Feb 2019 11:51:05 +0100
+Subject: [PATCH 1/3] depend on carp requieres HAVE_CARP
+
+---
+ src/usr.sbin/bgpd/parse.y | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git src/usr.sbin/bgpd/parse.y src/usr.sbin/bgpd/parse.y
+index dabb087f981..cc5f5c43fe0 100644
+--- src/usr.sbin/bgpd/parse.y
++++ src/usr.sbin/bgpd/parse.y
+@@ -1612,6 +1612,7 @@ peeropts	: REMOTEAS as4number	{
+ 			free($3);
+ 		}
+ 		| DEMOTE STRING		{
++#ifdef HAVE_CARP
+ 			if (strlcpy(curpeer->conf.demote_group, $2,
+ 			    sizeof(curpeer->conf.demote_group)) >=
+ 			    sizeof(curpeer->conf.demote_group)) {
+@@ -1628,6 +1629,11 @@ peeropts	: REMOTEAS as4number	{
+ 				    curpeer->conf.demote_group);
+ 				YYERROR;
+ 			}
++#else
++			yyerror("carp demote not supported");
++			free($2);
++			YYERROR;
++#endif
+ 		}
+ 		| TRANSPARENT yesno	{
+ 			if ($2 == 1)
+-- 
+2.20.1
+

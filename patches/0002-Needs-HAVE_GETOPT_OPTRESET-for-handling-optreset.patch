@@ -1,0 +1,29 @@
+From 46cb64d148e41767f5ae21bd7142636f751f3709 Mon Sep 17 00:00:00 2001
+From: Claudio Jeker <claudio@openbsd.org>
+Date: Mon, 25 Feb 2019 15:25:29 +0100
+Subject: [PATCH 2/3] Needs HAVE_GETOPT_OPTRESET for handling optreset
+
+On linux systems getopt does not have the optreset global.
+---
+ src/usr.sbin/bgpctl/parser.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git src/usr.sbin/bgpctl/parser.c src/usr.sbin/bgpctl/parser.c
+index db7903c80de..7a81315e3fe 100644
+--- src/usr.sbin/bgpctl/parser.c
++++ src/usr.sbin/bgpctl/parser.c
+@@ -1385,7 +1385,10 @@ bgpctl_getopt(int *argc, char **argv[], int type)
+ {
+ 	int	  ch;
+ 
+-	optind = optreset = 1;
++	optind = 1;
++#ifdef HAVE_GETOPT_OPTRESET
++	optreset = 1;
++#endif
+ 	while ((ch = getopt((*argc) + 1, (*argv) - 1, "46o:")) != -1) {
+ 		switch (ch) {
+ 		case '4':
+-- 
+2.20.1
+
