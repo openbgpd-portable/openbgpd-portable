@@ -33,7 +33,7 @@ do_cp_libc() {
 }
 CP_LIBC='do_cp_libc'
 CP='cp -p'
-PATCH='patch -p0 -s'
+PATCH='patch -s'
 
 ${CP} "${etc_src}/examples/bgpd.conf" ./
 sed '/DECLS/d' "${libc_inc}/sha2.h" > include/sha2_openbsd.h
@@ -44,7 +44,7 @@ ${CP} "${libutil_src}/imsg.h" include/
 ${CP} "${libutil_src}/fmt_scaled.c" compat/
 ${CP} "${libutil_src}/imsg.c" compat/
 ${CP} "${libutil_src}/imsg-buffer.c" compat/
-(cd compat; ${PATCH} < "${patches}/patch-imsg.c")
+(cd compat; ${PATCH} -p0 < "${patches}/patch-imsg.c")
 
 for i in explicit_bzero.c strlcpy.c strlcat.c; do
 	${CP_LIBC} "${libc_src}/string/${i}" compat
@@ -75,6 +75,6 @@ done
 if [ -n "$(ls -A patches/*.patch 2>/dev/null)" ]; then
 	for i in patches/*.patch; do
 		echo Patching ${i}
-		${PATCH} < "${i}"
+		(cd src && ${PATCH} -p2 < "${dir}/${i}")
 	done
 fi
