@@ -46,9 +46,26 @@ pfkey_remove(struct peer *p)
 }
 
 int
-pfkey_init(struct bgpd_sysdep *sysdep)
+pfkey_init(void)
 {
 	log_warnx("PF_KEY not available, disabling ipsec");
-	sysdep->no_pfkey = 1;
 	return (-1);
+}
+
+int
+tcp_md5_check(int fd, struct peer *p)
+{
+	return (0);
+}
+
+int
+tcp_md5_set(int fd, struct peer *p)
+{
+	return (0);
+}
+
+int
+tcp_md5_listen(int fd, struct peer_head *p)
+{
+	return (0);
 }
