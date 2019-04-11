@@ -55,5 +55,6 @@ pftable_addr_remove(struct pftable_msg *m)
 int
 pftable_commit(void)
 {
-	return (-1);
+	/* is called on session shutdown so fake success */
+	return (0);
 }
