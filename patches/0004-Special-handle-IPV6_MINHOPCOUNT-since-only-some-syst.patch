@@ -1,0 +1,36 @@
+From 122ca0babc2defab8bec47eef2826847125b4931 Mon Sep 17 00:00:00 2001
+From: Claudio Jeker <claudio@openbsd.org>
+Date: Thu, 11 Apr 2019 17:02:57 +0200
+Subject: [PATCH 4/4] Special handle IPV6_MINHOPCOUNT since only some systems
+ support it.
+
+---
+ src/usr.sbin/bgpd/session.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git src/usr.sbin/bgpd/session.c src/usr.sbin/bgpd/session.c
+index 4ded57c2520..e4bd3c03305 100644
+--- src/usr.sbin/bgpd/session.c
++++ src/usr.sbin/bgpd/session.c
+@@ -1189,6 +1189,7 @@ session_setup_socket(struct peer *p)
+ 			/* set hoplimit to foreign router's distance
+ 			   1=direct n=multihop with ttlsec, we always use 255 */
+ 			if (p->conf.ttlsec) {
++#ifdef IPV6_MINHOPCOUNT
+ 				ttl = 256 - p->conf.distance;
+ 				if (setsockopt(p->fd, IPPROTO_IPV6,
+ 				    IPV6_MINHOPCOUNT, &ttl, sizeof(ttl))
+@@ -1199,6 +1200,10 @@ session_setup_socket(struct peer *p)
+ 					return (-1);
+ 				}
+ 				ttl = 255;
++#else
++				log_peer_warn(&p->conf, "OS does not support "
++				    "ttl-security for IPv6 sessions");
++#endif
+ 			}
+ 			if (setsockopt(p->fd, IPPROTO_IPV6, IPV6_UNICAST_HOPS,
+ 			    &ttl, sizeof(ttl)) == -1) {
+-- 
+2.21.0
+
