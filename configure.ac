@@ -212,6 +212,15 @@ AC_CHECK_MEMBERS([struct sockaddr_in.sin_len], , ,
 	  #include <sys/socket.h> ]
 )
 
+AC_ARG_WITH([privsep-user],
+	AS_HELP_STRING([--with-privsep-user=user],
+		[Privilege separation user for ntpd to use]),
+	PRIVSEP_USER="$withval",
+	PRIVSEP_USER="_bgpd"
+)
+AC_DEFINE_UNQUOTED(BGPD_USER, "$PRIVSEP_USER", [Unprivileged user])
+AC_SUBST(PRIVSEP_USER)
+
 AC_CONFIG_FILES([
 	Makefile
 	include/Makefile
