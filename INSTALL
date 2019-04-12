@@ -12,7 +12,8 @@ If you have checked this source using Git, follow these initial steps to
 prepare the source tree for building:
 
  1. ensure you have the following packages installed:
-      automake, autoconf, git, libtool, bison or yacc
+      automake, autoconf, git, libtool, yacc or byacc (bison does not work)
+      On Linux systems set YACC=byacc before running ./configure.
  2. run './autogen.sh' to prepare the source tree for building
     or run './dist.sh' to prepare a tarball.
 
