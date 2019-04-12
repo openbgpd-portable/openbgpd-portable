@@ -17,3 +17,22 @@ SUBDIRS = include compat src/bgpd src/bgpctl
 ACLOCAL_AMFLAGS = -I m4
 
 EXTRA_DIST = README.md VERSION bgpd.conf
+
+install-data-hook:
+	@if [ ! -d "$(DESTDIR)$(localstatedir)/run" ]; then \
+		$(INSTALL) -m 755 -d "$(DESTDIR)$(localstatedir)/run"; \
+	fi
+	@if [ ! -d "$(DESTDIR)$(sysconfdir)" ]; then \
+		$(INSTALL) -m 755 -d "$(DESTDIR)$(sysconfdir)"; \
+	fi
+	@if [ ! -f "$(DESTDIR)$(sysconfdir)/bgpd.conf" ]; then \
+		$(INSTALL) -m 644 "$(srcdir)/bgpd.conf" "$(DESTDIR)$(sysconfdir)/bgpd.conf"; \
+	else \
+		echo; \
+		echo " $(DESTDIR)$(sysconfdir)/bgpd.conf already exists, install will not overwrite"; \
+	fi
+
+uninstall-local:
+	@if cmp -s "$(DESTDIR)$(sysconfdir)/bgpd.conf" "$(srcdir)/bgpd.conf"; then \
+		rm -f "$(DESTDIR)$(sysconfdir)/bgpd.conf"; \
+	fi
