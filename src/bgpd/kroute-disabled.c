@@ -41,7 +41,16 @@ struct knexthop_node {
 	void			*kroute;
 };
 
+struct kredist_node {
+	RB_ENTRY(kredist_node)	 entry;
+	struct bgpd_addr	 prefix;
+	u_int64_t		 rd;
+	u_int8_t		 prefixlen;
+	u_int8_t		 dynamic;
+};
+
 struct ktable	 krt;
+const u_int	 krt_size = 1;
 
 struct ktable	*ktable_get(u_int);
 
@@ -75,8 +84,51 @@ knexthop_compare(struct knexthop_node *a, struct knexthop_node *b)
 	return (0);
 }
 
+static inline int
+kredist_compare(struct kredist_node *a, struct kredist_node *b)
+{
+	int	i;
+
+	if (a->prefix.aid != b->prefix.aid)
+		return (b->prefix.aid - a->prefix.aid);
+
+	if (a->prefixlen < b->prefixlen)
+		return (-1);
+	if (a->prefixlen > b->prefixlen)
+		return (1);
+
+	switch (a->prefix.aid) {
+	case AID_INET:
+		if (ntohl(a->prefix.v4.s_addr) < ntohl(b->prefix.v4.s_addr))
+			return (-1);
+		if (ntohl(a->prefix.v4.s_addr) > ntohl(b->prefix.v4.s_addr))
+			return (1);
+		break;
+	case AID_INET6:
+		for (i = 0; i < 16; i++) {
+			if (a->prefix.v6.s6_addr[i] < b->prefix.v6.s6_addr[i])
+				return (-1);
+			if (a->prefix.v6.s6_addr[i] > b->prefix.v6.s6_addr[i])
+				return (1);
+		}
+		break;
+	default:
+		fatalx("%s: unknown AF", __func__);
+	}
+
+	if (a->rd < b->rd)
+		return (-1);
+	if (a->rd > b->rd)
+		return (1);
+
+	return (0);
+}
+
 RB_PROTOTYPE(knexthop_tree, knexthop_node, entry, knexthop_compare)
 RB_GENERATE(knexthop_tree, knexthop_node, entry, knexthop_compare)
+
+RB_PROTOTYPE(kredist_tree, kredist_node, entry, kredist_compare)
+RB_GENERATE(kredist_tree, kredist_node, entry, kredist_compare)
 
 #define KT2KNT(x)	(&(ktable_get((x)->nhtableid)->knt))
 
@@ -308,15 +360,145 @@ kr_delete(u_int rtableid, struct kroute_full *kl, u_int8_t fib_prio)
 	return (0);
 }
 
-int
-kr_reload(void)
+static int
+kr_net_redist_add(struct ktable *kt, struct network_config *net,
+    struct filter_set_head *attr, int dynamic)
 {
-	return (0);
+	struct kredist_node *r, *xr;
+
+	if ((r = calloc(1, sizeof(*r))) == NULL)
+		fatal("%s", __func__);
+	r->prefix = net->prefix;
+	r->prefixlen = net->prefixlen;
+	r->rd = net->rd;
+	r->dynamic = dynamic;
+
+	xr = RB_INSERT(kredist_tree, &kt->kredist, r);
+	if (xr != NULL) {
+		if (dynamic == xr->dynamic || dynamic) {
+			/*
+			 * ignore update, equal announcement already present,
+			 * or a non-dynamic announcement is already present
+			 * which has preference.
+			 */
+			free(r);
+			return 0;
+		}
+		/*
+		 * only the case where xr->dynamic == 1 and dynamic == 0
+		 * ends up here and in this case non-dynamic announcments
+		 * are preferred. Override dynamic flag.
+		 */
+		xr->dynamic = dynamic;
+	}
+
+	if (send_network(IMSG_NETWORK_ADD, net, attr) == -1)
+		log_warnx("%s: faild to send network update", __func__);
+	return 1;
+}
+
+static void
+kr_net_redist_del(struct ktable *kt, struct network_config *net, int dynamic)
+{
+	struct kredist_node *r, node;
+
+	bzero(&node, sizeof(node));
+	node.prefix = net->prefix;
+	node.prefixlen = net->prefixlen;
+	node.rd = net->rd;
+
+	r = RB_FIND(kredist_tree, &kt->kredist, &node);
+	if (r == NULL || dynamic != r->dynamic)
+		return;
+
+	if (RB_REMOVE(kredist_tree, &kt->kredist, r) == NULL) {
+		log_warnx("%s: failed to remove network %s/%u", __func__,
+		    log_addr(&node.prefix), node.prefixlen);
+		return;
+	}
+	free(r);
+
+	if (send_network(IMSG_NETWORK_REMOVE, net, NULL) == -1)
+		log_warnx("%s: faild to send network removal", __func__);
+}
+
+static struct network *
+kr_net_find(struct ktable *kt, struct network *n)
+{
+	struct network		*xn;
+
+	TAILQ_FOREACH(xn, &kt->krn, entry) {
+		if (n->net.type != xn->net.type ||
+		    n->net.prefixlen != xn->net.prefixlen ||
+		    n->net.rd != xn->net.rd)
+			continue;
+		if (memcmp(&n->net.prefix, &xn->net.prefix,
+		    sizeof(n->net.prefix)) == 0)
+			return (xn);
+	}
+	return (NULL);
+}
+
+static void
+kr_net_delete(struct network *n)
+{
+	filterset_free(&n->net.attrset);
+	free(n);
 }
 
 void
 kr_net_reload(u_int rtableid, u_int64_t rd, struct network_head *nh)
 {
+	struct network		*n, *xn;
+	struct ktable		*kt;
+
+	if ((kt = ktable_get(rtableid)) == NULL)
+		fatalx("%s: non-existent rtableid %d", __func__, rtableid);
+
+	while ((n = TAILQ_FIRST(nh)) != NULL) {
+		TAILQ_REMOVE(nh, n, entry);
+
+		if (n->net.type != NETWORK_DEFAULT) {
+			log_warnx("dynamic network statements unimplemened, "
+			    "network ignored");
+			kr_net_delete(n);
+			continue;
+		}
+
+		n->net.old = 0;
+		n->net.rd = rd;
+		xn = kr_net_find(kt, n);
+		if (xn) {
+			xn->net.old = 0;
+			filterset_free(&xn->net.attrset);
+			filterset_move(&n->net.attrset, &xn->net.attrset);
+			kr_net_delete(n);
+		} else
+			TAILQ_INSERT_TAIL(&kt->krn, n, entry);
+	}
+}
+
+int
+kr_reload(void)
+{
+	struct ktable		*kt;
+	struct network		*n;
+	u_int			 rid;
+
+	for (rid = 0; rid < krt_size; rid++) {
+		if ((kt = ktable_get(rid)) == NULL)
+			continue;
+
+		TAILQ_FOREACH(n, &kt->krn, entry)
+			if (n->net.type == NETWORK_DEFAULT) {
+				kr_net_redist_add(kt, &n->net,
+				    &n->net.attrset, 0);
+			} else
+				fatalx("%s: dynamic networks not implemented",
+				    __func__);
+	}
+
+	return (0);
 }
 
 void
@@ -419,20 +601,77 @@ ktable_get(u_int rtableid)
 	return NULL;
 }
 
+static void
+ktable_free(u_int rtableid, u_int8_t fib_prio)
+{
+	fatalx("%s not implemented", __func__);
+}
+
 int
 ktable_update(u_int rtableid, char *name, int flags, u_int8_t fib_prio)
 {
+	struct ktable	*kt;
+
+	kt = ktable_get(rtableid);
+	if (kt == NULL) {
+		return (-1);
+	} else {
+		/* fib sync has higher preference then no sync */
+		if (kt->state == RECONF_DELETE) {
+			kt->fib_conf = !(flags & F_RIB_NOFIBSYNC);
+			kt->state = RECONF_KEEP;
+		} else if (!kt->fib_conf)
+			kt->fib_conf = !(flags & F_RIB_NOFIBSYNC);
+
+		strlcpy(kt->descr, name, sizeof(kt->descr));
+	}
 	return (0);
 }
 
 void
 ktable_preload(void)
 {
+	struct ktable	*kt;
+	struct network	*n;
+	u_int		 i;
+
+	for (i = 0; i < krt_size; i++) {
+		if ((kt = ktable_get(i)) == NULL)
+			continue;
+		kt->state = RECONF_DELETE;
+
+		/* mark all networks as old */
+		TAILQ_FOREACH(n, &kt->krn, entry)
+			n->net.old = 1;
+	}
 }
 
 void
 ktable_postload(u_int8_t fib_prio)
 {
+	struct ktable	*kt;
+	struct network	*n, *xn;
+	u_int		 i;
+
+	for (i = krt_size; i > 0; i--) {
+		if ((kt = ktable_get(i - 1)) == NULL)
+			continue;
+		if (kt->state == RECONF_DELETE) {
+			ktable_free(i - 1, fib_prio);
+			continue;
+		} else if (kt->state == RECONF_REINIT)
+			kt->fib_sync = kt->fib_conf;
+
+		/* cleanup old networks */
+		TAILQ_FOREACH_SAFE(n, &kt->krn, entry, xn) {
+			if (n->net.old) {
+				TAILQ_REMOVE(&kt->krn, n, entry);
+				if (n->net.type == NETWORK_DEFAULT)
+					kr_net_redist_del(kt, &n->net, 0);
+				kr_net_delete(n);
+			}
+		}
+	}
 }
 
 int
