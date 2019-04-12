@@ -16,4 +16,4 @@
 SUBDIRS = include compat src/bgpd src/bgpctl
 ACLOCAL_AMFLAGS = -I m4
 
-EXTRA_DIST = README.md VERSION
+EXTRA_DIST = README.md VERSION bgpd.conf
