@@ -1,0 +1,110 @@
+1. Prerequisites
+----------------
+
+You will need an entropy (randomness) source.  If your OS has arc4random or
+getentropy then that is ideal. Otherwise, you can use the builtin arc4random
+implementation or the one built into LibreSSL.
+
+2. Building / Installation
+--------------------------
+
+If you have checked this source using Git, follow these initial steps to
+prepare the source tree for building:
+
+ 1. ensure you have the following packages installed:
+      automake, autoconf, git, libtool, bison or yacc
+ 2. run './autogen.sh' to prepare the source tree for building
+    or run './dist.sh' to prepare a tarball.
+
+To install OpenBGPD with default options:
+
+./configure
+make
+make install
+
+This will install the OpenBGPD binary in /usr/local/sbin, configuration
+files in /usr/local/etc. To specify a different installation prefix,
+use the --prefix option to configure:
+
+./configure --prefix=/opt
+make
+make install
+
+Will install OpenBGPD in /opt/{etc,sbin}. You can also override
+specific paths, for example:
+
+./configure --prefix=/opt --sysconfdir=/etc/bgpd
+make
+make install
+
+This will install the binaries in /opt/sbin, but will place the
+configuration files in /etc/bgpd.
+
+OpenBGPD always uses Privilege Separation (ie the majority of the
+processing is done as a chroot'ed, unprivileged user).
+
+This requires that a user, group and directory to be created for it.
+The user should not be permitted to log in, and its home directory
+should be owned by root and be mode 755.
+
+If you do "make install", the Makefile will create the directory with
+the correct permissions and will prompt you for the rest if required.
+If, however, you need to perform all of these tasks yourself (eg if you
+are moving the built binaries to another system) then you will need to
+do something like the following (although the exact commands required
+for creating the user and group are system dependant):
+
+On most Linux and BSD systems, something like should work:
+
+ groupadd _bgpd
+ useradd -g _bgpd -s /sbin/nologin -d /var/empty -c 'OpenBGPD daemon' _bgpd
+ mkdir -p /var/empty
+ chown 0 /var/empty
+ chgrp 0 /var/empty
+ chmod 0755 /var/empty
+
+/var/empty here is a chroot directory used by bgpd for privilege separation of
+the session engine and the route decision engine processes. This directory
+should not contain any files, must be owned by root, and must not be group
+or world-writable.
+
+If you need to pass special options to the compiler or linker, you
+can specify these as environment variables before running ./configure.
+For example:
+
+CFLAGS="-O2 " LDFLAGS="-s" ./configure
+
+
+If you need to pass special options to the compiler or linker, you
+can specify these as environment variables before running ./configure.
+For example:
+
+CFLAGS="-O2 " LDFLAGS="-s" ./configure
+
+
+
+If you need to pass special options to the compiler or linker, you
+can specify these as environment variables before running ./configure.
+For example:
+
+CFLAGS="-O2 " LDFLAGS="-s" ./configure
+
+
+
+If you need to pass special options to the compiler or linker, you
+can specify these as environment variables before running ./configure.
+For example:
+
+CFLAGS="-O2 " LDFLAGS="-s" ./configure
+
+3. Configuration
+----------------
+
+The runtime configuration files are installed by in ${prefix}/etc or
+whatever you specified as your --sysconfdir (/usr/local/etc by default).
+
+4. Problems?
+------------
+
+If you experience problems compiling, installing or running OpenBGPD,
+please report the problem to the address in the README file.
