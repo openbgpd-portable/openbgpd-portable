@@ -63,33 +63,17 @@ On most Linux and BSD systems, something like should work:
  chgrp 0 /var/empty
  chmod 0755 /var/empty
 
-/var/empty here is a chroot directory used by bgpd for privilege separation of
-the session engine and the route decision engine processes. This directory
-should not contain any files, must be owned by root, and must not be group
-or world-writable.
+OpenBGPD is using the home directory of the _bgpd user (/var/empty by default)
+as the chroot directory for privilege separation of the session engine and the
+route decision engine processes. This directory should not contain any files,
+must be owned by root, and must not be group or world-writable.
 
-If you need to pass special options to the compiler or linker, you
-can specify these as environment variables before running ./configure.
-For example:
+There are a few options to the configure script in addition to the ones
+provided by autoconf itself:
 
-CFLAGS="-O2 " LDFLAGS="-s" ./configure
-
-
-If you need to pass special options to the compiler or linker, you
-can specify these as environment variables before running ./configure.
-For example:
-
-CFLAGS="-O2 " LDFLAGS="-s" ./configure
-
-
-
-If you need to pass special options to the compiler or linker, you
-can specify these as environment variables before running ./configure.
-For example:
-
-CFLAGS="-O2 " LDFLAGS="-s" ./configure
-
-
+--with-privsep-user=[user]
+ Specify unprivileged user used for privilege separation.  The default
+ is "_bgpd".
 
 If you need to pass special options to the compiler or linker, you
 can specify these as environment variables before running ./configure.
