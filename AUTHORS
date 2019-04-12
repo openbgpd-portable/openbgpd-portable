@@ -1,0 +1,8 @@
+Credits
+-------
+OpenBSD's native bgpd was written by Henning Brauer and Claudio Jeker in 2004.
+It has seen improvements from many others as well. Please see the commit logs
+for an exhaustive list of contributors.
+
+This new portable version is based on the LibreSSL / OpenNTPD portable
+framework by Brent Cook.
