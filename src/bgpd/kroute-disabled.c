@@ -743,11 +743,14 @@ mask2prefixlen6(struct sockaddr_in6 *sa_in6)
 	u_int		 l = 0;
 
 	/*
-	 * sin6_len is the size of the sockaddr so substract the offset of
-	 * the possibly truncated sin6_addr struct.
+	 * There is no sin6_len for portability so calculate the end pointer
+	 * so that a full IPv6 address fits. On systems without sa_len this
+	 * is fine, on OpenBSD this is also correct. On other systems the
+	 * assumtion is they behave like OpenBSD or that there is at least
+	 * a 0 byte right after the end of the truncated sockaddr_in6.
 	 */
 	ap = (u_int8_t *)&sa_in6->sin6_addr;
-	ep = (u_int8_t *)sa_in6 + sa_in6->sin6_len;
+	ep = ap + sizeof(struct in6_addr);
 	for (; ap < ep; ap++) {
 		/* this "beauty" is adopted from sbin/route/show.c ... */
 		switch (*ap) {
