@@ -16,6 +16,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <sys/tree.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <ifaddrs.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -53,6 +56,9 @@ struct ktable	 krt;
 const u_int	 krt_size = 1;
 
 struct ktable	*ktable_get(u_int);
+
+static u_int8_t	mask2prefixlen(in_addr_t);
+static u_int8_t	mask2prefixlen6(struct sockaddr_in6 *);
 
 static inline int
 knexthop_compare(struct knexthop_node *a, struct knexthop_node *b)
@@ -241,6 +247,7 @@ knexthop_send_update(struct knexthop_node *kn)
 	struct kroute_node	*kr;
 	struct kroute6_node	*kr6;
 #endif
+	struct ifaddrs		*ifap, *ifa;
 
 	bzero(&n, sizeof(n));
 	memcpy(&n.nexthop, &kn->nexthop, sizeof(n.nexthop));
@@ -288,6 +295,46 @@ knexthop_send_update(struct knexthop_node *kn)
 #else
 	n.valid = 1;		/* NH is always valid */
 	memcpy(&n.gateway, &kn->nexthop, sizeof(n.gateway));
+
+	if (getifaddrs(&ifap) == -1)
+		fatal("getifaddrs");
+
+	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
+		struct bgpd_addr addr;
+		struct sockaddr_in *m4;
+		struct sockaddr_in6 *m6;
+		int plen;
+
+		switch (ifa->ifa_addr->sa_family) {
+		case AF_INET:
+			m4 = (struct sockaddr_in *)ifa->ifa_netmask;
+			if (m4 == NULL)
+				plen = 32;
+			else
+				plen = mask2prefixlen(m4->sin_addr.s_addr);
+			break;
+		case AF_INET6:
+			m6 = (struct sockaddr_in6 *)ifa->ifa_netmask;
+			if (m6 == NULL)
+				plen = 128;
+			else
+				plen = mask2prefixlen6(m6);
+			break;
+		default:
+			continue;
+		}
+		sa2addr(ifa->ifa_addr, &addr, NULL);
+		if (prefix_compare(&n.nexthop, &addr, plen) != 0)
+			continue;
+
+		n.connected = F_CONNECTED;
+		n.gateway = addr;
+		n.net = addr;
+		n.netlen = plen;
+		break;
+	}
+
+        freeifaddrs(ifap);
 #endif
 	send_nexthop_update(&n);
 }
@@ -678,4 +725,65 @@ int
 get_mpe_config(const char *name, u_int *rdomain, u_int *label)
 {
 	return (-1);
+}
+
+static u_int8_t
+mask2prefixlen(in_addr_t ina)
+{
+	if (ina == 0)
+		return (0);
+	else
+		return (33 - ffs(ntohl(ina)));
+}
+
+static u_int8_t
+mask2prefixlen6(struct sockaddr_in6 *sa_in6)
+{
+	u_int8_t	*ap, *ep;
+	u_int		 l = 0;
+
+	/*
+	 * sin6_len is the size of the sockaddr so substract the offset of
+	 * the possibly truncated sin6_addr struct.
+	 */
+	ap = (u_int8_t *)&sa_in6->sin6_addr;
+	ep = (u_int8_t *)sa_in6 + sa_in6->sin6_len;
+	for (; ap < ep; ap++) {
+		/* this "beauty" is adopted from sbin/route/show.c ... */
+		switch (*ap) {
+		case 0xff:
+			l += 8;
+			break;
+		case 0xfe:
+			l += 7;
+			goto done;
+		case 0xfc:
+			l += 6;
+			goto done;
+		case 0xf8:
+			l += 5;
+			goto done;
+		case 0xf0:
+			l += 4;
+			goto done;
+		case 0xe0:
+			l += 3;
+			goto done;
+		case 0xc0:
+			l += 2;
+			goto done;
+		case 0x80:
+			l += 1;
+			goto done;
+		case 0x00:
+			goto done;
+		default:
+			fatalx("non contiguous inet6 netmask");
+		}
+	}
+
+ done:
+	if (l > sizeof(struct in6_addr) * 8)
+		fatalx("%s: prefixlen %d out of bound", __func__, l);
+	return (l);
 }
