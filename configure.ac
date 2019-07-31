@@ -107,6 +107,42 @@ AC_CHECK_FUNCS([SipHash])
 AC_CHECK_FUNCS([getrtable])
 AC_CHECK_FUNCS([strnvis])
 
+dnl NetBSD added an strnvis and unfortunately made it incompatible with the
+dnl existing one in OpenBSD and Linux's libbsd (the former having existed
+dnl for over ten years). Despite this incompatibility being reported during
+dnl development (see http://gnats.netbsd.org/44977) they still shipped it.
+dnl Even more unfortunately FreeBSD and later MacOS picked up this incompatible
+dnl implementation.  Try to detect this mess, and assume the only safe option
+dnl if we're cross compiling.
+dnl
+dnl OpenBSD, 2001: strnvis(char *dst, const char *src, size_t dlen, int flag);
+dnl NetBSD: 2012,  strnvis(char *dst, size_t dlen, const char *src, int flag);
+if test "x$ac_cv_func_strnvis" = "xyes"; then
+ AC_MSG_CHECKING([for working strnvis])
+ AC_RUN_IFELSE(
+  [AC_LANG_PROGRAM([[
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <vis.h>
+static void sighandler(int sig) { _exit(1); }
+  ]], [[
+ char dst[16];
+
+ signal(SIGSEGV, sighandler);
+ if (strnvis(dst, "src", 4, 0) && strcmp(dst, "src") == 0)
+  exit(0);
+ exit(1)
+  ]])],
+  [AC_MSG_RESULT([yes])],
+  [AC_MSG_RESULT([no])
+   ac_cv_broken_strnvis="yes" ],
+  [AC_MSG_WARN([cross compiling: assuming broken])
+   ac_cv_broken_strnvis="yes" ]
+ )
+fi
+
+
 AC_CHECK_HEADERS([endian.h])
 AC_CHECK_HEADERS([netinet/ip_ipsp.h], [], [], [[#include <sys/socket.h>]])
 AC_CHECK_HEADERS([linux/in6.h])
@@ -159,6 +195,7 @@ AM_CONDITIONAL([HAVE_SYSCONF], [test "x$ac_cv_func_sysconf" = xyes])
 AM_CONDITIONAL([HAVE_SIPHASH], [test "x$ac_cv_func_SipHash" = xyes])
 AM_CONDITIONAL([HAVE_GETRTABLE], [test "x$ac_cv_func_getrtable" = xyes])
 AM_CONDITIONAL([HAVE_STRNVIS], [test "x$ac_cv_func_strnvis" = xyes])
+AM_CONDITIONAL([BROKEN_STRNVIS], [test "x$ac_cv_broken_strnvis" = xyes])
 AM_CONDITIONAL([HAVE_FMT_SCALED], [test "x$ac_cv_func_fmt_scaled" = xyes])
 
 # overrides for arc4random implementations with known issues
