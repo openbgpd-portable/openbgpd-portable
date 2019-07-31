@@ -112,6 +112,9 @@ endif
 if !HAVE_STRNVIS
 libcompat_la_SOURCES += vis.c
 endif
+if BROKEN_STRNVIS
+libcompat_la_SOURCES += vis.c
+endif
 
 noinst_HEADERS = arc4random.h
 noinst_HEADERS += arc4random_freebsd.h
