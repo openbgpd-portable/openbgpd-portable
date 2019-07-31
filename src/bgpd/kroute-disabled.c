@@ -548,6 +548,13 @@ kr_reload(void)
 	return (0);
 }
 
+int
+kr_flush(u_int rtableid)
+{
+	/* nothing to flush for now */
+	return (0);
+}
+
 void
 kr_show_route(struct imsg *imsg)
 {
