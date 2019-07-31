@@ -32,15 +32,8 @@ bgpctl_LDADD += $(top_builddir)/compat/libcompatnoopt.la
 
 bgpctl_SOURCES = bgpctl.c
 bgpctl_SOURCES += parser.c
-bgpctl_SOURCES += irrfilter.c
-bgpctl_SOURCES += whois.c
-bgpctl_SOURCES += irr_asset.c
-bgpctl_SOURCES += irr_prefix.c
-bgpctl_SOURCES += irr_output.c
-bgpctl_SOURCES += irr_parser.c
 bgpctl_SOURCES += mrtparser.c
 bgpctl_SOURCES += util.c
 
-noinst_HEADERS = irrfilter.h
-noinst_HEADERS += mrtparser.h
+noinst_HEADERS = mrtparser.h
 noinst_HEADERS += parser.h

@@ -55,6 +55,7 @@ bgpd_SOURCES += pfkey-disabled.c
 endif
 bgpd_SOURCES += rde_update.c
 bgpd_SOURCES += rde_attr.c
+bgpd_SOURCES += rde_community.c
 bgpd_SOURCES += printconf.c
 bgpd_SOURCES += rde_filter.c
 bgpd_SOURCES += rde_sets.c
