@@ -249,6 +249,13 @@ AC_CHECK_MEMBERS([struct sockaddr_in.sin_len], , ,
 	  #include <sys/socket.h> ]
 )
 
+AC_CHECK_MEMBERS([struct tcp_md5sig.tcpm_key], , ,
+	[ #include <sys/socket.h>
+	  #include <netinet/in.h>
+	  #include <netinet/tcp.h> ]
+)
+AM_CONDITIONAL([HAVE_LINUX_TCPMD5], [test "x$ac_cv_member_struct_tcp_md5sig_tcpm_key" = xyes])
+
 AC_ARG_WITH([privsep-user],
 	AS_HELP_STRING([--with-privsep-user=user],
 		[Privilege separation user for ntpd to use]),

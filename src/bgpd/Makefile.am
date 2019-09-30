@@ -51,7 +51,11 @@ bgpd_SOURCES += control.c
 if HAVE_PFKEY
 bgpd_SOURCES += pfkey.c
 else
+if HAVE_LINUX_TCPMD5
+bgpd_SOURCES += pfkey-linux.c
+else
 bgpd_SOURCES += pfkey-disabled.c
+endif
 endif
 bgpd_SOURCES += rde_update.c
 bgpd_SOURCES += rde_attr.c
