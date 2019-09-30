@@ -16,7 +16,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <netinet/tcp.h>
+#include <errno.h>
+#include <string.h>
 
 #include "bgpd.h"
 #include "session.h"
@@ -57,44 +61,136 @@ pfkey_init(void)
 int
 tcp_md5_check(int fd, struct peer *p)
 {
+	/*
+	 * No need to do the check on Linux.
+	 * Only two options get us here:
+	 *  - the session has no md5 and the SYN had no md5 option
+	 *  - the session has md5 and the SYN had a valid md5 hash
+	 */
 	return (0);
 }
 
 /*
- * This function needs to be called on socket that is already bound locally.
+ * Add the TCP MD5SUM key to the kernel to enable TCP MD5SUM.
  */
-int
-tcp_md5_set(int fd, struct peer *p)
+static int
+install_tcp_md5(int fd, struct bgpd_addr *addr, char *key, u_int8_t key_len)
 {
 	struct tcp_md5sig md5;
-	struct sockaddr sa;
+	struct sockaddr *sa;
 	socklen_t sa_len;
 
-	memset(&md5, 0, sizeof(md5));
-	if (p->conf.auth.method == AUTH_MD5SIG) {
-		if (p->conf.auth.md5key_len > TCP_MD5SIG_MAXKEYLEN) {
-			/* should not be possible */
-			log_peer_warn(&p->conf, "md5sig key too long");
-			return -1;
-		}
-		md5.tcpm_keylen = p->conf.auth.md5key_len;
-		memcpy(&md5.tcpm_key, p->conf.auth.md5key, md5.tcpm_keylen);
-
-		sa = addr2sa(&p->conf.remote_addr, 0, &sa_len);
-		memcpy(&md5.tcpm_addr, sa, sa_len);
-
-		if (setsockopt(fd, IPPROTO_TCP, TCP_MD5SIG,
-		    &md5, sizeof(md5)) == -1) {
-			log_peer_warn(&p->conf, "setsockopt md5sig");
-			return -1;
-		}
+	if (key_len > TCP_MD5SIG_MAXKEYLEN) {
+		/* not be possible unless TCP_MD5_KEY_LEN changes */
+		errno = EINVAL;
+		return -1;
 	}
 
+	memset(&md5, 0, sizeof(md5));
+	if (key_len != 0) {
+		md5.tcpm_keylen = key_len;
+		memcpy(&md5.tcpm_key, key, md5.tcpm_keylen);
+	}
+
+	sa = addr2sa(addr, 0, &sa_len);
+	memcpy(&md5.tcpm_addr, sa, sa_len);
+
+	if (setsockopt(fd, IPPROTO_TCP, TCP_MD5SIG, &md5, sizeof(md5)) == -1) {
+		/* ignore removals that fail because addr is not present */
+		if (errno == ENOENT && key_len == 0)
+			return 0;
+		return -1;
+	}
 	return 0;
 }
 
 int
-tcp_md5_listen(int fd, struct peer_head *p)
+tcp_md5_set(int fd, struct peer *p)
 {
-	return (0);
+
+	if (p->conf.auth.method == AUTH_MD5SIG) {
+		if (install_tcp_md5(fd, &p->conf.remote_addr,
+		    p->conf.auth.md5key, p->conf.auth.md5key_len) == -1) {
+			log_peer_warn(&p->conf, "setsockopt md5sig");
+			return -1;
+		}
+	}
+	return 0;
+}
+
+static int
+listener_match_peer(struct listen_addr *la, struct peer *p)
+{
+	struct sockaddr *sa, *la_sa;
+	socklen_t sa_len;
+
+	la_sa = (struct sockaddr *)&la->sa;
+
+	/* first check remote_addr to be in same address family as socket */
+	if (aid2af(p->conf.remote_addr.aid) != la_sa->sa_family)
+		return 0;
+
+	sa = addr2sa(&p->conf.local_addr, BGP_PORT, &sa_len);
+	if (sa == NULL)
+		/* undefined bind address will match any listener */
+		return 1;
+
+	if (sa_len == la->sa_len &&
+	    memcmp(&sa->sa_data, &la_sa->sa_data, sa_len - 2) == 0)
+		return 1;
+	return 0;
+}
+
+int
+tcp_md5_prep_listener(struct listen_addr *la, struct peer_head *peers)
+{
+	struct peer *p;
+
+	RB_FOREACH(p, peer_head, peers) {
+		if (p->conf.auth.method == AUTH_MD5SIG) {
+			if (listener_match_peer(la, p) == 0)
+				continue;
+
+			if (install_tcp_md5(la->fd, &p->conf.remote_addr,
+			    p->conf.auth.md5key,
+			    p->conf.auth.md5key_len) == -1) {
+				log_peer_warn(&p->conf,
+				   "setsockopt md5sig on listening socket");
+				return -1;
+			}
+		}
+	}
+	return 0;
+}
+
+void
+tcp_md5_add_listener(struct bgpd_config *conf, struct peer *p)
+{
+	struct listen_addr *la;
+
+	TAILQ_FOREACH(la, conf->listen_addrs, entry) {
+		if (listener_match_peer(la, p) == 0)
+			continue;
+
+		if (install_tcp_md5(la->fd, &p->conf.remote_addr,
+		    p->conf.auth.md5key, p->conf.auth.md5key_len) == -1)
+			log_peer_warn(&p->conf,
+			   "failed deletion of md5sig on listening socket");
+	}
+}
+
+void
+tcp_md5_del_listener(struct bgpd_config *conf, struct peer *p)
+{
+	struct listen_addr *la;
+
+	TAILQ_FOREACH(la, conf->listen_addrs, entry) {
+		if (listener_match_peer(la, p) == 0)
+			continue;
+
+		if (install_tcp_md5(la->fd, &p->conf.remote_addr,
+		    NULL, 0) == -1)
+			log_peer_warn(&p->conf,
+			   "failed deletion of md5sig on listening socket");
+	}
 }
