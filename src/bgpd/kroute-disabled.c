@@ -340,7 +340,7 @@ knexthop_send_update(struct knexthop_node *kn)
 }
 
 int
-kr_init(void)
+kr_init(int *fd)
 {
 	struct ktable	*kt = &krt;;
 
@@ -355,7 +355,8 @@ kr_init(void)
 	kt->nhtableid = 0;
 
 	/* XXX need to return an FD that can be polled */
-	return (-1);
+	*fd = -1;
+	return (0);
 }
 
 void

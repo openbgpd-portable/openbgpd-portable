@@ -65,7 +65,19 @@ tcp_md5_set(int fd, struct peer *p)
 }
 
 int
-tcp_md5_listen(int fd, struct peer_head *p)
+tcp_md5_prep_listener(struct listen_addr *la, struct peer_head *p)
 {
 	return (0);
+}
+
+/* add md5 key to all listening sockets, dummy function for portable */
+void
+tcp_md5_add_listener(struct bgpd_config *conf, struct peer *p)
+{
+}
+
+/* delete md5 key form all listening sockets, dummy function for portable */
+void
+tcp_md5_del_listener(struct bgpd_config *conf, struct peer *p)
+{
 }
