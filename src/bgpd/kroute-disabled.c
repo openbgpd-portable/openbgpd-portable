@@ -423,19 +423,19 @@ kr_net_redist_add(struct ktable *kt, struct network_config *net,
 
 	xr = RB_INSERT(kredist_tree, &kt->kredist, r);
 	if (xr != NULL) {
-		if (dynamic == xr->dynamic || dynamic) {
+		free(r);
+
+		if (dynamic != xr->dynamic && dynamic) {
 			/*
-			 * ignore update, equal announcement already present,
-			 * or a non-dynamic announcement is already present
-			 * which has preference.
+			 * ignore update a non-dynamic announcement is
+			 * already present which has preference.
 			 */
-			free(r);
 			return 0;
 		}
 		/*
-		 * only the case where xr->dynamic == 1 and dynamic == 0
-		 * ends up here and in this case non-dynamic announcments
-		 * are preferred. Override dynamic flag.
+		 * only equal or non-dynamic announcement ends up here.
+		 * In both cases reset the dynamic flag (nop for equal) and
+		 * redistribute.
 		 */
 		xr->dynamic = dynamic;
 	}
@@ -521,8 +521,9 @@ kr_net_reload(u_int rtableid, u_int64_t rd, struct network_head *nh)
 			filterset_free(&xn->net.attrset);
 			filterset_move(&n->net.attrset, &xn->net.attrset);
 			kr_net_delete(n);
-		} else
+		} else {
 			TAILQ_INSERT_TAIL(&kt->krn, n, entry);
+		}
 	}
 }
 
