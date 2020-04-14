@@ -31,9 +31,12 @@ bgpctl_LDADD += $(top_builddir)/compat/libcompat.la
 bgpctl_LDADD += $(top_builddir)/compat/libcompatnoopt.la
 
 bgpctl_SOURCES = bgpctl.c
+bgpctl_SOURCES += output.c
 bgpctl_SOURCES += parser.c
 bgpctl_SOURCES += mrtparser.c
 bgpctl_SOURCES += util.c
 
-noinst_HEADERS = mrtparser.h
+noinst_HEADERS =
+noinst_HEADERS += bgpctl.h
+noinst_HEADERS += mrtparser.h
 noinst_HEADERS += parser.h
