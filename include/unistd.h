@@ -8,9 +8,13 @@
 #ifndef LIBCOMPAT_UNISTD_H
 #define LIBCOMPAT_UNISTD_H
 
+#ifndef HAVE_PLEDGE
 #define pledge(request, paths) 0
+#endif
 
+#ifndef HAVE_UNVEIL
 #define unveil(path, permissions) 0
+#endif
 
 #ifndef HAVE_GETENTROPY
 int getentropy(void *buf, size_t buflen);
