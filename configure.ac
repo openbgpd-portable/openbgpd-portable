@@ -258,7 +258,7 @@ AM_CONDITIONAL([HAVE_LINUX_TCPMD5], [test "x$ac_cv_member_struct_tcp_md5sig_tcpm
 
 AC_ARG_WITH([privsep-user],
 	AS_HELP_STRING([--with-privsep-user=user],
-		[Privilege separation user for ntpd to use]),
+		[Privilege separation user for bgpd to use]),
 	PRIVSEP_USER="$withval",
 	PRIVSEP_USER="_bgpd"
 )
