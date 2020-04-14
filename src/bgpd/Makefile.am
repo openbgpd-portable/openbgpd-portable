@@ -77,6 +77,7 @@ else
 bgpd_SOURCES += carp-disabled.c
 endif
 bgpd_SOURCES += timer.c
+bgpd_SOURCES += rde_peer.c
 
 noinst_HEADERS = bgpd.h
 noinst_HEADERS += log.h
