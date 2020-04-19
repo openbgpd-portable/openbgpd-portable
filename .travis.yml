@@ -8,6 +8,6 @@ matrix:
 
 script:
   ./autogen.sh;
-  ./configure;
+  ./configure CFLAGS="-Wall";
   make -k;
   make distcheck
