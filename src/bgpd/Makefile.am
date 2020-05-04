@@ -27,6 +27,7 @@ man_MANS += bgpd.conf.5
 EXTRA_DIST = bgpd.8.in bgpd.conf.5.in
 
 bgpd_CFLAGS = $(CFLAGS)
+bgpd_CFLAGS += $(AM_CFLAGS)
 bgpd_CFLAGS += -DSYSCONFDIR=\"$(sysconfdir)\"
 bgpd_CFLAGS += -DRUNSTATEDIR=\"$(runstatedir)\"
 
