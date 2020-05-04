@@ -130,7 +130,14 @@ listener_match_peer(struct listen_addr *la, struct peer *p)
 	if (aid2af(p->conf.remote_addr.aid) != la_sa->sa_family)
 		return 0;
 
-	sa = addr2sa(&p->conf.local_addr, BGP_PORT, &sa_len);
+	switch (p->conf.remote_addr.aid) {
+	case AID_INET:
+		sa = addr2sa(&p->conf.local_addr_v4, BGP_PORT, &sa_len);
+	case AID_INET6:
+		sa = addr2sa(&p->conf.local_addr_v6, BGP_PORT, &sa_len);
+	default:
+		return 0;
+	}
 	if (sa == NULL)
 		/* undefined bind address will match any listener */
 		return 1;
