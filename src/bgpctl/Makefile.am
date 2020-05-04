@@ -20,7 +20,10 @@ AM_CPPFLAGS += -I$(top_srcdir)/src/bgpctl
 ACLOCAL_AMFLAGS = -Im4
 
 sbin_PROGRAMS = bgpctl
-dist_man_MANS = bgpctl.8
+man_MANS = bgpctl.8
+
+EXTRA_DIST = bgpctl.8.in
+CLEANFILES = $(man_MANS)
 
 bgpctl_CFLAGS = $(CFLAGS)
 bgpctl_CFLAGS += -DSYSCONFDIR=\"$(sysconfdir)\"
@@ -38,8 +41,17 @@ bgpctl_SOURCES += mrtparser.c
 bgpctl_SOURCES += util.c
 bgpctl_SOURCES += json.c
 
+bgpctl_DEPENDENCIES = $(man_MANS)
+
 noinst_HEADERS =
 noinst_HEADERS += bgpctl.h
 noinst_HEADERS += json.h
 noinst_HEADERS += mrtparser.h
 noinst_HEADERS += parser.h
+
+bgpctl.8: bgpctl.8.in
+	$(SED) \
+		-e 's|@BGPD_USER[@]|$(BGPD_USER)|g' \
+		-e 's|@SYSCONFDIR[@]|$(SYSCONFDIR)|g' \
+		-e 's|@LOCALSTATEDIR[@]|$(LOCALSTATEDIR)|g' \
+		'$(srcdir)/bgpctl.8.in' >$@

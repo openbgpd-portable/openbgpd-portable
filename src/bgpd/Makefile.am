@@ -17,11 +17,14 @@ AM_CPPFLAGS = -I$(top_srcdir)/include
 AM_CPPFLAGS += -I$(top_srcdir)/src/bgpd
 
 ACLOCAL_AMFLAGS = -Im4
-CLEANFILES = parse.c
+CLEANFILES = $(man_MANS)
+CLEANFILES += parse.c
 
 sbin_PROGRAMS = bgpd
-dist_man_MANS = bgpd.8
-dist_man_MANS += bgpd.conf.5
+man_MANS = bgpd.8
+man_MANS += bgpd.conf.5
+
+EXTRA_DIST = bgpd.8.in bgpd.conf.5.in
 
 bgpd_CFLAGS = $(CFLAGS)
 bgpd_CFLAGS += -DSYSCONFDIR=\"$(sysconfdir)\"
@@ -79,8 +82,24 @@ endif
 bgpd_SOURCES += timer.c
 bgpd_SOURCES += rde_peer.c
 
+bgpd_DEPENDENCIES = $(man_MANS)
+
 noinst_HEADERS = bgpd.h
 noinst_HEADERS += log.h
 noinst_HEADERS += mrt.h
 noinst_HEADERS += rde.h
 noinst_HEADERS += session.h
+
+bgpd.conf.5: bgpd.conf.5.in
+	$(SED) \
+		-e 's|@BGPD_USER[@]|$(BGPD_USER)|g' \
+		-e 's|@SYSCONFDIR[@]|$(SYSCONFDIR)|g' \
+		-e 's|@LOCALSTATEDIR[@]|$(LOCALSTATEDIR)|g' \
+		'$(srcdir)/bgpd.conf.5.in' >$@
+
+bgpd.8: bgpd.8.in
+	$(SED) \
+		-e 's|@BGPD_USER[@]|$(BGPD_USER)|g' \
+		-e 's|@SYSCONFDIR[@]|$(SYSCONFDIR)|g' \
+		-e 's|@LOCALSTATEDIR[@]|$(LOCALSTATEDIR)|g' \
+		'$(srcdir)/bgpd.8.in' >$@
