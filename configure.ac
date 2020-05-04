@@ -158,16 +158,6 @@ AC_SEARCH_LIBS([fmt_scaled], [util])
 AC_CHECK_FUNCS([arc4random clock_gettime ibuf_open SHA512Init])
 AC_CHECK_FUNCS([inet_net_pton fmt_scaled])
 
-AC_CACHE_CHECK([if libc defines optreset], ac_cv_libc_defines_optreset, [
-	AC_LINK_IFELSE([AC_LANG_PROGRAM([[]],
-		[[ extern int optreset; optreset = 1; ]])],
-		[ ac_cv_libc_defines_optreset="yes" ],
-		[ ac_cv_libc_defines_optreset="no" ])
-])
-if test "x$ac_cv_libc_defines_optreset" = "xyes" ; then
-	AC_DEFINE([HAVE_GETOPT_OPTRESET], [1], [Define if libc defines optreset])
-fi
-
 # Share test results with automake
 AM_CONDITIONAL([HAVE_ARC4RANDOM], [test "x$ac_cv_func_arc4random" = xyes])
 AM_CONDITIONAL([HAVE_ASPRINTF], [test "x$ac_cv_func_asprintf" = xyes])
