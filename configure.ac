@@ -225,6 +225,14 @@ AC_ARG_WITH([privsep-user],
 AC_DEFINE_UNQUOTED(BGPD_USER, "$PRIVSEP_USER", [Unprivileged user])
 AC_SUBST(PRIVSEP_USER)
 
+# workaround the issue that there is no autoconf release supporting
+# runstatedir but many linux distros patched their versions instead
+# Check if the variable is set, if not use a basic default.
+if test "x$runstatedir" == x; then
+	runstatedir='${localstatedir}/run'
+	AC_SUBST(runstatedir)
+fi
+
 AC_CONFIG_FILES([
 	Makefile
 	include/Makefile

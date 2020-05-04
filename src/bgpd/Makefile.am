@@ -25,7 +25,7 @@ dist_man_MANS += bgpd.conf.5
 
 bgpd_CFLAGS = $(CFLAGS)
 bgpd_CFLAGS += -DSYSCONFDIR=\"$(sysconfdir)\"
-bgpd_CFLAGS += -DLOCALSTATEDIR=\"$(localstatedir)\"
+bgpd_CFLAGS += -DRUNSTATEDIR=\"$(runstatedir)\"
 
 bgpd_LDADD = $(PLATFORM_LDADD) $(PROG_LDADD) -lutil
 bgpd_LDADD += $(top_builddir)/compat/libcompat.la

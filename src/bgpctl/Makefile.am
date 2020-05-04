@@ -24,7 +24,7 @@ dist_man_MANS = bgpctl.8
 
 bgpctl_CFLAGS = $(CFLAGS)
 bgpctl_CFLAGS += -DSYSCONFDIR=\"$(sysconfdir)\"
-bgpctl_CFLAGS += -DLOCALSTATEDIR=\"$(localstatedir)\"
+bgpctl_CFLAGS += -DRUNSTATEDIR=\"$(runstatedir)\"
 
 bgpctl_LDADD = $(PLATFORM_LDADD) $(PROG_LDADD) -lutil -lm
 bgpctl_LDADD += $(top_builddir)/compat/libcompat.la
