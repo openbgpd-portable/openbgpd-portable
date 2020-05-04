@@ -16,7 +16,7 @@
 SUBDIRS = include compat src/bgpd src/bgpctl
 ACLOCAL_AMFLAGS = -I m4
 
-EXTRA_DIST = README.md VERSION bgpd.conf
+EXTRA_DIST = README.md LICENSE VERSION bgpd.conf
 
 install-data-hook:
 	@if [ ! -d "$(DESTDIR)$(runstatedir)" ]; then \
