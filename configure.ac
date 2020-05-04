@@ -208,31 +208,6 @@ if test "x$ac_cv_libc_defines___progname" = "xyes" ; then
         AC_DEFINE([HAVE___PROGNAME], [1], [Define if libc defines __progname])
 fi
 
-AC_CACHE_CHECK([whether va_copy exists], ac_cv_have_va_copy, [
-	AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-#include <stdarg.h>
-va_list x,y;
-		]], [[ va_copy(x,y); ]])],
-	[ ac_cv_have_va_copy="yes" ],
-	[ ac_cv_have_va_copy="no"
-	])
-])
-if test "x$ac_cv_have_va_copy" = "xyes" ; then
-	AC_DEFINE([HAVE_VA_COPY], [1], [Define if va_copy exists])
-fi
-
-AC_CACHE_CHECK([whether __va_copy exists], ac_cv_have___va_copy, [
-	AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-#include <stdarg.h>
-va_list x,y;
-		]], [[ __va_copy(x,y); ]])],
-	[ ac_cv_have___va_copy="yes" ], [ ac_cv_have___va_copy="no"
-	])
-])
-if test "x$ac_cv_have___va_copy" = "xyes" ; then
-	AC_DEFINE([HAVE___VA_COPY], [1], [Define if __va_copy exists])
-fi
-
 AC_CHECK_HEADERS([err.h sha2.h])
 
 AC_CHECK_MEMBERS([struct sockaddr_in.sin_len], , ,
