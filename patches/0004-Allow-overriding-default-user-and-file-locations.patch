@@ -1,4 +1,4 @@
-From 6861f3d9f8c8e672acdc16f78539d831435eec38 Mon Sep 17 00:00:00 2001
+From bc3425846967e37f44d94a3a23682e73a9c3f843 Mon Sep 17 00:00:00 2001
 From: Claudio Jeker <claudio@openbsd.org>
 Date: Fri, 12 Apr 2019 17:17:08 +0200
 Subject: [PATCH 4/4] Allow overriding default user and file locations
@@ -8,7 +8,7 @@ Subject: [PATCH 4/4] Allow overriding default user and file locations
  1 file changed, 13 insertions(+), 3 deletions(-)
 
 diff --git src/usr.sbin/bgpd/bgpd.h src/usr.sbin/bgpd/bgpd.h
-index 56c99e9f585..f75566fa2dc 100644
+index 3876b9e125c..da1fc583c3d 100644
 --- src/usr.sbin/bgpd/bgpd.h
 +++ src/usr.sbin/bgpd/bgpd.h
 @@ -35,8 +35,6 @@
@@ -20,7 +20,7 @@ index 56c99e9f585..f75566fa2dc 100644
  #define	PEER_DESCR_LEN			32
  #define	SHUT_COMM_LEN			256	/* includes NUL terminator */
  #define	PFTABLE_LEN			32
-@@ -69,7 +67,19 @@
+@@ -68,7 +66,19 @@
  
  #define	BGPD_LOG_UPDATES		0x0001
  
@@ -34,13 +34,13 @@ index 56c99e9f585..f75566fa2dc 100644
 +#endif
 +#define	CONFFILE			SYSCONFDIR "/bgpd.conf"
 +
-+#ifndef LOCALSTATEDIR
-+#define LOCALSTATEDIR "/var"
++#ifndef RUNSTATEDIR
++#define RUNSTATEDIR "/var/run"
 +#endif
-+#define	SOCKET_NAME			LOCALSTATEDIR "/run/bgpd.sock"
++#define	SOCKET_NAME			RUNSTATEDIR "/bgpd.sock"
  
  #define	F_BGPD_INSERTED		0x0001
  #define	F_KERNEL		0x0002
 -- 
-2.22.0
+2.25.2
 

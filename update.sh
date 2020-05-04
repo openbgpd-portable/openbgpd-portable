@@ -33,6 +33,7 @@ do_cp_libc() {
 }
 CP_LIBC='do_cp_libc'
 CP='cp -p'
+MV='mv -f'
 PATCH='patch -s'
 
 ${CP} "${etc_src}/examples/bgpd.conf" ./
@@ -80,3 +81,10 @@ if [ -n "$(ls -A patches/*.patch 2>/dev/null)" ]; then
 		(cd src && ${PATCH} -p2 < "${dir}/${i}")
 	done
 fi
+
+# after patching rename man-page so that configure can adjust placeholders
+for j in bgpd bgpctl ; do
+	for i in `awk '/MANS (\+)?=/ { print $3 }' src/$j/Makefile.am |grep -v top_srcdir` ; do
+		${MV} src/$j/$i src/$j/$i.in
+	done
+done

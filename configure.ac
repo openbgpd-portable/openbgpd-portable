@@ -18,9 +18,7 @@ AC_INIT([OpenBGPD], m4_esyscmd([tr -d '\n' < VERSION]))
 AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE([subdir-objects foreign])
 AC_CONFIG_MACRO_DIR([m4])
-
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
-
 AC_PROG_CC([cc gcc])
 
 case $host_os in
@@ -62,9 +60,7 @@ AM_CONDITIONAL([HAVE_PFKEY], [test x$HOST_OS = xopenbsd])
 AM_CONDITIONAL([HAVE_PFTABLE], [test x$HOST_OS = xopenbsd])
 AM_CONDITIONAL([HAVE_KROUTE], [test x$HOST_OS = xopenbsd])
 
-AC_CHECK_FUNC([dl_iterate_phdr],,
-	[AC_SEARCH_LIBS([dl_iterate_phdr],[dl])])
-
+AC_PROG_SED
 AC_PROG_CC
 AC_PROG_CC_STDC
 AM_PROG_CC_C_O
@@ -156,16 +152,6 @@ AC_SEARCH_LIBS([fmt_scaled], [util])
 AC_CHECK_FUNCS([arc4random clock_gettime ibuf_open SHA512Init])
 AC_CHECK_FUNCS([inet_net_pton fmt_scaled])
 
-AC_CACHE_CHECK([if libc defines optreset], ac_cv_libc_defines_optreset, [
-	AC_LINK_IFELSE([AC_LANG_PROGRAM([[]],
-		[[ extern int optreset; optreset = 1; ]])],
-		[ ac_cv_libc_defines_optreset="yes" ],
-		[ ac_cv_libc_defines_optreset="no" ])
-])
-if test "x$ac_cv_libc_defines_optreset" = "xyes" ; then
-	AC_DEFINE([HAVE_GETOPT_OPTRESET], [1], [Define if libc defines optreset])
-fi
-
 # Share test results with automake
 AM_CONDITIONAL([HAVE_ARC4RANDOM], [test "x$ac_cv_func_arc4random" = xyes])
 AM_CONDITIONAL([HAVE_ASPRINTF], [test "x$ac_cv_func_asprintf" = xyes])
@@ -216,31 +202,6 @@ if test "x$ac_cv_libc_defines___progname" = "xyes" ; then
         AC_DEFINE([HAVE___PROGNAME], [1], [Define if libc defines __progname])
 fi
 
-AC_CACHE_CHECK([whether va_copy exists], ac_cv_have_va_copy, [
-	AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-#include <stdarg.h>
-va_list x,y;
-		]], [[ va_copy(x,y); ]])],
-	[ ac_cv_have_va_copy="yes" ],
-	[ ac_cv_have_va_copy="no"
-	])
-])
-if test "x$ac_cv_have_va_copy" = "xyes" ; then
-	AC_DEFINE([HAVE_VA_COPY], [1], [Define if va_copy exists])
-fi
-
-AC_CACHE_CHECK([whether __va_copy exists], ac_cv_have___va_copy, [
-	AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-#include <stdarg.h>
-va_list x,y;
-		]], [[ __va_copy(x,y); ]])],
-	[ ac_cv_have___va_copy="yes" ], [ ac_cv_have___va_copy="no"
-	])
-])
-if test "x$ac_cv_have___va_copy" = "xyes" ; then
-	AC_DEFINE([HAVE___VA_COPY], [1], [Define if __va_copy exists])
-fi
-
 AC_CHECK_HEADERS([err.h sha2.h])
 
 AC_CHECK_MEMBERS([struct sockaddr_in.sin_len], , ,
@@ -264,6 +225,14 @@ AC_ARG_WITH([privsep-user],
 )
 AC_DEFINE_UNQUOTED(BGPD_USER, "$PRIVSEP_USER", [Unprivileged user])
 AC_SUBST(PRIVSEP_USER)
+
+# workaround the issue that there is no autoconf release supporting
+# runstatedir but many linux distros patched their versions instead
+# Check if the variable is set, if not use a basic default.
+if test "x$runstatedir" == x; then
+	runstatedir='${localstatedir}/run'
+	AC_SUBST(runstatedir)
+fi
 
 AC_CONFIG_FILES([
 	Makefile
