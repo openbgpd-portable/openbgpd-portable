@@ -64,9 +64,6 @@ AM_CONDITIONAL([HAVE_PFKEY], [test x$HOST_OS = xopenbsd])
 AM_CONDITIONAL([HAVE_PFTABLE], [test x$HOST_OS = xopenbsd])
 AM_CONDITIONAL([HAVE_KROUTE], [test x$HOST_OS = xopenbsd])
 
-AC_CHECK_FUNC([dl_iterate_phdr],,
-	[AC_SEARCH_LIBS([dl_iterate_phdr],[dl])])
-
 AC_PROG_CC
 AC_PROG_CC_STDC
 AM_PROG_CC_C_O
