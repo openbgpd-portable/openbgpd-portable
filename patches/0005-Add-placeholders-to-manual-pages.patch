@@ -1,0 +1,100 @@
+From 29e69290c2eba653fe55e78bb41064afc56e2152 Mon Sep 17 00:00:00 2001
+From: Claudio Jeker <claudio@openbsd.org>
+Date: Tue, 5 May 2020 09:13:19 +0200
+Subject: [PATCH 5/5] Add placeholders to manual pages
+
+---
+ src/usr.sbin/bgpctl/bgpctl.8  | 8 ++++----
+ src/usr.sbin/bgpd/bgpd.8      | 8 ++++----
+ src/usr.sbin/bgpd/bgpd.conf.5 | 8 +++-----
+ 3 files changed, 11 insertions(+), 13 deletions(-)
+
+diff --git src/usr.sbin/bgpctl/bgpctl.8 src/usr.sbin/bgpctl/bgpctl.8
+index cbc5eb45ac..83237f9d23 100644
+--- src/usr.sbin/bgpctl/bgpctl.8
++++ src/usr.sbin/bgpctl/bgpctl.8
+@@ -49,7 +49,7 @@ Use
+ to communicate with
+ .Xr bgpd 8
+ instead of the default
+-.Pa /var/run/bgpd.sock.<rdomain>
++.Pa @RUNSTATEDIR@/bgpd.sock.<rdomain>
+ where
+ .Ar <rdomain>
+ is the routing domain
+@@ -438,12 +438,12 @@ in a terse format.
+ Show a list of all currently loaded fib routing tables.
+ .El
+ .Sh FILES
+-.Bl -tag -width "/var/run/bgpd.sockXXX" -compact
+-.It Pa /etc/bgpd.conf
++.Bl -tag -width "@RUNSTATEDIR@/bgpd.sockXXX" -compact
++.It Pa @SYSCONFDIR@/bgpd.conf
+ default
+ .Xr bgpd 8
+ configuration file
+-.It Pa /var/run/bgpd.sock
++.It Pa @RUNSTATEDIR@/bgpd.sock
+ default
+ .Xr bgpd 8
+ control socket
+diff --git src/usr.sbin/bgpd/bgpd.8 src/usr.sbin/bgpd/bgpd.8
+index 03a3e421e6..31685881c3 100644
+--- src/usr.sbin/bgpd/bgpd.8
++++ src/usr.sbin/bgpd/bgpd.8
+@@ -197,7 +197,7 @@ Use
+ .Ar file
+ as the configuration file,
+ instead of the default
+-.Pa /etc/bgpd.conf .
++.Pa @SYSCONFDIR@/bgpd.conf .
+ .It Fl n
+ Configtest mode.
+ Only check the configuration file for validity.
+@@ -205,12 +205,12 @@ Only check the configuration file for validity.
+ Produce more verbose output.
+ .El
+ .Sh FILES
+-.Bl -tag -width "/var/run/bgpd.sockXXX" -compact
+-.It Pa /etc/bgpd.conf
++.Bl -tag -width "@RUNSTATEDIR@/bgpd.sockXXX" -compact
++.It Pa @SYSCONFDIR@/bgpd.conf
+ default
+ .Nm
+ configuration file
+-.It Pa /var/run/bgpd.sock
++.It Pa @RUNSTATEDIR@/bgpd.sock
+ default
+ .Nm
+ control socket
+diff --git src/usr.sbin/bgpd/bgpd.conf.5 src/usr.sbin/bgpd/bgpd.conf.5
+index e4e0f54be7..032a70a5df 100644
+--- src/usr.sbin/bgpd/bgpd.conf.5
++++ src/usr.sbin/bgpd/bgpd.conf.5
+@@ -359,7 +359,7 @@ If
+ .Ic restricted
+ is specified a restricted control socket will be created.
+ By default
+-.Pa /var/run/bgpd.sock.<rdomain>
++.Pa @RUNSTATEDIR@/bgpd.sock.<rdomain>
+ is used where
+ .Ar <rdomain>
+ is the routing domain in which
+@@ -1888,12 +1888,10 @@ For prefixes with equally long paths, the prefix with the larger weight
+ is selected.
+ .El
+ .Sh FILES
+-.Bl -tag -width "/etc/examples/bgpd.conf" -compact
+-.It Pa /etc/bgpd.conf
++.Bl -tag -width "@SYSCONFDIR@/bgpd.conf" -compact
++.It Pa @SYSCONFDIR@/bgpd.conf
+ .Xr bgpd 8
+ configuration file
+-.It Pa /etc/examples/bgpd.conf
+-example configuration file
+ .El
+ .Sh SEE ALSO
+ .Xr strftime 3 ,
+-- 
+2.26.1
+
