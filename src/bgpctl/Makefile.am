@@ -25,7 +25,7 @@ man_MANS = bgpctl.8
 EXTRA_DIST = bgpctl.8.in
 CLEANFILES = $(man_MANS)
 
-bgpctl_CFLAGS = $(CFLAGS)
+bgpctl_CFLAGS = $(AM_CFLAGS)
 bgpctl_CFLAGS += -DSYSCONFDIR=\"$(sysconfdir)\"
 bgpctl_CFLAGS += -DRUNSTATEDIR=\"$(runstatedir)\"
 
