@@ -38,9 +38,6 @@ libcompat_la_SOURCES += imsg.c
 libcompat_la_SOURCES += imsg-buffer.c
 endif
 
-
-libcompat_la_SOURCES += progname.c
-
 if !HAVE_REALLOCARRAY
 libcompat_la_SOURCES += reallocarray.c
 endif

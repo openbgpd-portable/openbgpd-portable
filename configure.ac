@@ -207,17 +207,6 @@ AM_CONDITIONAL([HAVE_ARC4RANDOM],
 	   -a "x$HOST_OS" != xnetbsd \
 	   -a "x$ac_cv_func_arc4random" = xyes])
 
-AC_CACHE_CHECK([if libc defines __progname], ac_cv_libc_defines___progname, [
-	AC_LINK_IFELSE([AC_LANG_PROGRAM([[]],
-                [[ extern char *__progname; printf("%s", __progname); ]])],
-        [ ac_cv_libc_defines___progname="yes" ],
-        [ ac_cv_libc_defines___progname="no"
-        ])
-])
-if test "x$ac_cv_libc_defines___progname" = "xyes" ; then
-        AC_DEFINE([HAVE___PROGNAME], [1], [Define if libc defines __progname])
-fi
-
 AC_CHECK_HEADERS([err.h sha2.h])
 
 AC_CHECK_MEMBERS([struct sockaddr_in.sin_len], , ,
