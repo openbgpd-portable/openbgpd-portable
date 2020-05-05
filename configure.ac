@@ -31,7 +31,7 @@ case $host_os in
 		;;
 	*linux*)
 		HOST_OS=linux
-		CFLAGS="$CFLAGS -D_DEFAULT_SOURCE -D_BSD_SOURCE -D_GNU_SOURCE"
+		AM_CFLAGS="-D_DEFAULT_SOURCE -D_BSD_SOURCE -D_GNU_SOURCE"
 		AC_DEFINE([SPT_TYPE], [SPT_REUSEARGV])
 		;;
 	*netbsd*)
@@ -44,7 +44,7 @@ case $host_os in
 		;;
 	*solaris*)
 		HOST_OS=solaris
-		CFLAGS="$CFLAGS -D__EXTENSIONS__ -D_XOPEN_SOURCE=600 -DBSD_COMP"
+		AM_CFLAGS="-D__EXTENSIONS__ -D_XOPEN_SOURCE=600 -DBSD_COMP"
 		;;
 	*) ;;
 esac
@@ -67,15 +67,29 @@ AM_PROG_CC_C_O
 AC_PROG_LIBTOOL
 AC_PROG_YACC
 
-save_cflags="$CFLAGS"
-CFLAGS=-Wno-pointer-sign
-AC_MSG_CHECKING([whether CC supports -Wno-pointer-sign])
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
-	[AC_MSG_RESULT([yes])]
-	[AM_CFLAGS=-Wno-pointer-sign],
-	[AC_MSG_RESULT([no])]
-)
-CFLAGS="$save_cflags $AM_CFLAGS"
+AC_ARG_ENABLE(warnings,
+	AS_HELP_STRING([--disable-warnings],
+		[ enable compiler warnings [default=enabled]]),
+	[case $enableval in
+		yes) enable_warnings=yes;;
+		no) enable_warnings=no;;
+		*) enable_warnings=yes;; esac],
+	enable_warnings=yes)
+
+if test "$enable_warnings" = yes; then
+	AM_CFLAGS="$AM_CFLAGS -Wall -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wshadow -Wpointer-arith -Wcast-qual -Wsign-compare"
+
+	save_cflags="$CFLAGS"
+	CFLAGS=-Wno-pointer-sign
+	AC_MSG_CHECKING([whether CC supports -Wno-pointer-sign])
+	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
+		[AC_MSG_RESULT([yes])]
+		[WARN_CFLAGS=-Wno-pointer-sign],
+		[AC_MSG_RESULT([no])]
+	)
+	AM_CFLAGS="$AM_CFLAGS $WARN_CFLAGS"
+	CFLAGS="$save_cflags"
+fi
 
 AC_MSG_CHECKING([if compiling with clang])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [[
@@ -87,8 +101,10 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [[
 	[CLANG_FLAGS=-Qunused-arguments],
 	[AC_MSG_RESULT([no])]
 )
-CFLAGS="$CFLAGS $CLANG_CFLAGS"
-LDFLAGS="$LDFLAGS $CLANG_FLAGS"
+AM_CFLAGS="$AM_CFLAGS $CLANG_FLAGS"
+AM_LDFLAGS="$LDFLAGS $CLANG_FLAGS"
+AC_SUBST(AM_CFLAGS)
+AC_SUBST(AM_LDFLAGS)
 
 # check functions that are expected to be in libc
 AC_CHECK_FUNCS([arc4random asprintf explicit_bzero])
