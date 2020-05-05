@@ -93,13 +93,13 @@ noinst_HEADERS += session.h
 bgpd.conf.5: bgpd.conf.5.in
 	$(SED) \
 		-e 's|@BGPD_USER[@]|$(BGPD_USER)|g' \
-		-e 's|@SYSCONFDIR[@]|$(SYSCONFDIR)|g' \
-		-e 's|@LOCALSTATEDIR[@]|$(LOCALSTATEDIR)|g' \
+		-e 's|@SYSCONFDIR[@]|$(sysconfdir)|g' \
+		-e 's|@RUNSTATEDIR[@]|$(runstatedir)|g' \
 		'$(srcdir)/bgpd.conf.5.in' >$@
 
 bgpd.8: bgpd.8.in
 	$(SED) \
 		-e 's|@BGPD_USER[@]|$(BGPD_USER)|g' \
-		-e 's|@SYSCONFDIR[@]|$(SYSCONFDIR)|g' \
-		-e 's|@LOCALSTATEDIR[@]|$(LOCALSTATEDIR)|g' \
+		-e 's|@SYSCONFDIR[@]|$(sysconfdir)|g' \
+		-e 's|@RUNSTATEDIR[@]|$(runstatedir)|g' \
 		'$(srcdir)/bgpd.8.in' >$@

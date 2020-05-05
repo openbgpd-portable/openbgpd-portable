@@ -52,6 +52,6 @@ noinst_HEADERS += parser.h
 bgpctl.8: bgpctl.8.in
 	$(SED) \
 		-e 's|@BGPD_USER[@]|$(BGPD_USER)|g' \
-		-e 's|@SYSCONFDIR[@]|$(SYSCONFDIR)|g' \
-		-e 's|@LOCALSTATEDIR[@]|$(LOCALSTATEDIR)|g' \
+		-e 's|@SYSCONFDIR[@]|$(sysconfdir)|g' \
+		-e 's|@RUNSTATEDIR[@]|$(runstatedir)|g' \
 		'$(srcdir)/bgpctl.8.in' >$@
