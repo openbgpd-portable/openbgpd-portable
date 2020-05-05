@@ -60,5 +60,9 @@ include/siphash.h
 include/util.h
 include/vis.h
 
-src/bgpctl
-src/bgpd
+src/bgpctl/bgpctl
+src/bgpd/bgpd
+src/bgpctl/*.[ch]
+src/bgpctl/*.in
+src/bgpd/*.[ch]
+src/bgpd/*.in
