@@ -1,7 +1,7 @@
-From de9b5b05bff757f986c76aa6c7b35268c7497806 Mon Sep 17 00:00:00 2001
+From 62d5ebfb7a99f77a10b52e1b4485d7ef0b78a69f Mon Sep 17 00:00:00 2001
 From: Claudio Jeker <claudio@openbsd.org>
 Date: Thu, 11 Apr 2019 17:02:57 +0200
-Subject: [PATCH 3/5] Special handle IPV6_MINHOPCOUNT since only some systems
+Subject: [PATCH 3/6] Special handle IPV6_MINHOPCOUNT since only some systems
  support it.
 
 ---

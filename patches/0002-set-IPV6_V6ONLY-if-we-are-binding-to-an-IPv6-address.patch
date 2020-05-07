@@ -1,7 +1,7 @@
-From b10ffd88d062882b9513334bc68a6ef5063acf31 Mon Sep 17 00:00:00 2001
+From e1dadcc8148f66f0ff653ca0c422e848a8c7e29a Mon Sep 17 00:00:00 2001
 From: Claudio Jeker <claudio@openbsd.org>
 Date: Tue, 26 Feb 2019 15:37:50 +0100
-Subject: [PATCH 2/5] set IPV6_V6ONLY if we are binding to an IPv6 address
+Subject: [PATCH 2/6] set IPV6_V6ONLY if we are binding to an IPv6 address
 
 ---
  src/usr.sbin/bgpd/config.c | 9 +++++++++

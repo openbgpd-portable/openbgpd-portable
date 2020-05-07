@@ -1,0 +1,34 @@
+From db849bb682d4c59da9fdec2f3e1795f32e9a1338 Mon Sep 17 00:00:00 2001
+From: Claudio Jeker <claudio@openbsd.org>
+Date: Thu, 7 May 2020 21:23:40 +0200
+Subject: [PATCH 6/6] Fix parse.y to work with bison
+
+---
+ src/usr.sbin/bgpd/parse.y | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git src/usr.sbin/bgpd/parse.y src/usr.sbin/bgpd/parse.y
+index f3ee180ade..ee2aea6cd3 100644
+--- src/usr.sbin/bgpd/parse.y
++++ src/usr.sbin/bgpd/parse.y
+@@ -1565,7 +1565,7 @@ peeropts	: REMOTEAS as4number	{
+ 			if (merge_filterset(&r->set, $2) == -1)
+ 				YYERROR;
+ 		}
+-		| SET "{" optnl filter_set_l optnl "}"	{
++		| SET '{' optnl filter_set_l optnl '}'	{
+ 			struct filter_rule	*r;
+ 			struct filter_set	*s;
+ 
+@@ -2358,7 +2358,7 @@ filter_set	: /* empty */					{ $$ = NULL; }
+ 			TAILQ_INIT($$);
+ 			TAILQ_INSERT_TAIL($$, $2, entry);
+ 		}
+-		| SET "{" optnl filter_set_l optnl "}"	{ $$ = $4; }
++		| SET '{' optnl filter_set_l optnl '}'	{ $$ = $4; }
+ 		;
+ 
+ filter_set_l	: filter_set_l comma filter_set_opt	{
+-- 
+2.26.1
+
