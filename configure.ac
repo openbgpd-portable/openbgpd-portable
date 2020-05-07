@@ -65,7 +65,14 @@ AC_PROG_CC
 AC_PROG_CC_STDC
 AM_PROG_CC_C_O
 AC_PROG_LIBTOOL
-AC_PROG_YACC
+
+if test X"$YACC" = X; then
+	AC_CHECK_PROGS([YACC], [byacc yacc])
+fi
+if test X"$YACC" = X; then
+	AC_MSG_ERROR([No yacc binary found in $PATH])
+fi
+AC_SUBST(YACC)
 
 AC_ARG_ENABLE(warnings,
 	AS_HELP_STRING([--disable-warnings],
