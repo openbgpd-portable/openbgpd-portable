@@ -13,10 +13,12 @@ if [ ! -d openbsd ]; then
 		git clone "${OPENBGPD_GIT}/openbsd"
 	fi
 fi
-(cd openbsd
- git fetch
- git checkout "${openbsd_branch}"
- git pull --rebase)
+if [ -d openbsd/.git ]; then
+	(cd openbsd
+	 git fetch
+	 git checkout "${openbsd_branch}"
+	 git pull --rebase)
+fi
 
 # setup source paths
 dir=`pwd`
