@@ -234,7 +234,7 @@ AC_SUBST(PRIVSEP_USER)
 # workaround the issue that there is no autoconf release supporting
 # runstatedir but many linux distros patched their versions instead
 # Check if the variable is set, if not use a basic default.
-if test "x$runstatedir" == x; then
+if test "x$runstatedir" = x; then
 	runstatedir='${localstatedir}/run'
 	AC_SUBST(runstatedir)
 fi
