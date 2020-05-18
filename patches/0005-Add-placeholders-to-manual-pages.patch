@@ -1,7 +1,7 @@
-From 0749a924a653d294c76e78e0b0db171c6fefb788 Mon Sep 17 00:00:00 2001
+From f9e3b0176952f82d7dfb8b6213230e6324c0ef9f Mon Sep 17 00:00:00 2001
 From: Claudio Jeker <claudio@openbsd.org>
 Date: Tue, 5 May 2020 09:13:19 +0200
-Subject: [PATCH 5/6] Add placeholders to manual pages
+Subject: [PATCH 5/5] Add placeholders to manual pages
 
 ---
  src/usr.sbin/bgpctl/bgpctl.8  | 8 ++++----
@@ -10,7 +10,7 @@ Subject: [PATCH 5/6] Add placeholders to manual pages
  3 files changed, 11 insertions(+), 13 deletions(-)
 
 diff --git src/usr.sbin/bgpctl/bgpctl.8 src/usr.sbin/bgpctl/bgpctl.8
-index cbc5eb45ac..83237f9d23 100644
+index 4b61250703..8cba4b0bbc 100644
 --- src/usr.sbin/bgpctl/bgpctl.8
 +++ src/usr.sbin/bgpctl/bgpctl.8
 @@ -49,7 +49,7 @@ Use
@@ -68,7 +68,7 @@ index 03a3e421e6..31685881c3 100644
  .Nm
  control socket
 diff --git src/usr.sbin/bgpd/bgpd.conf.5 src/usr.sbin/bgpd/bgpd.conf.5
-index e4e0f54be7..032a70a5df 100644
+index 5b1d73d17c..38ee13df56 100644
 --- src/usr.sbin/bgpd/bgpd.conf.5
 +++ src/usr.sbin/bgpd/bgpd.conf.5
 @@ -359,7 +359,7 @@ If
@@ -89,12 +89,12 @@ index e4e0f54be7..032a70a5df 100644
 +.Bl -tag -width "@SYSCONFDIR@/bgpd.conf" -compact
 +.It Pa @SYSCONFDIR@/bgpd.conf
  .Xr bgpd 8
- configuration file
+ configuration file.
 -.It Pa /etc/examples/bgpd.conf
--example configuration file
+-Example configuration file.
  .El
  .Sh SEE ALSO
  .Xr strftime 3 ,
 -- 
-2.26.1
+2.26.2
 
