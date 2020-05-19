@@ -234,6 +234,11 @@ AC_SUBST(PRIVSEP_USER)
 # workaround the issue that there is no autoconf release supporting
 # runstatedir but many linux distros patched their versions instead
 # Check if the variable is set, if not use a basic default.
+AC_ARG_WITH([runstatedir],
+	AS_HELP_STRING([--with-runstatedir=DIR],
+		[Location for bgpd control socket [LOCALSTATEDIR/run]]),
+	runstatedir="$withval"
+)
 if test "x$runstatedir" = x; then
 	runstatedir='${localstatedir}/run'
 	AC_SUBST(runstatedir)
