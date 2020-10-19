@@ -1,0 +1,37 @@
+From 83d296bb8b99dcc2f7dc4246677abda72bdabe7d Mon Sep 17 00:00:00 2001
+From: Claudio Jeker <claudio@openbsd.org>
+Date: Mon, 19 Oct 2020 15:32:43 +0200
+Subject: [PATCH 7/7] Add missing endian.h includes
+
+---
+ src/usr.sbin/bgpctl/output.c      | 1 +
+ src/usr.sbin/bgpctl/output_json.c | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git src/usr.sbin/bgpctl/output.c src/usr.sbin/bgpctl/output.c
+index ead6d9f068..019d7309a3 100644
+--- src/usr.sbin/bgpctl/output.c
++++ src/usr.sbin/bgpctl/output.c
+@@ -19,6 +19,7 @@
+  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+  */
+ 
++#include <endian.h>
+ #include <err.h>
+ #include <math.h>
+ #include <stdio.h>
+diff --git src/usr.sbin/bgpctl/output_json.c src/usr.sbin/bgpctl/output_json.c
+index 5c7f611f88..1041076fea 100644
+--- src/usr.sbin/bgpctl/output_json.c
++++ src/usr.sbin/bgpctl/output_json.c
+@@ -16,6 +16,7 @@
+  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+  */
+ 
++#include <endian.h>
+ #include <err.h>
+ #include <math.h>
+ #include <stdio.h>
+-- 
+2.28.0
+

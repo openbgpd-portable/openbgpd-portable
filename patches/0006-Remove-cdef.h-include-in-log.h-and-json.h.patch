@@ -1,7 +1,7 @@
 From 3a0112e7d5b885fbd2f71f12417f638ff23a098f Mon Sep 17 00:00:00 2001
 From: Claudio Jeker <claudio@openbsd.org>
 Date: Mon, 19 Oct 2020 12:37:51 +0200
-Subject: [PATCH 6/6] Remove cdef.h include in log.h and json.h
+Subject: [PATCH 6/7] Remove cdef.h include in log.h and json.h
 
 It is not needed and causes protability issues.
 ---
@@ -34,5 +34,5 @@ index 0b52f46b0e..ff3a60250c 100644
  void	log_init(int, int);
  void	log_procinit(const char *);
 -- 
-2.26.2
+2.28.0
 

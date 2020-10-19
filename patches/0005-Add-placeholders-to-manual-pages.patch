@@ -1,7 +1,7 @@
 From 64d5b9212c348e9a61c941d202ea68dc1fc78487 Mon Sep 17 00:00:00 2001
 From: Claudio Jeker <claudio@openbsd.org>
 Date: Tue, 5 May 2020 09:13:19 +0200
-Subject: [PATCH 5/6] Add placeholders to manual pages
+Subject: [PATCH 5/7] Add placeholders to manual pages
 
 ---
  src/usr.sbin/bgpctl/bgpctl.8  | 8 ++++----
@@ -96,5 +96,5 @@ index 5b1d73d17c..38ee13df56 100644
  .Sh SEE ALSO
  .Xr strftime 3 ,
 -- 
-2.26.2
+2.28.0
 
