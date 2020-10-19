@@ -8,3 +8,7 @@
 #ifdef HAVE_LINUX_IN6_H
 #include <linux/in6.h>
 #endif
+
+#ifndef HAVE_INET_NET_PTON
+int	inet_net_pton(int, const char *, void *, size_t);
+#endif

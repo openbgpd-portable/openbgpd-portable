@@ -103,9 +103,14 @@ if !HAVE_GETRTABLE
 libcompat_la_SOURCES += getrtable.c
 endif
 
+if !HAVE_INET_NET_PTON
+libcompat_la_SOURCES += inet_net_pton.c
+endif
+
 if !HAVE_FMT_SCALED
 libcompat_la_SOURCES += fmt_scaled.c
 endif
+
 if !HAVE_STRNVIS
 libcompat_la_SOURCES += vis.c
 endif
