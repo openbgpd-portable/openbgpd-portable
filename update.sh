@@ -34,17 +34,21 @@ sbin_src="${dir}/openbsd/src/usr.sbin"
 do_cp_libc() {
 	sed "/DEF_WEAK/d" < "${1}" > "${2}"/`basename "${1}"`
 }
+do_cp_include() {
+	sed "/DECLS/d ; /cdefs.h/d" < "${1}" > "${2}"/`basename "${1}"`
+}
 CP_LIBC='do_cp_libc'
+CP_INC='do_cp_include'
 CP='cp -p'
 MV='mv -f'
 PATCH='patch -s'
 
 ${CP} "${etc_src}/examples/bgpd.conf" ./
 sed '/DECLS/d' "${libc_inc}/sha2.h" > include/sha2_openbsd.h
-${CP} "${libc_inc}/siphash.h" include/
-${CP} "${libc_inc}/vis.h" include/
-${CP} "${libutil_src}/util.h" include/
-${CP} "${libutil_src}/imsg.h" include/
+${CP_INC} "${libc_inc}/siphash.h" include/
+${CP_INC} "${libc_inc}/vis.h" include/
+${CP_INC} "${libutil_src}/util.h" include/
+${CP_INC} "${libutil_src}/imsg.h" include/
 ${CP} "${libutil_src}/fmt_scaled.c" compat/
 ${CP} "${libutil_src}/imsg.c" compat/
 ${CP} "${libutil_src}/imsg-buffer.c" compat/
@@ -63,6 +67,7 @@ ${CP_LIBC} "${libc_src}/hash/md5.c" compat
 ${CP_LIBC} "${libc_src}/hash/sha2.c" compat
 ${CP_LIBC} "${libc_src}/hash/siphash.c" compat
 ${CP_LIBC} "${libc_src}/gen/vis.c" compat
+${CP_LIBC} "${libc_src}/net/inet_net_pton.c" compat
 for i in "${arc4random_src}"/getentropy_*.c; do
 	sed -e 's/openssl\/sha.h/sha2.h/' < "${i}" > compat/`basename "${i}"`
 done
