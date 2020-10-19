@@ -1,7 +1,7 @@
-From 1c6fcb06a4cdc761cfeb1143728dc7ada989212a Mon Sep 17 00:00:00 2001
+From 80317d0458cd433e6b4b84c954496ae399be8e05 Mon Sep 17 00:00:00 2001
 From: Claudio Jeker <claudio@openbsd.org>
 Date: Fri, 12 Apr 2019 17:17:08 +0200
-Subject: [PATCH 4/5] Allow overriding default user and file locations
+Subject: [PATCH 4/6] Allow overriding default user and file locations
 
 ---
  src/usr.sbin/bgpd/bgpd.h | 16 +++++++++++++---

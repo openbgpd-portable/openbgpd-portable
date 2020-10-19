@@ -1,0 +1,38 @@
+From 3a0112e7d5b885fbd2f71f12417f638ff23a098f Mon Sep 17 00:00:00 2001
+From: Claudio Jeker <claudio@openbsd.org>
+Date: Mon, 19 Oct 2020 12:37:51 +0200
+Subject: [PATCH 6/6] Remove cdef.h include in log.h and json.h
+
+It is not needed and causes protability issues.
+---
+ src/usr.sbin/bgpctl/json.h | 1 -
+ src/usr.sbin/bgpd/log.h    | 1 -
+ 2 files changed, 2 deletions(-)
+
+diff --git src/usr.sbin/bgpctl/json.h src/usr.sbin/bgpctl/json.h
+index 59a645f6f1..a979e4cd31 100644
+--- src/usr.sbin/bgpctl/json.h
++++ src/usr.sbin/bgpctl/json.h
+@@ -15,7 +15,6 @@
+  */
+ 
+ #include <stdarg.h>
+-#include <sys/cdefs.h>
+ 
+ void json_do_start(void);
+ void json_do_finish(void);
+diff --git src/usr.sbin/bgpd/log.h src/usr.sbin/bgpd/log.h
+index 0b52f46b0e..ff3a60250c 100644
+--- src/usr.sbin/bgpd/log.h
++++ src/usr.sbin/bgpd/log.h
+@@ -20,7 +20,6 @@
+ #define LOG_H
+ 
+ #include <stdarg.h>
+-#include <sys/cdefs.h>
+ 
+ void	log_init(int, int);
+ void	log_procinit(const char *);
+-- 
+2.26.2
+

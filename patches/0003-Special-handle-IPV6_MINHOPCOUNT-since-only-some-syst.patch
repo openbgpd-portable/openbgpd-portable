@@ -1,7 +1,7 @@
-From 74be97f95ec8e5526c965269acc0288360a08472 Mon Sep 17 00:00:00 2001
+From 19b851ff5b4f08a88cd9d6e97e792ecf9707e8b5 Mon Sep 17 00:00:00 2001
 From: Claudio Jeker <claudio@openbsd.org>
 Date: Thu, 11 Apr 2019 17:02:57 +0200
-Subject: [PATCH 3/5] Special handle IPV6_MINHOPCOUNT since only some systems
+Subject: [PATCH 3/6] Special handle IPV6_MINHOPCOUNT since only some systems
  support it.
 
 ---
@@ -9,7 +9,7 @@ Subject: [PATCH 3/5] Special handle IPV6_MINHOPCOUNT since only some systems
  1 file changed, 5 insertions(+)
 
 diff --git src/usr.sbin/bgpd/session.c src/usr.sbin/bgpd/session.c
-index 4930c38e99..8fcd4f0d59 100644
+index e02f25fd9f..8f5d442067 100644
 --- src/usr.sbin/bgpd/session.c
 +++ src/usr.sbin/bgpd/session.c
 @@ -1154,6 +1154,7 @@ session_setup_socket(struct peer *p)
