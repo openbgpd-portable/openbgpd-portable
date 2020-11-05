@@ -11,11 +11,14 @@ https://github.com/openbgpd-portable/openbgpd-portable
 Platform Requirements
 ---------------------
 
-At the time of writing the Portable version is known to build and work on:
+At the time of writing the portable version is known to build and work on:
 
  - OpenBSD-current
  - OpenBSD (6.5)
- - Linux (Debian 9)
+ - Alpine 3.12
+ - Debian 9
+ - Fedora 31, 32, 33
+ - RHEL/CentOS 7, 8
  - FreeBSD (12.x)
 
 OpenBGPD may work on other operating systems, newer and older, but the above
