@@ -1,7 +1,7 @@
-From 19b851ff5b4f08a88cd9d6e97e792ecf9707e8b5 Mon Sep 17 00:00:00 2001
+From 61d11415dab8882a51568a3d9f1f8dd08af55c7d Mon Sep 17 00:00:00 2001
 From: Claudio Jeker <claudio@openbsd.org>
 Date: Thu, 11 Apr 2019 17:02:57 +0200
-Subject: [PATCH 3/7] Special handle IPV6_MINHOPCOUNT since only some systems
+Subject: [PATCH 3/5] Special handle IPV6_MINHOPCOUNT since only some systems
  support it.
 
 ---
@@ -9,10 +9,10 @@ Subject: [PATCH 3/7] Special handle IPV6_MINHOPCOUNT since only some systems
  1 file changed, 5 insertions(+)
 
 diff --git src/usr.sbin/bgpd/session.c src/usr.sbin/bgpd/session.c
-index e02f25fd9f..8f5d442067 100644
+index 5e1edebd3c..3db62ba4c5 100644
 --- src/usr.sbin/bgpd/session.c
 +++ src/usr.sbin/bgpd/session.c
-@@ -1154,6 +1154,7 @@ session_setup_socket(struct peer *p)
+@@ -1149,6 +1149,7 @@ session_setup_socket(struct peer *p)
  			 * 1=direct n=multihop with ttlsec, we always use 255
  			 */
  			if (p->conf.ttlsec) {
@@ -20,7 +20,7 @@ index e02f25fd9f..8f5d442067 100644
  				ttl = 256 - p->conf.distance;
  				if (setsockopt(p->fd, IPPROTO_IPV6,
  				    IPV6_MINHOPCOUNT, &ttl, sizeof(ttl))
-@@ -1164,6 +1165,10 @@ session_setup_socket(struct peer *p)
+@@ -1159,6 +1160,10 @@ session_setup_socket(struct peer *p)
  					return (-1);
  				}
  				ttl = 255;
@@ -32,5 +32,5 @@ index e02f25fd9f..8f5d442067 100644
  			if (setsockopt(p->fd, IPPROTO_IPV6, IPV6_UNICAST_HOPS,
  			    &ttl, sizeof(ttl)) == -1) {
 -- 
-2.28.0
+2.29.2
 
