@@ -7,15 +7,19 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        compiler: [gcc, clang-9, gcc-10]
+        compiler: [cc, clang-9, gcc-10]
     steps:
       - uses: actions/checkout@v2
       - name: autogen
         run: ./autogen.sh
+      - name: compiler
+        run: $CC -v
+        env:
+          CC: ${{ matrix.compiler }}
       - name: configure
         run: ./configure
         env:
-          CC: ${{ matrix.compiler}}
+          CC: ${{ matrix.compiler }}
       - name: make
         run: make -k
       - name: make distcheck
