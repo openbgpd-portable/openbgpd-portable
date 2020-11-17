@@ -5,12 +5,17 @@ on: [ push, pull_request ]
 jobs:
   build-latest:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [gcc, clang-9, gcc-10]
     steps:
       - uses: actions/checkout@v2
       - name: autogen
         run: ./autogen.sh
       - name: configure
         run: ./configure
+        env:
+          CC: ${{ matrix.compiler}}
       - name: make
         run: make -k
       - name: make distcheck
