@@ -6,7 +6,7 @@ OpenBGPD has a web site at http://openbgpd.com/
 The current portable tree can be found at
 https://github.com/openbgpd-portable/openbgpd-portable
 
-[![Build Status](https://github.com/actions/openbgpd-portable/openbgpd-portable/Build%20CI/badge.svg)](https://github.com/openbgpd-portable/openbgpd-portable/actions)
+[![Build Status](https://github.com/openbgpd-portable/openbgpd-portable/workflows/Build%20CI/badge.svg?branch=github_actions)](https://github.com/openbgpd-portable/openbgpd-portable/actions)
 [![Build Status](https://travis-ci.org/openbgpd-portable/openbgpd-portable.svg?branch=master)](https://travis-ci.org/openbgpd-portable/openbgpd-portable)
 
 Platform Requirements
