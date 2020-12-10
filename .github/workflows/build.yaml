@@ -29,3 +29,4 @@ jobs:
         run: make -k
       - name: make distcheck
         run: make distcheck
+        if: matrix.compiler == 'cc'
