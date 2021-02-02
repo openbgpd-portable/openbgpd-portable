@@ -14,7 +14,6 @@ prepare the source tree for building:
  1. ensure you have the following packages installed:
       automake, autoconf, git, libtool, yacc or bison
  2. run './autogen.sh' to prepare the source tree for building
-    or run './dist.sh' to prepare a tarball.
 
 To install OpenBGPD with default options:
 
