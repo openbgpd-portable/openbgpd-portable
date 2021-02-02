@@ -1,4 +1,4 @@
-From eac1b12977f248ec99efce189d005d436a4d94ac Mon Sep 17 00:00:00 2001
+From cabbc896220e0d04882ff1d813c77d7d013a3190 Mon Sep 17 00:00:00 2001
 From: Claudio Jeker <claudio@openbsd.org>
 Date: Tue, 5 May 2020 09:13:19 +0200
 Subject: [PATCH 5/5] Add placeholders to manual pages
@@ -39,7 +39,7 @@ index 4b61250703..8cba4b0bbc 100644
  .Xr bgpd 8
  control socket
 diff --git src/usr.sbin/bgpd/bgpd.8 src/usr.sbin/bgpd/bgpd.8
-index 03a3e421e6..31685881c3 100644
+index 3c2cb0aab4..bf47313e42 100644
 --- src/usr.sbin/bgpd/bgpd.8
 +++ src/usr.sbin/bgpd/bgpd.8
 @@ -197,7 +197,7 @@ Use
@@ -55,23 +55,23 @@ index 03a3e421e6..31685881c3 100644
  Produce more verbose output.
  .El
  .Sh FILES
--.Bl -tag -width "/var/run/bgpd.sockXXX" -compact
+-.Bl -tag -width "/var/run/bgpd.sock.<rdomain>" -compact
 -.It Pa /etc/bgpd.conf
-+.Bl -tag -width "@RUNSTATEDIR@/bgpd.sockXXX" -compact
++.Bl -tag -width "@RUNSTATEDIR@/bgpd.sock.<rdomain>" -compact
 +.It Pa @SYSCONFDIR@/bgpd.conf
- default
+ Default
  .Nm
- configuration file
--.It Pa /var/run/bgpd.sock
-+.It Pa @RUNSTATEDIR@/bgpd.sock
- default
+ configuration file.
+-.It Pa /var/run/bgpd.sock.<rdomain>
++.It Pa @RUNSTATEDIR@/bgpd.sock.<rdomain>
+ Default
  .Nm
- control socket
+ control socket, where
 diff --git src/usr.sbin/bgpd/bgpd.conf.5 src/usr.sbin/bgpd/bgpd.conf.5
-index 5b1d73d17c..38ee13df56 100644
+index eb93741773..49e4c9e239 100644
 --- src/usr.sbin/bgpd/bgpd.conf.5
 +++ src/usr.sbin/bgpd/bgpd.conf.5
-@@ -359,7 +359,7 @@ If
+@@ -373,7 +373,7 @@ If
  .Ic restricted
  is specified a restricted control socket will be created.
  By default
@@ -80,7 +80,7 @@ index 5b1d73d17c..38ee13df56 100644
  is used where
  .Ar <rdomain>
  is the routing domain in which
-@@ -1888,12 +1888,10 @@ For prefixes with equally long paths, the prefix with the larger weight
+@@ -1917,12 +1917,10 @@ For prefixes with equally long paths, the prefix with the larger weight
  is selected.
  .El
  .Sh FILES
@@ -96,5 +96,5 @@ index 5b1d73d17c..38ee13df56 100644
  .Sh SEE ALSO
  .Xr strftime 3 ,
 -- 
-2.29.2
+2.30.0
 

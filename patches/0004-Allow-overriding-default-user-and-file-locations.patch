@@ -1,4 +1,4 @@
-From e9a8a64647d4874f32b87d52163437870ad418a4 Mon Sep 17 00:00:00 2001
+From c71c39a0bd3674fe0ef8da78bd6ea9ba6cd01ad6 Mon Sep 17 00:00:00 2001
 From: Claudio Jeker <claudio@openbsd.org>
 Date: Fri, 12 Apr 2019 17:17:08 +0200
 Subject: [PATCH 4/5] Allow overriding default user and file locations
@@ -8,7 +8,7 @@ Subject: [PATCH 4/5] Allow overriding default user and file locations
  1 file changed, 13 insertions(+), 3 deletions(-)
 
 diff --git src/usr.sbin/bgpd/bgpd.h src/usr.sbin/bgpd/bgpd.h
-index 5e1e615335..5b8cc47831 100644
+index 97f20cde47..c4c6194d27 100644
 --- src/usr.sbin/bgpd/bgpd.h
 +++ src/usr.sbin/bgpd/bgpd.h
 @@ -35,8 +35,6 @@
@@ -20,7 +20,7 @@ index 5e1e615335..5b8cc47831 100644
  #define	PEER_DESCR_LEN			32
  #define	REASON_LEN			256	/* includes NUL terminator */
  #define	PFTABLE_LEN			32
-@@ -68,7 +66,19 @@
+@@ -69,7 +67,19 @@
  
  #define	BGPD_LOG_UPDATES		0x0001
  
@@ -42,5 +42,5 @@ index 5e1e615335..5b8cc47831 100644
  #define	F_BGPD_INSERTED		0x0001
  #define	F_KERNEL		0x0002
 -- 
-2.29.2
+2.30.0
 
