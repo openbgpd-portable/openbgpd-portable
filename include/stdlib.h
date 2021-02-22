@@ -14,6 +14,7 @@
 
 #ifndef HAVE_ARC4RANDOM_
 uint32_t arc4random(void);
+uint32_t arc4random_uniform(uint32_t);
 void arc4random_buf(void *buf, size_t nbytes);
 #endif
 

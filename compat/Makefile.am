@@ -76,6 +76,7 @@ endif
 
 if !HAVE_ARC4RANDOM
 libcompat_la_SOURCES += arc4random.c
+libcompat_la_SOURCES += arc4random_uniform.c
 
 if !HAVE_GETENTROPY
 if HOST_FREEBSD
