@@ -81,6 +81,8 @@ bgpd_SOURCES += carp-disabled.c
 endif
 bgpd_SOURCES += timer.c
 bgpd_SOURCES += rde_peer.c
+bgpd_SOURCES += rtr.c
+bgpd_SOURCES += rtr_proto.c
 
 bgpd_DEPENDENCIES = $(man_MANS)
 
