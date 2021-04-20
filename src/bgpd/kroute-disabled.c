@@ -305,6 +305,9 @@ knexthop_send_update(struct knexthop_node *kn)
 		struct sockaddr_in6 *m6;
 		int plen;
 
+		if (ifa->ifa_addr == NULL)
+			continue;
+
 		switch (ifa->ifa_addr->sa_family) {
 		case AF_INET:
 			m4 = (struct sockaddr_in *)ifa->ifa_netmask;
