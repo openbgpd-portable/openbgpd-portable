@@ -1,4 +1,4 @@
-From cabbc896220e0d04882ff1d813c77d7d013a3190 Mon Sep 17 00:00:00 2001
+From 1d10e83b503ef4e3f1b8c2584bbc89c60f686841 Mon Sep 17 00:00:00 2001
 From: Claudio Jeker <claudio@openbsd.org>
 Date: Tue, 5 May 2020 09:13:19 +0200
 Subject: [PATCH 5/5] Add placeholders to manual pages
@@ -10,7 +10,7 @@ Subject: [PATCH 5/5] Add placeholders to manual pages
  3 files changed, 11 insertions(+), 13 deletions(-)
 
 diff --git src/usr.sbin/bgpctl/bgpctl.8 src/usr.sbin/bgpctl/bgpctl.8
-index 4b61250703..8cba4b0bbc 100644
+index dab1dda450..5fb503a044 100644
 --- src/usr.sbin/bgpctl/bgpctl.8
 +++ src/usr.sbin/bgpctl/bgpctl.8
 @@ -49,7 +49,7 @@ Use
@@ -22,7 +22,7 @@ index 4b61250703..8cba4b0bbc 100644
  where
  .Ar <rdomain>
  is the routing domain
-@@ -438,12 +438,12 @@ in a terse format.
+@@ -450,12 +450,12 @@ in a terse format.
  Show a list of all currently loaded fib routing tables.
  .El
  .Sh FILES
@@ -39,7 +39,7 @@ index 4b61250703..8cba4b0bbc 100644
  .Xr bgpd 8
  control socket
 diff --git src/usr.sbin/bgpd/bgpd.8 src/usr.sbin/bgpd/bgpd.8
-index 3c2cb0aab4..bf47313e42 100644
+index 2006696ce2..5b3231a28e 100644
 --- src/usr.sbin/bgpd/bgpd.8
 +++ src/usr.sbin/bgpd/bgpd.8
 @@ -197,7 +197,7 @@ Use
@@ -68,10 +68,10 @@ index 3c2cb0aab4..bf47313e42 100644
  .Nm
  control socket, where
 diff --git src/usr.sbin/bgpd/bgpd.conf.5 src/usr.sbin/bgpd/bgpd.conf.5
-index eb93741773..49e4c9e239 100644
+index 3d59f9090b..6ae930cb77 100644
 --- src/usr.sbin/bgpd/bgpd.conf.5
 +++ src/usr.sbin/bgpd/bgpd.conf.5
-@@ -373,7 +373,7 @@ If
+@@ -382,7 +382,7 @@ If
  .Ic restricted
  is specified a restricted control socket will be created.
  By default
@@ -80,7 +80,7 @@ index eb93741773..49e4c9e239 100644
  is used where
  .Ar <rdomain>
  is the routing domain in which
-@@ -1917,12 +1917,10 @@ For prefixes with equally long paths, the prefix with the larger weight
+@@ -1973,12 +1973,10 @@ For prefixes with equally long paths, the prefix with the larger weight
  is selected.
  .El
  .Sh FILES
@@ -96,5 +96,5 @@ index eb93741773..49e4c9e239 100644
  .Sh SEE ALSO
  .Xr strftime 3 ,
 -- 
-2.30.0
+2.31.1
 
