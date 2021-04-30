@@ -18,6 +18,7 @@ At the time of writing the portable version is known to build and work on:
  - Debian 9, 10
  - Fedora 31, 32, 33
  - RHEL/CentOS 7, 8
+ - Ubuntu 20.04 LTS
  - FreeBSD 12
 
 OpenBGPD may work on other operating systems, newer and older, but the above
