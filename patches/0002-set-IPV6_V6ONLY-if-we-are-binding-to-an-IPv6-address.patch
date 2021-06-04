@@ -1,4 +1,4 @@
-From 67d228ad645032d5a11797d631026d37cb19550f Mon Sep 17 00:00:00 2001
+From 77cd8619eac3efb33326e66f5ca0a0bb4394e1f2 Mon Sep 17 00:00:00 2001
 From: Claudio Jeker <claudio@openbsd.org>
 Date: Tue, 26 Feb 2019 15:37:50 +0100
 Subject: [PATCH 2/5] set IPV6_V6ONLY if we are binding to an IPv6 address
