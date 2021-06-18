@@ -43,8 +43,7 @@ bgpctl_SOURCES += json.c
 
 bgpctl_DEPENDENCIES = $(man_MANS)
 
-noinst_HEADERS =
-noinst_HEADERS += bgpctl.h
+noinst_HEADERS = bgpctl.h
 noinst_HEADERS += json.h
 noinst_HEADERS += mrtparser.h
 noinst_HEADERS += parser.h
