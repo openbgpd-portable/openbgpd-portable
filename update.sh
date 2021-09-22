@@ -1,8 +1,10 @@
 #!/bin/sh
 set -e
 
-openbsd_branch=`cat OPENBSD_BRANCH`
-openbgpd_version=`cat VERSION`
+openbsd_branch=master
+if [ -n "$1" ]; then
+	openbsd_branch="$1"
+fi
 
 # pull in latest upstream code
 echo "pulling upstream openbsd source"
@@ -82,6 +84,8 @@ for j in bgpd bgpctl ; do
 		$CP $sbin_src/$src/$i src/$j/$i
 	done
 done
+
+grep BGPD_VERSION "src/bgpd/version.h" | cut -d '"' -f 2 > VERSION
 
 if [ -n "$(ls -A patches/*.patch 2>/dev/null)" ]; then
 	for i in patches/*.patch; do
