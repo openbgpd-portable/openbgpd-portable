@@ -6,6 +6,7 @@ on:
   schedule:
     # build the main branch every Monday morning
     - cron: '17 5 * * 1'
+  workflow_dispatch:
 
 jobs:
   build-latest:
