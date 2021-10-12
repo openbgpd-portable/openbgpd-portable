@@ -165,6 +165,9 @@ AC_SEARCH_LIBS([SHA512Init], [md])
 AC_SEARCH_LIBS([inet_net_pton],[resolv])
 AC_SEARCH_LIBS([fmt_scaled], [util])
 
+# check for libmnl
+AC_SEARCH_LIBS([mnl_socket_recvfrom], [mnl])
+
 AC_CHECK_FUNCS([arc4random clock_gettime ibuf_open SHA512Init])
 AC_CHECK_FUNCS([inet_net_pton fmt_scaled])
 
@@ -201,6 +204,7 @@ AM_CONDITIONAL([HAVE_STRNVIS], [test "x$ac_cv_func_strnvis" = xyes])
 AM_CONDITIONAL([BROKEN_STRNVIS], [test "x$ac_cv_broken_strnvis" = xyes])
 AM_CONDITIONAL([HAVE_INET_NET_PTON], [test "x$ac_cv_func_inet_net_pton" = xyes])
 AM_CONDITIONAL([HAVE_FMT_SCALED], [test "x$ac_cv_func_fmt_scaled" = xyes])
+AM_CONDITIONAL([HAVE_MNL], [test "x$ac_cv_search_mnl_socket_recvfrom" = "x-lmnl"])
 
 # overrides for arc4random implementations with known issues
 AM_CONDITIONAL([HAVE_ARC4RANDOM],
