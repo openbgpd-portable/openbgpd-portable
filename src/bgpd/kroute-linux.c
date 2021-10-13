@@ -30,6 +30,12 @@
 #include "session.h"
 #include "log.h"
 
+struct {
+	struct mnl_socket	*nl;
+	u_int32_t		pid;
+	u_int32_t		nlmsg_seq;
+} kr_state;
+
 struct kroute_node {
 	RB_ENTRY(kroute_node)	 entry;
 	struct kroute		 r;
@@ -361,14 +367,28 @@ kr_init(int *fd)
 	kt->rtableid = 0;
 	kt->nhtableid = 0;
 
-	/* XXX need to return an FD that can be polled */
-	*fd = -1;
+	kr_state.nl = mnl_socket_open(NETLINK_ROUTE);
+	if (kr_state.nl == NULL) {
+		log_warn("%s: mnl_socket_open", __func__);
+		return (-1);
+	}
+
+	if (mnl_socket_bind(kr_state.nl, 0, MNL_SOCKET_AUTOPID) < 0) {
+		log_warn("%s: mnl_socket_bind", __func__);
+		return (-1);
+	}
+
+	kr_state.pid = mnl_socket_get_portid(kr_state.nl);
+	kr_state.nlmsg_seq = 1;
+
+	*fd = mnl_socket_get_fd(kr_state.nl);
 	return (0);
 }
 
 void
 kr_shutdown(u_int8_t fib_prio, u_int rdomain)
 {
+	mnl_socket_close(kr_state.nl);
 	knexthop_clear(&krt);
 }
 
