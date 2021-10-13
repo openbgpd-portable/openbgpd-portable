@@ -22,6 +22,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <libmnl/libmnl.h>
+#include <linux/if_link.h>
+#include <linux/rtnetlink.h>
+
 #include "bgpd.h"
 #include "session.h"
 #include "log.h"
