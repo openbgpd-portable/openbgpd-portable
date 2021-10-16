@@ -1,6 +1,7 @@
 /*	$OpenBSD$ */
 
 /*
+ * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 Ariadne Conill <ariadne@dereferenced.org>
  *
@@ -62,6 +63,15 @@ struct kredist_node {
 	u_int8_t		 prefixlen;
 	u_int8_t		 dynamic;
 };
+
+int	kroute_compare(struct kroute_node *, struct kroute_node *);
+int	kroute6_compare(struct kroute6_node *, struct kroute6_node *);
+
+RB_PROTOTYPE(kroute_tree, kroute_node, entry, kroute_compare)
+RB_GENERATE(kroute_tree, kroute_node, entry, kroute_compare)
+
+RB_PROTOTYPE(kroute6_tree, kroute6_node, entry, kroute6_compare)
+RB_GENERATE(kroute6_tree, kroute6_node, entry, kroute6_compare)
 
 struct ktable	 krt;
 const u_int	 krt_size = 1;
@@ -496,21 +506,74 @@ kr_shutdown(u_int8_t fib_prio, u_int rdomain)
 void
 kr_fib_couple(u_int rtableid, u_int8_t fib_prio)
 {
+	struct ktable		*kt;
+	struct kroute_node	*kr;
+	struct kroute6_node	*kr6;
+
+	if ((kt = ktable_get(rtableid)) == NULL)  /* table does not exist */
+		return;
+
+	if (kt->fib_sync)	/* already coupled */
+		return;
+
+	kt->fib_sync = 1;
+
+	RB_FOREACH(kr, kroute_tree, &kt->krt)
+		if ((kr->r.flags & F_BGPD_INSERTED))
+			send_rtmsg(kr_state.nl, RTM_NEWROUTE, kt, &kr->r, fib_prio);
+	RB_FOREACH(kr6, kroute6_tree, &kt->krt6)
+		if ((kr6->r.flags & F_BGPD_INSERTED))
+			send_rt6msg(kr_state.nl, RTM_NEWROUTE, kt, &kr6->r,
+			    fib_prio);
+
+	log_info("kernel routing table %u (%s) coupled", kt->rtableid,
+	    kt->descr);
 }
 
 void
 kr_fib_couple_all(u_int8_t fib_prio)
 {
+	u_int	 i;
+
+	for (i = krt_size; i > 0; i--)
+		kr_fib_couple(i - 1, fib_prio);
 }
 
 void
 kr_fib_decouple(u_int rtableid, u_int8_t fib_prio)
 {
+	struct ktable		*kt;
+	struct kroute_node	*kr;
+	struct kroute6_node	*kr6;
+
+	if ((kt = ktable_get(rtableid)) == NULL)  /* table does not exist */
+		return;
+
+	if (!kt->fib_sync)	/* already decoupled */
+		return;
+
+	RB_FOREACH(kr, kroute_tree, &kt->krt)
+		if ((kr->r.flags & F_BGPD_INSERTED))
+			send_rtmsg(kr_state.nl, RTM_DELROUTE, kt, &kr->r,
+			    fib_prio);
+	RB_FOREACH(kr6, kroute6_tree, &kt->krt6)
+		if ((kr6->r.flags & F_BGPD_INSERTED))
+			send_rt6msg(kr_state.nl, RTM_DELROUTE, kt, &kr6->r,
+			    fib_prio);
+
+	kt->fib_sync = 0;
+
+	log_info("kernel routing table %u (%s) decoupled", kt->rtableid,
+	    kt->descr);
 }
 
 void
 kr_fib_decouple_all(u_int8_t fib_prio)
 {
+	u_int	 i;
+
+	for (i = krt_size; i > 0; i--)
+		kr_fib_decouple(i - 1, fib_prio);
 }
 
 void
@@ -926,4 +989,53 @@ mask2prefixlen6(struct sockaddr_in6 *sa_in6)
 	if (l > sizeof(struct in6_addr) * 8)
 		fatalx("%s: prefixlen %d out of bound", __func__, l);
 	return (l);
+}
+
+int
+kroute_compare(struct kroute_node *a, struct kroute_node *b)
+{
+	if (ntohl(a->r.prefix.s_addr) < ntohl(b->r.prefix.s_addr))
+		return (-1);
+	if (ntohl(a->r.prefix.s_addr) > ntohl(b->r.prefix.s_addr))
+		return (1);
+	if (a->r.prefixlen < b->r.prefixlen)
+		return (-1);
+	if (a->r.prefixlen > b->r.prefixlen)
+		return (1);
+
+	/* if the priority is RTP_ANY finish on the first address hit */
+	if (a->r.priority == RTP_ANY || b->r.priority == RTP_ANY)
+		return (0);
+	if (a->r.priority < b->r.priority)
+		return (-1);
+	if (a->r.priority > b->r.priority)
+		return (1);
+	return (0);
+}
+
+int
+kroute6_compare(struct kroute6_node *a, struct kroute6_node *b)
+{
+	int i;
+
+	for (i = 0; i < 16; i++) {
+		if (a->r.prefix.s6_addr[i] < b->r.prefix.s6_addr[i])
+			return (-1);
+		if (a->r.prefix.s6_addr[i] > b->r.prefix.s6_addr[i])
+			return (1);
+	}
+
+	if (a->r.prefixlen < b->r.prefixlen)
+		return (-1);
+	if (a->r.prefixlen > b->r.prefixlen)
+		return (1);
+
+	/* if the priority is RTP_ANY finish on the first address hit */
+	if (a->r.priority == RTP_ANY || b->r.priority == RTP_ANY)
+		return (0);
+	if (a->r.priority < b->r.priority)
+		return (-1);
+	if (a->r.priority > b->r.priority)
+		return (1);
+	return (0);
 }
