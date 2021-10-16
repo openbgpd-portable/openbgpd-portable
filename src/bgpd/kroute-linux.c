@@ -2,6 +2,7 @@
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
+ * Copyright (c) 2021 Ariadne Conill <ariadne@dereferenced.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -69,6 +70,11 @@ struct ktable	*ktable_get(u_int);
 
 static u_int8_t	mask2prefixlen(in_addr_t);
 static u_int8_t	mask2prefixlen6(struct sockaddr_in6 *);
+
+static int	send_rtmsg(struct mnl_socket *, int, struct ktable *, struct kroute *,
+		    u_int8_t);
+static int	send_rt6msg(struct mnl_socket *, int, struct ktable *, struct kroute6 *,
+		    u_int8_t);
 
 static inline int
 knexthop_compare(struct knexthop_node *a, struct knexthop_node *b)
@@ -149,6 +155,101 @@ RB_GENERATE(kredist_tree, kredist_node, entry, kredist_compare)
 #define KT2KNT(x)	(&(ktable_get((x)->nhtableid)->knt))
 
 void	knexthop_send_update(struct knexthop_node *);
+
+/*
+ * rtsock related functions
+ */
+
+int
+send_rtmsg(struct mnl_socket *nl, int action, struct ktable *kt, struct kroute *kroute,
+    u_int8_t fib_prio)
+{
+	char buf[MNL_SOCKET_BUFFER_SIZE];
+	struct nlmsghdr *nlh;
+	struct rtmsg *rtm;
+
+	if (!kt->fib_sync)
+		return (0);
+
+	nlh = mnl_nlmsg_put_header(buf);
+	nlh->nlmsg_type = action;
+	nlh->nlmsg_flags = NLM_F_REQUEST | NLM_F_CREATE;
+	nlh->nlmsg_seq = kr_state.nlmsg_seq++;
+
+	rtm = mnl_nlmsg_put_extra_header(nlh, sizeof *rtm);
+	rtm->rtm_family = AF_INET;
+	rtm->rtm_dst_len = kroute->prefixlen;
+	rtm->rtm_src_len = 0;
+	rtm->rtm_tos = 0;
+	rtm->rtm_protocol = RTPROT_BGP;
+	rtm->rtm_table = kt->rtableid;
+	rtm->rtm_type = RTN_UNICAST;
+	if (kroute->flags & F_BLACKHOLE)
+		rtm->rtm_type = RTN_BLACKHOLE;
+	if (kroute->flags & F_REJECT)
+		rtm->rtm_type = RTN_PROHIBIT;
+	rtm->rtm_scope = RT_SCOPE_UNIVERSE;
+	rtm->rtm_flags = 0;
+
+	mnl_attr_put_u32(nlh, RTA_DST, kroute->prefix.s_addr);
+	if (kroute->nexthop.s_addr != 0) {
+		mnl_attr_put_u32(nlh, RTA_GATEWAY, kroute->nexthop.s_addr);
+	}
+
+	if (mnl_socket_sendto(nl, nlh, nlh->nlmsg_len) < 0) {
+		log_warn("%s: action %u, prefix %s/%u", __func__, nlh->nlmsg_type,
+			inet_ntoa(kroute->prefix), kroute->prefixlen);
+		return (0);
+	}
+
+	return (0);
+}
+
+int
+send_rt6msg(struct mnl_socket *nl, int action, struct ktable *kt, struct kroute6 *kroute,
+    u_int8_t fib_prio)
+{
+	char buf[MNL_SOCKET_BUFFER_SIZE];
+	struct nlmsghdr *nlh;
+	struct rtmsg *rtm;
+
+	if (!kt->fib_sync)
+		return (0);
+
+	nlh = mnl_nlmsg_put_header(buf);
+	nlh->nlmsg_type = action;
+	nlh->nlmsg_flags = NLM_F_REQUEST | NLM_F_CREATE;
+	nlh->nlmsg_seq = kr_state.nlmsg_seq++;
+
+	rtm = mnl_nlmsg_put_extra_header(nlh, sizeof *rtm);
+	rtm->rtm_family = AF_INET6;
+	rtm->rtm_dst_len = kroute->prefixlen;
+	rtm->rtm_src_len = 0;
+	rtm->rtm_tos = 0;
+	rtm->rtm_protocol = RTPROT_BGP;
+	rtm->rtm_table = kt->rtableid;
+	rtm->rtm_type = RTN_UNICAST;
+	if (kroute->flags & F_BLACKHOLE)
+		rtm->rtm_type = RTN_BLACKHOLE;
+	if (kroute->flags & F_REJECT)
+		rtm->rtm_type = RTN_PROHIBIT;
+	rtm->rtm_scope = RT_SCOPE_UNIVERSE;
+	rtm->rtm_flags = 0;
+
+	mnl_attr_put(nlh, RTA_DST, sizeof(struct in6_addr), &kroute->prefix);
+	if (memcmp(&kroute->nexthop, &in6addr_any, sizeof(struct in6_addr))) {
+		mnl_attr_put(nlh, RTA_GATEWAY, sizeof(struct in6_addr), &kroute->nexthop);
+	}
+
+	if (mnl_socket_sendto(nl, nlh, nlh->nlmsg_len) < 0) {
+		log_warn("%s: action %u, prefix %s/%u", __func__, nlh->nlmsg_type,
+			log_in6addr(&kroute->prefix), kroute->prefixlen);
+		return (0);
+	}
+
+	return (0);
+}
+
 
 static struct knexthop_node *
 knexthop_find(struct ktable *kt, struct bgpd_addr *addr)
