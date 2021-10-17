@@ -741,13 +741,123 @@ kr_dispatch_msg(u_int rdomain)
 int
 kr_change(u_int rtableid, struct kroute_full *kl, u_int8_t fib_prio)
 {
+	struct ktable		*kt;
+
+	if ((kt = ktable_get(rtableid)) == NULL)
+		/* too noisy during reloads, just ignore */
+		return (0);
+	switch (kl->prefix.aid) {
+	case AID_INET:
+		return (kr4_change(kt, kl, fib_prio));
+	case AID_INET6:
+		return (kr6_change(kt, kl, fib_prio));
+#ifdef NOTYET
+	/* XXX: support MPLS */
+	case AID_VPN_IPv4:
+		return (krVPN4_change(kt, kl, fib_prio));
+	case AID_VPN_IPv6:
+		return (krVPN6_change(kt, kl, fib_prio));
+#endif
+	}
+	log_warnx("%s: not handled AID", __func__);
+	return (-1);
+}
+
+int
+kr4_change(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
+{
+	struct kroute_node	*kr;
+	u_int16_t		 labelid;
+
+	/* for blackhole and reject routes nexthop needs to be 127.0.0.1 */
+	if (kl->flags & (F_BLACKHOLE|F_REJECT))
+		kl->nexthop.v4.s_addr = htonl(INADDR_LOOPBACK);
+	/* nexthop within 127/8 -> ignore silently */
+	else if ((kl->nexthop.v4.s_addr & htonl(IN_CLASSA_NET)) ==
+	    htonl(INADDR_LOOPBACK & IN_CLASSA_NET))
+		return (0);
+
+	labelid = rtlabel_name2id(kl->label);
+
+#ifdef NOTYET
+	/* XXX: have to delete old route and add new one to simulate RTM_CHANGE */
+	if ((kr = kroute_find(kt, kl->prefix.v4.s_addr, kl->prefixlen,
+	    fib_prio)) != NULL)
+		action = RTM_CHANGE;
+#endif
+
+	if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL) {
+		log_warn("%s", __func__);
+		return (-1);
+	}
+	kr->r.prefix.s_addr = kl->prefix.v4.s_addr;
+	kr->r.prefixlen = kl->prefixlen;
+	kr->r.nexthop.s_addr = kl->nexthop.v4.s_addr;
+	kr->r.flags = kl->flags | F_BGPD_INSERTED;
+	kr->r.priority = fib_prio;
+	kr->r.labelid = labelid;
+
+	if (kroute_insert(kt, kr) == -1) {
+		free(kr);
+		return (-1);
+	}
+
+	if (send_rtmsg(kr_state.nl, RTM_NEWROUTE, kt, &kr->r, fib_prio) == -1)
+		return (-1);
+
+	return (0);
+}
+
+int
+kr6_change(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
+{
+	struct kroute6_node	*kr6;
+	struct in6_addr		 lo6 = IN6ADDR_LOOPBACK_INIT;
+	u_int16_t		 labelid;
+
+	/* for blackhole and reject routes nexthop needs to be ::1 */
+	if (kl->flags & (F_BLACKHOLE|F_REJECT))
+		bcopy(&lo6, &kl->nexthop.v6, sizeof(kl->nexthop.v6));
+	/* nexthop to loopback -> ignore silently */
+	else if (IN6_IS_ADDR_LOOPBACK(&kl->nexthop.v6))
+		return (0);
+
+	labelid = rtlabel_name2id(kl->label);
+
+#ifdef NOTYET
+	/* XXX: withdraw old route to simulate RTM_CHANGE */
+	if ((kr6 = kroute6_find(kt, &kl->prefix.v6, kl->prefixlen, fib_prio)) !=
+	    NULL)
+		action = RTM_CHANGE;
+#endif
+
+	if ((kr6 = calloc(1, sizeof(struct kroute6_node))) == NULL) {
+		log_warn("%s", __func__);
+		return (-1);
+	}
+	memcpy(&kr6->r.prefix, &kl->prefix.v6, sizeof(struct in6_addr));
+	kr6->r.prefixlen = kl->prefixlen;
+	memcpy(&kr6->r.nexthop, &kl->nexthop.v6, sizeof(struct in6_addr));
+	kr6->r.flags = kl->flags | F_BGPD_INSERTED;
+	kr6->r.priority = fib_prio;
+	kr6->r.labelid = labelid;
+
+	if (kroute6_insert(kt, kr6) == -1) {
+		free(kr6);
+		return (-1);
+	}
+
+	if (send_rt6msg(kr_state.nl, RTM_NEWROUTE, kt, &kr6->r, fib_prio) == -1)
+		return (-1);
+
 	return (0);
 }
 
 int
 kr_delete(u_int rtableid, struct kroute_full *kl, u_int8_t fib_prio)
 {
-	return (0);
+	log_warnx("%s: unhandled AID %d", __func__, kl->prefix.aid);
+	return (-1);
 }
 
 static int
