@@ -73,6 +73,22 @@ RB_GENERATE(kroute_tree, kroute_node, entry, kroute_compare)
 RB_PROTOTYPE(kroute6_tree, kroute6_node, entry, kroute6_compare)
 RB_GENERATE(kroute6_tree, kroute6_node, entry, kroute6_compare)
 
+struct kroute_node	*kroute_find(struct ktable *, in_addr_t, u_int8_t,
+			    u_int8_t);
+struct kroute_node	*kroute_matchgw(struct kroute_node *,
+			    struct sockaddr_in *);
+int			 kroute_insert(struct ktable *, struct kroute_node *);
+int			 kroute_remove(struct ktable *, struct kroute_node *);
+void			 kroute_clear(struct ktable *);
+
+struct kroute6_node	*kroute6_find(struct ktable *, const struct in6_addr *,
+			    u_int8_t, u_int8_t);
+struct kroute6_node	*kroute6_matchgw(struct kroute6_node *,
+			    struct sockaddr_in6 *);
+int			 kroute6_insert(struct ktable *, struct kroute6_node *);
+int			 kroute6_remove(struct ktable *, struct kroute6_node *);
+void			 kroute6_clear(struct ktable *);
+
 struct ktable	 krt;
 const u_int	 krt_size = 1;
 
@@ -81,10 +97,20 @@ struct ktable	*ktable_get(u_int);
 static u_int8_t	mask2prefixlen(in_addr_t);
 static u_int8_t	mask2prefixlen6(struct sockaddr_in6 *);
 
+int	kr4_change(struct ktable *, struct kroute_full *, u_int8_t);
+int	kr6_change(struct ktable *, struct kroute_full *, u_int8_t);
+
 static int	send_rtmsg(struct mnl_socket *, int, struct ktable *, struct kroute *,
 		    u_int8_t);
 static int	send_rt6msg(struct mnl_socket *, int, struct ktable *, struct kroute6 *,
 		    u_int8_t);
+
+static void	kr_redistribute(int type, struct ktable *kt, struct kroute *kr);
+static void	kr_redistribute6(int type, struct ktable *kt, struct kroute6 *kr);
+
+static int	kr_net_match(struct ktable *, struct network_config *, u_int16_t, int);
+static struct network *kr_net_find(struct ktable *, struct network *);
+static void	kr_net_clear(struct ktable *);
 
 static inline int
 knexthop_compare(struct knexthop_node *a, struct knexthop_node *b)
@@ -298,6 +324,131 @@ knexthop_remove(struct ktable *kt, struct knexthop_node *kn)
 
 	free(kn);
 	return (0);
+}
+
+static struct kroute_node *
+kroute_match(struct ktable *kt, in_addr_t key, int matchall)
+{
+	int			 i;
+	struct kroute_node	*kr;
+	in_addr_t		 ina;
+
+	ina = ntohl(key);
+
+	/* this will never match the default route */
+	for (i = 32; i > 0; i--)
+		if ((kr = kroute_find(kt, htonl(ina & prefixlen2mask(i)), i,
+		    RTP_ANY)) != NULL)
+			if (matchall || bgpd_filternexthop(&kr->r, NULL) == 0)
+			    return (kr);
+
+	/* so if there is no match yet, lookup the default route */
+	if ((kr = kroute_find(kt, 0, 0, RTP_ANY)) != NULL)
+		if (matchall || bgpd_filternexthop(&kr->r, NULL) == 0)
+			return (kr);
+
+	return (NULL);
+}
+
+static struct kroute6_node *
+kroute6_match(struct ktable *kt, struct in6_addr *key, int matchall)
+{
+	int			 i;
+	struct kroute6_node	*kr6;
+	struct in6_addr		 ina;
+
+	/* this will never match the default route */
+	for (i = 128; i > 0; i--) {
+		inet6applymask(&ina, key, i);
+		if ((kr6 = kroute6_find(kt, &ina, i, RTP_ANY)) != NULL)
+			if (matchall || bgpd_filternexthop(NULL, &kr6->r) == 0)
+				return (kr6);
+	}
+
+	/* so if there is no match yet, lookup the default route */
+	if ((kr6 = kroute6_find(kt, &in6addr_any, 0, RTP_ANY)) != NULL)
+		if (matchall || bgpd_filternexthop(NULL, &kr6->r) == 0)
+			return (kr6);
+
+	return (NULL);
+}
+
+static void
+kroute_detach_nexthop(struct ktable *kt, struct knexthop_node *kn)
+{
+	struct knexthop_node	*s;
+	struct kroute_node	*k;
+	struct kroute6_node	*k6;
+
+	if (kn->kroute == NULL)
+		return;
+
+	/*
+	 * check whether there's another nexthop depending on this kroute
+	 * if not remove the flag
+	 */
+	RB_FOREACH(s, knexthop_tree, KT2KNT(kt))
+		if (s->kroute == kn->kroute && s != kn)
+			break;
+
+	if (s == NULL) {
+		switch (kn->nexthop.aid) {
+		case AID_INET:
+			k = kn->kroute;
+			k->r.flags &= ~F_NEXTHOP;
+			break;
+		case AID_INET6:
+			k6 = kn->kroute;
+			k6->r.flags &= ~F_NEXTHOP;
+			break;
+		}
+	}
+
+	kn->kroute = NULL;
+}
+
+static void
+knexthop_validate(struct ktable *kt, struct knexthop_node *kn)
+{
+	void			*oldk;
+	struct kroute_node	*kr;
+	struct kroute6_node	*kr6;
+
+	oldk = kn->kroute;
+	kroute_detach_nexthop(kt, kn);
+
+	if ((kt = ktable_get(kt->nhtableid)) == NULL)
+		fatalx("%s: lost nexthop routing table", __func__);
+
+	switch (kn->nexthop.aid) {
+	case AID_INET:
+		kr = kroute_match(kt, kn->nexthop.v4.s_addr, 0);
+
+		if (kr) {
+			kn->kroute = kr;
+			kr->r.flags |= F_NEXTHOP;
+		}
+
+		/*
+		 * Send update if nexthop route changed under us if
+		 * the route remains the same then the NH state has not
+		 * changed. State changes are tracked by knexthop_track().
+		 */
+		if (kr != oldk)
+			knexthop_send_update(kn);
+		break;
+	case AID_INET6:
+		kr6 = kroute6_match(kt, &kn->nexthop.v6, 0);
+
+		if (kr6) {
+			kn->kroute = kr6;
+			kr6->r.flags |= F_NEXTHOP;
+		}
+
+		if (kr6 != oldk)
+			knexthop_send_update(kn);
+		break;
+	}
 }
 
 static void
@@ -1037,5 +1188,479 @@ kroute6_compare(struct kroute6_node *a, struct kroute6_node *b)
 		return (-1);
 	if (a->r.priority > b->r.priority)
 		return (1);
+	return (0);
+}
+
+/*
+ * tree management functions
+ */
+
+struct kroute_node *
+kroute_find(struct ktable *kt, in_addr_t prefix, u_int8_t prefixlen,
+    u_int8_t prio)
+{
+	struct kroute_node	s;
+	struct kroute_node	*kn, *tmp;
+
+	s.r.prefix.s_addr = prefix;
+	s.r.prefixlen = prefixlen;
+	s.r.priority = prio;
+
+	kn = RB_FIND(kroute_tree, &kt->krt, &s);
+	if (kn && prio == RTP_ANY) {
+		tmp = RB_PREV(kroute_tree, &kt->krt, kn);
+		while (tmp) {
+			if (kroute_compare(&s, tmp) == 0)
+				kn = tmp;
+			else
+				break;
+			tmp = RB_PREV(kroute_tree, &kt->krt, kn);
+		}
+	}
+	return (kn);
+}
+
+struct kroute_node *
+kroute_matchgw(struct kroute_node *kr, struct sockaddr_in *sa_in)
+{
+	in_addr_t	nexthop;
+
+	if (sa_in == NULL) {
+		log_warnx("%s: no nexthop defined", __func__);
+		return (NULL);
+	}
+	nexthop = sa_in->sin_addr.s_addr;
+
+	while (kr) {
+		if (kr->r.nexthop.s_addr == nexthop)
+			return (kr);
+		kr = kr->next;
+	}
+
+	return (NULL);
+}
+
+int
+kroute_insert(struct ktable *kt, struct kroute_node *kr)
+{
+	struct kroute_node	*krm;
+	struct knexthop_node	*h;
+	in_addr_t		 mask, ina;
+
+	if ((krm = RB_INSERT(kroute_tree, &kt->krt, kr)) != NULL) {
+		/* multipath route, add at end of list */
+		while (krm->next != NULL)
+			krm = krm->next;
+		krm->next = kr;
+		kr->next = NULL; /* to be sure */
+	}
+
+	/* XXX this is wrong for nexthop validated via BGP */
+	if (kr->r.flags & F_KERNEL) {
+		mask = prefixlen2mask(kr->r.prefixlen);
+		ina = ntohl(kr->r.prefix.s_addr);
+		RB_FOREACH(h, knexthop_tree, KT2KNT(kt))
+			if (h->nexthop.aid == AID_INET &&
+			    (ntohl(h->nexthop.v4.s_addr) & mask) == ina)
+				knexthop_validate(kt, h);
+
+#ifdef NOTYET
+		if (kr->r.flags & F_CONNECTED)
+			if (kif_kr_insert(kr) == -1)
+				return (-1);
+#endif
+
+		if (krm == NULL)
+			/* redistribute multipath routes only once */
+			kr_redistribute(IMSG_NETWORK_ADD, kt, &kr->r);
+	}
+	return (0);
+}
+
+
+int
+kroute_remove(struct ktable *kt, struct kroute_node *kr)
+{
+	struct kroute_node	*krm;
+	struct knexthop_node	*s;
+
+	if ((krm = RB_FIND(kroute_tree, &kt->krt, kr)) == NULL) {
+		log_warnx("%s: failed to find %s/%u", __func__,
+		    inet_ntoa(kr->r.prefix), kr->r.prefixlen);
+		return (-1);
+	}
+
+	if (krm == kr) {
+		/* head element */
+		if (RB_REMOVE(kroute_tree, &kt->krt, kr) == NULL) {
+			log_warnx("%s: failed for %s/%u", __func__,
+			    inet_ntoa(kr->r.prefix), kr->r.prefixlen);
+			return (-1);
+		}
+		if (kr->next != NULL) {
+			if (RB_INSERT(kroute_tree, &kt->krt, kr->next) !=
+			    NULL) {
+				log_warnx("%s: failed to add %s/%u", __func__,
+				    inet_ntoa(kr->r.prefix), kr->r.prefixlen);
+				return (-1);
+			}
+		}
+	} else {
+		/* somewhere in the list */
+		while (krm->next != kr && krm->next != NULL)
+			krm = krm->next;
+		if (krm->next == NULL) {
+			log_warnx("%s: multipath list corrupted "
+			    "for %s/%u", inet_ntoa(kr->r.prefix), __func__,
+			    kr->r.prefixlen);
+			return (-1);
+		}
+		krm->next = kr->next;
+	}
+
+	/* check whether a nexthop depends on this kroute */
+	if (kr->r.flags & F_NEXTHOP)
+		RB_FOREACH(s, knexthop_tree, KT2KNT(kt))
+			if (s->kroute == kr)
+				knexthop_validate(kt, s);
+
+	if (kr->r.flags & F_KERNEL && kr == krm && kr->next == NULL)
+		/* again remove only once */
+		kr_redistribute(IMSG_NETWORK_REMOVE, kt, &kr->r);
+
+#ifdef NOTYET
+	if (kr->r.flags & F_CONNECTED)
+		if (kif_kr_remove(kr) == -1) {
+			free(kr);
+			return (-1);
+		}
+#endif
+
+	free(kr);
+	return (0);
+}
+
+void
+kroute_clear(struct ktable *kt)
+{
+	struct kroute_node	*kr;
+
+	while ((kr = RB_MIN(kroute_tree, &kt->krt)) != NULL)
+		kroute_remove(kt, kr);
+}
+
+struct kroute6_node *
+kroute6_find(struct ktable *kt, const struct in6_addr *prefix,
+    u_int8_t prefixlen, u_int8_t prio)
+{
+	struct kroute6_node	s;
+	struct kroute6_node	*kn6, *tmp;
+
+	memcpy(&s.r.prefix, prefix, sizeof(struct in6_addr));
+	s.r.prefixlen = prefixlen;
+	s.r.priority = prio;
+
+	kn6 = RB_FIND(kroute6_tree, &kt->krt6, &s);
+	if (kn6 && prio == RTP_ANY) {
+		tmp = RB_PREV(kroute6_tree, &kt->krt6, kn6);
+		while (tmp) {
+			if (kroute6_compare(&s, tmp) == 0)
+				kn6 = tmp;
+			else
+				break;
+			tmp = RB_PREV(kroute6_tree, &kt->krt6, kn6);
+		}
+	}
+	return (kn6);
+}
+
+struct kroute6_node *
+kroute6_matchgw(struct kroute6_node *kr, struct sockaddr_in6 *sa_in6)
+{
+	struct in6_addr	nexthop;
+
+	if (sa_in6 == NULL) {
+		log_warnx("%s: no nexthop defined", __func__);
+		return (NULL);
+	}
+	memcpy(&nexthop, &sa_in6->sin6_addr, sizeof(nexthop));
+
+	while (kr) {
+		if (memcmp(&kr->r.nexthop, &nexthop, sizeof(nexthop)) == 0)
+			return (kr);
+		kr = kr->next;
+	}
+
+	return (NULL);
+}
+
+int
+kroute6_insert(struct ktable *kt, struct kroute6_node *kr)
+{
+	struct kroute6_node	*krm;
+	struct knexthop_node	*h;
+	struct in6_addr		 ina, inb;
+
+	if ((krm = RB_INSERT(kroute6_tree, &kt->krt6, kr)) != NULL) {
+		/* multipath route, add at end of list */
+		while (krm->next != NULL)
+			krm = krm->next;
+		krm->next = kr;
+		kr->next = NULL; /* to be sure */
+	}
+
+	/* XXX this is wrong for nexthop validated via BGP */
+	if (kr->r.flags & F_KERNEL) {
+		inet6applymask(&ina, &kr->r.prefix, kr->r.prefixlen);
+		RB_FOREACH(h, knexthop_tree, KT2KNT(kt))
+			if (h->nexthop.aid == AID_INET6) {
+				inet6applymask(&inb, &h->nexthop.v6,
+				    kr->r.prefixlen);
+				if (memcmp(&ina, &inb, sizeof(ina)) == 0)
+					knexthop_validate(kt, h);
+			}
+
+#ifdef NOTYET
+		if (kr->r.flags & F_CONNECTED)
+			if (kif_kr6_insert(kr) == -1)
+				return (-1);
+#endif
+
+		if (krm == NULL)
+			/* redistribute multipath routes only once */
+			kr_redistribute6(IMSG_NETWORK_ADD, kt, &kr->r);
+	}
+
+	return (0);
+}
+
+int
+kroute6_remove(struct ktable *kt, struct kroute6_node *kr)
+{
+	struct kroute6_node	*krm;
+	struct knexthop_node	*s;
+
+	if ((krm = RB_FIND(kroute6_tree, &kt->krt6, kr)) == NULL) {
+		log_warnx("%s: failed for %s/%u", __func__,
+		    log_in6addr(&kr->r.prefix), kr->r.prefixlen);
+		return (-1);
+	}
+
+	if (krm == kr) {
+		/* head element */
+		if (RB_REMOVE(kroute6_tree, &kt->krt6, kr) == NULL) {
+			log_warnx("%s: failed for %s/%u", __func__,
+			    log_in6addr(&kr->r.prefix), kr->r.prefixlen);
+			return (-1);
+		}
+		if (kr->next != NULL) {
+			if (RB_INSERT(kroute6_tree, &kt->krt6, kr->next) !=
+			    NULL) {
+				log_warnx("%s: failed to add %s/%u", __func__,
+				    log_in6addr(&kr->r.prefix),
+				    kr->r.prefixlen);
+				return (-1);
+			}
+		}
+	} else {
+		/* somewhere in the list */
+		while (krm->next != kr && krm->next != NULL)
+			krm = krm->next;
+		if (krm->next == NULL) {
+			log_warnx("%s: multipath list corrupted "
+			    "for %s/%u", __func__, log_in6addr(&kr->r.prefix),
+			    kr->r.prefixlen);
+			return (-1);
+		}
+		krm->next = kr->next;
+	}
+
+	/* check whether a nexthop depends on this kroute */
+	if (kr->r.flags & F_NEXTHOP)
+		RB_FOREACH(s, knexthop_tree, KT2KNT(kt))
+			if (s->kroute == kr)
+				knexthop_validate(kt, s);
+
+	if (kr->r.flags & F_KERNEL && kr == krm && kr->next == NULL)
+		/* again remove only once */
+		kr_redistribute6(IMSG_NETWORK_REMOVE, kt, &kr->r);
+
+#ifdef NOTYET
+	if (kr->r.flags & F_CONNECTED)
+		if (kif_kr6_remove(kr) == -1) {
+			free(kr);
+			return (-1);
+		}
+#endif
+
+	free(kr);
+	return (0);
+}
+
+void
+kroute6_clear(struct ktable *kt)
+{
+	struct kroute6_node	*kr;
+
+	while ((kr = RB_MIN(kroute6_tree, &kt->krt6)) != NULL)
+		kroute6_remove(kt, kr);
+}
+
+
+static void
+kr_redistribute(int type, struct ktable *kt, struct kroute *kr)
+{
+	struct network_config	 net;
+	u_int32_t		 a;
+	int			 loflag = 0;
+
+	bzero(&net, sizeof(net));
+	net.prefix.aid = AID_INET;
+	net.prefix.v4.s_addr = kr->prefix.s_addr;
+	net.prefixlen = kr->prefixlen;
+	net.rtlabel = kr->labelid;
+	net.priority = kr->priority;
+
+	/* shortcut for removals */
+	if (type == IMSG_NETWORK_REMOVE) {
+		kr_net_redist_del(kt, &net, 1);
+		return;
+	}
+
+	if (!(kr->flags & F_KERNEL))
+		return;
+
+	/* Dynamic routes are not redistributable. */
+	if (kr->flags & F_DYNAMIC)
+		return;
+
+	/*
+	 * We consider the loopback net, multicast and experimental addresses
+	 * as not redistributable.
+	 */
+	a = ntohl(kr->prefix.s_addr);
+	if (IN_MULTICAST(a) || IN_BADCLASS(a) ||
+	    (a >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET)
+		return;
+
+	/* Check if the nexthop is the loopback addr. */
+	if (kr->nexthop.s_addr == htonl(INADDR_LOOPBACK))
+		loflag = 1;
+
+	/*
+	 * never allow 0.0.0.0/0 the default route can only be redistributed
+	 * with announce default.
+	 */
+	if (kr->prefix.s_addr == INADDR_ANY && kr->prefixlen == 0)
+		return;
+
+	if (kr_net_match(kt, &net, kr->flags, loflag) == 0)
+		/* no longer matches, if still present remove it */
+		kr_net_redist_del(kt, &net, 1);
+}
+
+static void
+kr_redistribute6(int type, struct ktable *kt, struct kroute6 *kr6)
+{
+	struct network_config	net;
+	int			loflag = 0;
+
+	bzero(&net, sizeof(net));
+	net.prefix.aid = AID_INET6;
+	memcpy(&net.prefix.v6, &kr6->prefix, sizeof(struct in6_addr));
+	net.prefixlen = kr6->prefixlen;
+	net.rtlabel = kr6->labelid;
+	net.priority = kr6->priority;
+
+	/* shortcut for removals */
+	if (type == IMSG_NETWORK_REMOVE) {
+		kr_net_redist_del(kt, &net, 1);
+		return;
+	}
+
+	if (!(kr6->flags & F_KERNEL))
+		return;
+
+	/* Dynamic routes are not redistributable. */
+	if (kr6->flags & F_DYNAMIC)
+		return;
+
+	/*
+	 * We consider unspecified, loopback, multicast, link- and site-local,
+	 * IPv4 mapped and IPv4 compatible addresses as not redistributable.
+	 */
+	if (IN6_IS_ADDR_UNSPECIFIED(&kr6->prefix) ||
+	    IN6_IS_ADDR_LOOPBACK(&kr6->prefix) ||
+	    IN6_IS_ADDR_MULTICAST(&kr6->prefix) ||
+	    IN6_IS_ADDR_LINKLOCAL(&kr6->prefix) ||
+	    IN6_IS_ADDR_SITELOCAL(&kr6->prefix) ||
+	    IN6_IS_ADDR_V4MAPPED(&kr6->prefix) ||
+	    IN6_IS_ADDR_V4COMPAT(&kr6->prefix))
+		return;
+
+	/* Check if the nexthop is the loopback addr. */
+	if (IN6_IS_ADDR_LOOPBACK(&kr6->nexthop))
+		loflag = 1;
+
+	/*
+	 * never allow ::/0 the default route can only be redistributed
+	 * with announce default.
+	 */
+	if (kr6->prefixlen == 0 &&
+	    memcmp(&kr6->prefix, &in6addr_any, sizeof(struct in6_addr)) == 0)
+		return;
+
+	if (kr_net_match(kt, &net, kr6->flags, loflag) == 0)
+		/* no longer matches, if still present remove it */
+		kr_net_redist_del(kt, &net, 1);
+}
+
+int
+kr_net_match(struct ktable *kt, struct network_config *net, u_int16_t flags,
+    int loopback)
+{
+	struct network		*xn;
+
+	TAILQ_FOREACH(xn, &kt->krn, entry) {
+		if (xn->net.prefix.aid != net->prefix.aid)
+			continue;
+		switch (xn->net.type) {
+		case NETWORK_DEFAULT:
+			/* static match already redistributed */
+			continue;
+		case NETWORK_STATIC:
+			/* Skip networks with nexthop on loopback. */
+			if (loopback)
+				continue;
+			if (flags & F_STATIC)
+				break;
+			continue;
+		case NETWORK_CONNECTED:
+			/* Skip networks with nexthop on loopback. */
+			if (loopback)
+				continue;
+			if (flags & F_CONNECTED)
+				break;
+			continue;
+		case NETWORK_RTLABEL:
+			if (net->rtlabel == xn->net.rtlabel)
+				break;
+			continue;
+		case NETWORK_PRIORITY:
+			if (net->priority == xn->net.priority)
+				break;
+			continue;
+		case NETWORK_MRTCLONE:
+		case NETWORK_PREFIXSET:
+			/* must not happen */
+			log_warnx("%s: found a NETWORK_PREFIXSET, "
+			    "please send a bug report", __func__);
+			continue;
+		}
+
+		net->rd = xn->net.rd;
+		if (kr_net_redist_add(kt, net, &xn->net.attrset, 1))
+			return (1);
+	}
 	return (0);
 }
