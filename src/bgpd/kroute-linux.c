@@ -824,12 +824,12 @@ kr4_change(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
 
 	labelid = rtlabel_name2id(kl->label);
 
-#ifdef NOTYET
-	/* XXX: have to delete old route and add new one to simulate RTM_CHANGE */
+	/* Linux does not have anything like RTM_CHANGE, so we have to delete
+	 * the old route then add a new one. */
 	if ((kr = kroute_find(kt, kl->prefix.v4.s_addr, kl->prefixlen,
-	    fib_prio)) != NULL)
-		action = RTM_CHANGE;
-#endif
+	    fib_prio)) != NULL) {
+		kr4_delete(kt, kr_tofull(&kr->r), fib_prio);
+	}
 
 	if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL) {
 		log_warn("%s", __func__);
@@ -869,12 +869,11 @@ kr6_change(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
 
 	labelid = rtlabel_name2id(kl->label);
 
-#ifdef NOTYET
-	/* XXX: withdraw old route to simulate RTM_CHANGE */
+	/* Linux does not have anything like RTM_CHANGE, so we have to delete
+	 * the old route then add a new one. */
 	if ((kr6 = kroute6_find(kt, &kl->prefix.v6, kl->prefixlen, fib_prio)) !=
 	    NULL)
-		action = RTM_CHANGE;
-#endif
+		kr6_delete(kt, kr6_tofull(&kr6->r), fib_prio);
 
 	if ((kr6 = calloc(1, sizeof(struct kroute6_node))) == NULL) {
 		log_warn("%s", __func__);
