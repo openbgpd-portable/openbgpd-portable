@@ -100,6 +100,9 @@ static u_int8_t	mask2prefixlen6(struct sockaddr_in6 *);
 int	kr4_change(struct ktable *, struct kroute_full *, u_int8_t);
 int	kr6_change(struct ktable *, struct kroute_full *, u_int8_t);
 
+int	kr4_delete(struct ktable *, struct kroute_full *, u_int8_t);
+int	kr6_delete(struct ktable *, struct kroute_full *, u_int8_t);
+
 static int	send_rtmsg(struct mnl_socket *, int, struct ktable *, struct kroute *,
 		    u_int8_t);
 static int	send_rt6msg(struct mnl_socket *, int, struct ktable *, struct kroute6 *,
@@ -856,8 +859,108 @@ kr6_change(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
 int
 kr_delete(u_int rtableid, struct kroute_full *kl, u_int8_t fib_prio)
 {
-	log_warnx("%s: unhandled AID %d", __func__, kl->prefix.aid);
+	struct ktable		*kt;
+
+	if ((kt = ktable_get(rtableid)) == NULL)
+		/* too noisy during reloads, just ignore */
+		return (0);
+
+	switch (kl->prefix.aid) {
+	case AID_INET:
+		return (kr4_delete(kt, kl, fib_prio));
+	case AID_INET6:
+		return (kr6_delete(kt, kl, fib_prio));
+#ifdef NOTYET
+	case AID_VPN_IPv4:
+		return (krVPN4_delete(kt, kl, fib_prio));
+	case AID_VPN_IPv6:
+		return (krVPN6_delete(kt, kl, fib_prio));
+#endif
+	}
+	log_warnx("%s: not handled AID", __func__);
 	return (-1);
+}
+
+int
+kr_flush(u_int rtableid)
+{
+	struct ktable		*kt;
+	struct kroute_node	*kr, *next;
+	struct kroute6_node	*kr6, *next6;
+
+	if ((kt = ktable_get(rtableid)) == NULL)
+		/* too noisy during reloads, just ignore */
+		return (0);
+
+	RB_FOREACH_SAFE(kr, kroute_tree, &kt->krt, next)
+		if ((kr->r.flags & F_BGPD_INSERTED)) {
+			if (kt->fib_sync)	/* coupled */
+				send_rtmsg(kr_state.nl, RTM_DELROUTE, kt,
+				    &kr->r, kr->r.priority);
+			rtlabel_unref(kr->r.labelid);
+
+			if (kroute_remove(kt, kr) == -1)
+				return (-1);
+		}
+	RB_FOREACH_SAFE(kr6, kroute6_tree, &kt->krt6, next6)
+		if ((kr6->r.flags & F_BGPD_INSERTED)) {
+			if (kt->fib_sync)	/* coupled */
+				send_rt6msg(kr_state.nl, RTM_DELROUTE, kt,
+				    &kr6->r, kr6->r.priority);
+			rtlabel_unref(kr6->r.labelid);
+
+			if (kroute6_remove(kt, kr6) == -1)
+				return (-1);
+		}
+
+	kt->fib_sync = 0;
+	return (0);
+}
+
+int
+kr4_delete(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
+{
+	struct kroute_node	*kr;
+
+	if ((kr = kroute_find(kt, kl->prefix.v4.s_addr, kl->prefixlen,
+	    fib_prio)) == NULL)
+		return (0);
+
+	if (!(kr->r.flags & F_BGPD_INSERTED))
+		return (0);
+
+	if (send_rtmsg(kr_state.nl, RTM_DELROUTE, kt, &kr->r, fib_prio) == -1)
+		return (-1);
+
+	rtlabel_unref(kr->r.labelid);
+
+	if (kroute_remove(kt, kr) == -1)
+		return (-1);
+
+	return (0);
+}
+
+int
+kr6_delete(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
+{
+	struct kroute6_node	*kr6;
+
+	if ((kr6 = kroute6_find(kt, &kl->prefix.v6, kl->prefixlen, fib_prio)) ==
+	    NULL)
+		return (0);
+
+	if (!(kr6->r.flags & F_BGPD_INSERTED))
+		return (0);
+
+	if (send_rt6msg(kr_state.nl, RTM_DELROUTE, kt, &kr6->r, fib_prio) == -1)
+		return (-1);
+
+	rtlabel_unref(kr6->r.labelid);
+
+	if (kroute6_remove(kt, kr6) == -1)
+		return (-1);
+
+	return (0);
 }
 
 static int
@@ -999,13 +1102,6 @@ kr_reload(void)
 				    __func__);
 	}
 
-	return (0);
-}
-
-int
-kr_flush(u_int rtableid)
-{
-	/* nothing to flush for now */
 	return (0);
 }
 
