@@ -115,6 +115,48 @@ static int	kr_net_match(struct ktable *, struct network_config *, u_int16_t, int
 static struct network *kr_net_find(struct ktable *, struct network *);
 static void	kr_net_clear(struct ktable *);
 
+static struct kroute_full *
+kr_tofull(struct kroute *kr)
+{
+	static struct kroute_full	kf;
+
+	bzero(&kf, sizeof(kf));
+
+	kf.prefix.aid = AID_INET;
+	kf.prefix.v4.s_addr = kr->prefix.s_addr;
+	kf.nexthop.aid = AID_INET;
+	kf.nexthop.v4.s_addr = kr->nexthop.s_addr;
+	strlcpy(kf.label, rtlabel_id2name(kr->labelid), sizeof(kf.label));
+	kf.labelid = kr->labelid;
+	kf.flags = kr->flags;
+	kf.ifindex = kr->ifindex;
+	kf.prefixlen = kr->prefixlen;
+	kf.priority = kr->priority;
+
+	return (&kf);
+}
+
+static struct kroute_full *
+kr6_tofull(struct kroute6 *kr6)
+{
+	static struct kroute_full	kf;
+
+	bzero(&kf, sizeof(kf));
+
+	kf.prefix.aid = AID_INET6;
+	memcpy(&kf.prefix.v6, &kr6->prefix, sizeof(struct in6_addr));
+	kf.nexthop.aid = AID_INET6;
+	memcpy(&kf.nexthop.v6, &kr6->nexthop, sizeof(struct in6_addr));
+	strlcpy(kf.label, rtlabel_id2name(kr6->labelid), sizeof(kf.label));
+	kf.labelid = kr6->labelid;
+	kf.flags = kr6->flags;
+	kf.ifindex = kr6->ifindex;
+	kf.prefixlen = kr6->prefixlen;
+	kf.priority = kr6->priority;
+
+	return (&kf);
+}
+
 static inline int
 knexthop_compare(struct knexthop_node *a, struct knexthop_node *b)
 {
