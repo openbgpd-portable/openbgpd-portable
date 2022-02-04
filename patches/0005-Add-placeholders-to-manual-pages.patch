@@ -1,4 +1,4 @@
-From 9aa9cc6f40c63af87354f7d31e4399994e1b3779 Mon Sep 17 00:00:00 2001
+From a5cc98d883a3235bc339f5d2cc37db87d358eb93 Mon Sep 17 00:00:00 2001
 From: Claudio Jeker <claudio@openbsd.org>
 Date: Tue, 5 May 2020 09:13:19 +0200
 Subject: [PATCH 5/5] Add placeholders to manual pages
@@ -10,7 +10,7 @@ Subject: [PATCH 5/5] Add placeholders to manual pages
  3 files changed, 11 insertions(+), 13 deletions(-)
 
 diff --git src/usr.sbin/bgpctl/bgpctl.8 src/usr.sbin/bgpctl/bgpctl.8
-index 990e39c048..cb4d46bf84 100644
+index a9e6accdf1..c553937e9b 100644
 --- src/usr.sbin/bgpctl/bgpctl.8
 +++ src/usr.sbin/bgpctl/bgpctl.8
 @@ -49,7 +49,7 @@ Use
@@ -22,7 +22,7 @@ index 990e39c048..cb4d46bf84 100644
  where
  .Ar <rdomain>
  is the routing domain
-@@ -449,12 +449,12 @@ in a terse format.
+@@ -458,12 +458,12 @@ in a terse format.
  Show a list of all currently loaded fib routing tables.
  .El
  .Sh FILES
@@ -39,7 +39,7 @@ index 990e39c048..cb4d46bf84 100644
  .Xr bgpd 8
  control socket
 diff --git src/usr.sbin/bgpd/bgpd.8 src/usr.sbin/bgpd/bgpd.8
-index eb5082eb88..42141b8830 100644
+index 4dac23a64b..5e4a3fbeda 100644
 --- src/usr.sbin/bgpd/bgpd.8
 +++ src/usr.sbin/bgpd/bgpd.8
 @@ -197,7 +197,7 @@ Use
@@ -51,8 +51,8 @@ index eb5082eb88..42141b8830 100644
  .It Fl n
  Configtest mode.
  Only check the configuration file for validity.
-@@ -205,12 +205,12 @@ Only check the configuration file for validity.
- Produce more verbose output.
+@@ -207,12 +207,12 @@ Produce more verbose output.
+ Show the version and exit.
  .El
  .Sh FILES
 -.Bl -tag -width "/var/run/bgpd.sock.<rdomain>" -compact
@@ -68,7 +68,7 @@ index eb5082eb88..42141b8830 100644
  .Nm
  control socket, where
 diff --git src/usr.sbin/bgpd/bgpd.conf.5 src/usr.sbin/bgpd/bgpd.conf.5
-index dbb8f950af..b63ac1dee0 100644
+index b77f0719ca..59347af167 100644
 --- src/usr.sbin/bgpd/bgpd.conf.5
 +++ src/usr.sbin/bgpd/bgpd.conf.5
 @@ -382,7 +382,7 @@ If
@@ -80,7 +80,7 @@ index dbb8f950af..b63ac1dee0 100644
  is used where
  .Ar <rdomain>
  is the routing domain in which
-@@ -1970,12 +1970,10 @@ For prefixes with equally long paths, the prefix with the larger weight
+@@ -1996,12 +1996,10 @@ For prefixes with equally long paths, the prefix with the larger weight
  is selected.
  .El
  .Sh FILES
@@ -96,5 +96,5 @@ index dbb8f950af..b63ac1dee0 100644
  .Sh SEE ALSO
  .Xr strftime 3 ,
 -- 
-2.31.1
+2.35.0
 

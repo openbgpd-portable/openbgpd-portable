@@ -1,0 +1,55 @@
+From 0453ee2eac149b3ef7c70934e612a3a3b3293869 Mon Sep 17 00:00:00 2001
+From: Claudio Jeker <claudio@openbsd.org>
+Date: Thu, 11 Apr 2019 17:02:57 +0200
+Subject: [PATCH 3/5] Special handle IPV6_MINHOPCOUNT and IP_MINTTL since only
+ some systems support them.
+
+---
+ src/usr.sbin/bgpd/session.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git src/usr.sbin/bgpd/session.c src/usr.sbin/bgpd/session.c
+index 61224667d7..758644fb64 100644
+--- src/usr.sbin/bgpd/session.c
++++ src/usr.sbin/bgpd/session.c
+@@ -1140,6 +1140,7 @@ session_setup_socket(struct peer *p)
+ 			 * 1=direct n=multihop with ttlsec, we always use 255
+ 			 */
+ 			if (p->conf.ttlsec) {
++#ifdef IP_MINTTL
+ 				ttl = 256 - p->conf.distance;
+ 				if (setsockopt(p->fd, IPPROTO_IP, IP_MINTTL,
+ 				    &ttl, sizeof(ttl)) == -1) {
+@@ -1149,6 +1150,10 @@ session_setup_socket(struct peer *p)
+ 					return (-1);
+ 				}
+ 				ttl = 255;
++#else
++				log_peer_warn(&p->conf, "OS does not support "
++				    "ttl-security for IPv4 sessions");
++#endif
+ 			}
+ 
+ 			if (setsockopt(p->fd, IPPROTO_IP, IP_TTL, &ttl,
+@@ -1166,6 +1171,7 @@ session_setup_socket(struct peer *p)
+ 			 * 1=direct n=multihop with ttlsec, we always use 255
+ 			 */
+ 			if (p->conf.ttlsec) {
++#ifdef IPV6_MINHOPCOUNT
+ 				ttl = 256 - p->conf.distance;
+ 				if (setsockopt(p->fd, IPPROTO_IPV6,
+ 				    IPV6_MINHOPCOUNT, &ttl, sizeof(ttl))
+@@ -1176,6 +1182,10 @@ session_setup_socket(struct peer *p)
+ 					return (-1);
+ 				}
+ 				ttl = 255;
++#else
++				log_peer_warn(&p->conf, "OS does not support "
++				    "ttl-security for IPv6 sessions");
++#endif
+ 			}
+ 			if (setsockopt(p->fd, IPPROTO_IPV6, IPV6_UNICAST_HOPS,
+ 			    &ttl, sizeof(ttl)) == -1) {
+-- 
+2.35.0
+

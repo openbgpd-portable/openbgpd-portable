@@ -1,4 +1,4 @@
-From 77cd8619eac3efb33326e66f5ca0a0bb4394e1f2 Mon Sep 17 00:00:00 2001
+From 0870dd3f577f2c101929d1df84271eaa51be451d Mon Sep 17 00:00:00 2001
 From: Claudio Jeker <claudio@openbsd.org>
 Date: Tue, 26 Feb 2019 15:37:50 +0100
 Subject: [PATCH 2/5] set IPV6_V6ONLY if we are binding to an IPv6 address
@@ -28,5 +28,5 @@ index d5b326e9af..1c4b84a923 100644
  		    -1) {
  			switch (la->sa.ss_family) {
 -- 
-2.31.1
+2.35.0
 
