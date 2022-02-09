@@ -47,9 +47,9 @@ struct knexthop_node {
 struct kredist_node {
 	RB_ENTRY(kredist_node)	 entry;
 	struct bgpd_addr	 prefix;
-	u_int64_t		 rd;
-	u_int8_t		 prefixlen;
-	u_int8_t		 dynamic;
+	uint64_t		 rd;
+	uint8_t			 prefixlen;
+	uint8_t			 dynamic;
 };
 
 struct ktable	 krt;
@@ -57,8 +57,8 @@ const u_int	 krt_size = 1;
 
 struct ktable	*ktable_get(u_int);
 
-static u_int8_t	mask2prefixlen(in_addr_t);
-static u_int8_t	mask2prefixlen6(struct sockaddr_in6 *);
+static uint8_t	mask2prefixlen(in_addr_t);
+static uint8_t	mask2prefixlen6(struct sockaddr_in6 *);
 
 static inline int
 knexthop_compare(struct knexthop_node *a, struct knexthop_node *b)
@@ -363,33 +363,33 @@ kr_init(int *fd)
 }
 
 void
-kr_shutdown(u_int8_t fib_prio, u_int rdomain)
+kr_shutdown(uint8_t fib_prio, u_int rdomain)
 {
 	knexthop_clear(&krt);
 }
 
 void
-kr_fib_couple(u_int rtableid, u_int8_t fib_prio)
+kr_fib_couple(u_int rtableid, uint8_t fib_prio)
 {
 }
 
 void
-kr_fib_couple_all(u_int8_t fib_prio)
+kr_fib_couple_all(uint8_t fib_prio)
 {
 }
 
 void
-kr_fib_decouple(u_int rtableid, u_int8_t fib_prio)
+kr_fib_decouple(u_int rtableid, uint8_t fib_prio)
 {
 }
 
 void
-kr_fib_decouple_all(u_int8_t fib_prio)
+kr_fib_decouple_all(uint8_t fib_prio)
 {
 }
 
 void
-kr_fib_update_prio_all(u_int8_t fib_prio)
+kr_fib_update_prio_all(uint8_t fib_prio)
 {
 }
 
@@ -400,13 +400,13 @@ kr_dispatch_msg(u_int rdomain)
 }
 
 int
-kr_change(u_int rtableid, struct kroute_full *kl, u_int8_t fib_prio)
+kr_change(u_int rtableid, struct kroute_full *kl, uint8_t fib_prio)
 {
 	return (0);
 }
 
 int
-kr_delete(u_int rtableid, struct kroute_full *kl, u_int8_t fib_prio)
+kr_delete(u_int rtableid, struct kroute_full *kl, uint8_t fib_prio)
 {
 	return (0);
 }
@@ -498,7 +498,7 @@ kr_net_delete(struct network *n)
 }
 
 void
-kr_net_reload(u_int rtableid, u_int64_t rd, struct network_head *nh)
+kr_net_reload(u_int rtableid, uint64_t rd, struct network_head *nh)
 {
 	struct network		*n, *xn;
 	struct ktable		*kt;
@@ -661,13 +661,13 @@ ktable_get(u_int rtableid)
 }
 
 static void
-ktable_free(u_int rtableid, u_int8_t fib_prio)
+ktable_free(u_int rtableid, uint8_t fib_prio)
 {
 	fatalx("%s not implemented", __func__);
 }
 
 int
-ktable_update(u_int rtableid, char *name, int flags, u_int8_t fib_prio)
+ktable_update(u_int rtableid, char *name, int flags, uint8_t fib_prio)
 {
 	struct ktable	*kt;
 
@@ -706,7 +706,7 @@ ktable_preload(void)
 }
 
 void
-ktable_postload(u_int8_t fib_prio)
+ktable_postload(uint8_t fib_prio)
 {
 	struct ktable	*kt;
 	struct network	*n, *xn;
@@ -739,7 +739,7 @@ get_mpe_config(const char *name, u_int *rdomain, u_int *label)
 	return (-1);
 }
 
-static u_int8_t
+static uint8_t
 mask2prefixlen(in_addr_t ina)
 {
 	if (ina == 0)
@@ -748,10 +748,10 @@ mask2prefixlen(in_addr_t ina)
 		return (33 - ffs(ntohl(ina)));
 }
 
-static u_int8_t
+static uint8_t
 mask2prefixlen6(struct sockaddr_in6 *sa_in6)
 {
-	u_int8_t	*ap, *ep;
+	uint8_t	*ap, *ep;
 	u_int		 l = 0;
 
 	/*
@@ -761,7 +761,7 @@ mask2prefixlen6(struct sockaddr_in6 *sa_in6)
 	 * assumtion is they behave like OpenBSD or that there is at least
 	 * a 0 byte right after the end of the truncated sockaddr_in6.
 	 */
-	ap = (u_int8_t *)&sa_in6->sin6_addr;
+	ap = (uint8_t *)&sa_in6->sin6_addr;
 	ep = ap + sizeof(struct in6_addr);
 	for (; ap < ep; ap++) {
 		/* this "beauty" is adopted from sbin/route/show.c ... */

@@ -74,7 +74,7 @@ tcp_md5_check(int fd, struct peer *p)
  * Add the TCP MD5SUM key to the kernel to enable TCP MD5SUM.
  */
 static int
-install_tcp_md5(int fd, struct bgpd_addr *addr, char *key, u_int8_t key_len)
+install_tcp_md5(int fd, struct bgpd_addr *addr, char *key, uint8_t key_len)
 {
 	struct tcp_md5sig md5;
 	struct sockaddr *sa;
