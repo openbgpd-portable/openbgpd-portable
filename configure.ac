@@ -134,6 +134,7 @@ if test "x$ac_cv_func_strnvis" = "xyes"; then
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <vis.h>
 static void sighandler(int sig) { _exit(1); }
   ]], [[
