@@ -140,15 +140,16 @@ int	kr6_change(struct ktable *, struct kroute_full *, uint8_t);
 int	kr4_delete(struct ktable *, struct kroute_full *, uint8_t);
 int	kr6_delete(struct ktable *, struct kroute_full *, uint8_t);
 
-static int	send_rtmsg(struct mnl_socket *, int, struct ktable *, struct kroute *,
-		    uint8_t);
-static int	send_rt6msg(struct mnl_socket *, int, struct ktable *, struct kroute6 *,
-		    uint8_t);
+static int	send_rtmsg(struct mnl_socket *, int, struct ktable *,
+		    struct kroute *, uint8_t);
+static int	send_rt6msg(struct mnl_socket *, int, struct ktable *,
+		    struct kroute6 *, uint8_t);
 
-static void	kr_redistribute(int type, struct ktable *kt, struct kroute *kr);
-static void	kr_redistribute6(int type, struct ktable *kt, struct kroute6 *kr);
+static void	kr_redistribute(int, struct ktable *, struct kroute *);
+static void	kr_redistribute6(int, struct ktable *, struct kroute6 *);
 
-static int	kr_net_match(struct ktable *, struct network_config *, uint16_t, int);
+static int	kr_net_match(struct ktable *, struct network_config *,
+		    uint16_t, int);
 static struct network *kr_net_find(struct ktable *, struct network *);
 static void	kr_net_clear(struct ktable *);
 
@@ -280,8 +281,8 @@ void	knexthop_send_update(struct knexthop_node *);
  */
 
 int
-send_rtmsg(struct mnl_socket *nl, int action, struct ktable *kt, struct kroute *kroute,
-    uint8_t fib_prio)
+send_rtmsg(struct mnl_socket *nl, int action, struct ktable *kt,
+    struct kroute *kroute, uint8_t fib_prio)
 {
 	char buf[MNL_SOCKET_BUFFER_SIZE];
 	struct nlmsghdr *nlh;
@@ -316,8 +317,9 @@ send_rtmsg(struct mnl_socket *nl, int action, struct ktable *kt, struct kroute *
 	}
 
 	if (mnl_socket_sendto(nl, nlh, nlh->nlmsg_len) < 0) {
-		log_warn("%s: action %u, prefix %s/%u", __func__, nlh->nlmsg_type,
-			inet_ntoa(kroute->prefix), kroute->prefixlen);
+		log_warn("%s: action %u, prefix %s/%u", __func__,
+		    nlh->nlmsg_type, inet_ntoa(kroute->prefix),
+		    kroute->prefixlen);
 		return (0);
 	}
 
@@ -325,8 +327,8 @@ send_rtmsg(struct mnl_socket *nl, int action, struct ktable *kt, struct kroute *
 }
 
 int
-send_rt6msg(struct mnl_socket *nl, int action, struct ktable *kt, struct kroute6 *kroute,
-    uint8_t fib_prio)
+send_rt6msg(struct mnl_socket *nl, int action, struct ktable *kt,
+    struct kroute6 *kroute, uint8_t fib_prio)
 {
 	char buf[MNL_SOCKET_BUFFER_SIZE];
 	struct nlmsghdr *nlh;
@@ -357,12 +359,14 @@ send_rt6msg(struct mnl_socket *nl, int action, struct ktable *kt, struct kroute6
 
 	mnl_attr_put(nlh, RTA_DST, sizeof(struct in6_addr), &kroute->prefix);
 	if (memcmp(&kroute->nexthop, &in6addr_any, sizeof(struct in6_addr))) {
-		mnl_attr_put(nlh, RTA_GATEWAY, sizeof(struct in6_addr), &kroute->nexthop);
+		mnl_attr_put(nlh, RTA_GATEWAY, sizeof(struct in6_addr),
+		    &kroute->nexthop);
 	}
 
 	if (mnl_socket_sendto(nl, nlh, nlh->nlmsg_len) < 0) {
-		log_warn("%s: action %u, prefix %s/%u", __func__, nlh->nlmsg_type,
-			log_in6addr(&kroute->prefix), kroute->prefixlen);
+		log_warn("%s: action %u, prefix %s/%u", __func__,
+		    nlh->nlmsg_type, log_in6addr(&kroute->prefix),
+		    kroute->prefixlen);
 		return (0);
 	}
 
@@ -764,7 +768,8 @@ kr_fib_couple(u_int rtableid, uint8_t fib_prio)
 
 	RB_FOREACH(kr, kroute_tree, &kt->krt)
 		if ((kr->r.flags & F_BGPD_INSERTED))
-			send_rtmsg(kr_state.nl, RTM_NEWROUTE, kt, &kr->r, fib_prio);
+			send_rtmsg(kr_state.nl, RTM_NEWROUTE, kt, &kr->r,
+			    fib_prio);
 	RB_FOREACH(kr6, kroute6_tree, &kt->krt6)
 		if ((kr6->r.flags & F_BGPD_INSERTED))
 			send_rt6msg(kr_state.nl, RTM_NEWROUTE, kt, &kr6->r,
@@ -902,7 +907,8 @@ rt6msg_attr_cb(const struct nlattr *attr, void *data)
 }
 
 static int
-dispatch_rtmsg_addr(const struct nlmsghdr *nlh, const struct rtmsg *rm, struct nlattr **tb, struct ktable *kt)
+dispatch_rtmsg_addr(const struct nlmsghdr *nlh, const struct rtmsg *rm,
+    struct nlattr **tb, struct ktable *kt)
 {
 	struct sockaddr		*sa = NULL;
 	struct sockaddr_in	 sa_in = {};
@@ -1191,7 +1197,8 @@ dispatch_rtmsg(const struct nlmsghdr *nlh, void *data)
 		mnl_attr_parse(nlh, sizeof(*rm), rt6msg_attr_cb, tb);
 		break;
 	default:
-		log_warn("%s: unhandled routing family %d", __func__, rm->rtm_family);
+		log_warn("%s: unhandled routing family %d", __func__,
+		    rm->rtm_family);
 		return MNL_CB_ERROR;
 	}
 
@@ -1209,7 +1216,8 @@ dispatch_rtmsg(const struct nlmsghdr *nlh, void *data)
 
 		break;
 	default:
-		log_warn("%s: unhandled routing message %d", __func__, nlh->nlmsg_type);
+		log_warn("%s: unhandled routing message %d", __func__,
+		    nlh->nlmsg_type);
 		break;
 	}
 
