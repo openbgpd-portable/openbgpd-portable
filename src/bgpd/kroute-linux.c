@@ -945,16 +945,17 @@ dispatch_rtmsg_addr(const struct nlmsghdr *nlh, const struct rtmsg *rm,
 	switch (rm->rtm_family) {
 	case AF_INET:
 		sa = (struct sockaddr *) &sa_in;
+		sa_in.sin_addr.s_addr = mnl_attr_get_u32(tb[RTA_DST]);
 		prefix.aid = AID_INET;
-		sa_in.sin_addr.s_addr = prefix.v4.s_addr = mnl_attr_get_u32(tb[RTA_DST]);
+		prefix.v4.s_addr = sa_in.sin_addr.s_addr;
 		prefixlen = rm->rtm_dst_len;
 		break;
 	case AF_INET6:
 		sa = (struct sockaddr *) &sa_in6;
 		in6 = mnl_attr_get_payload(tb[RTA_DST]);
+		memcpy(&sa_in6.sin6_addr, in6, sizeof(struct in6_addr));
 		prefix.aid = AID_INET6;
-		memcpy(&sa_in6.sin6_addr, &in6, sizeof(struct in6_addr));
-		memcpy(&prefix.v6, &in6, sizeof(struct in6_addr));
+		memcpy(&prefix.v6, in6, sizeof(struct in6_addr));
 		prefixlen = rm->rtm_dst_len;
 		break;
 	default:
