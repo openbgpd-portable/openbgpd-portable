@@ -35,8 +35,8 @@
 
 struct {
 	struct mnl_socket	*nl;
-	u_int32_t		pid;
-	u_int32_t		nlmsg_seq;
+	uint32_t		pid;
+	uint32_t		nlmsg_seq;
 } kr_state;
 
 struct kroute_node {
@@ -60,9 +60,9 @@ struct knexthop_node {
 struct kredist_node {
 	RB_ENTRY(kredist_node)	 entry;
 	struct bgpd_addr	 prefix;
-	u_int64_t		 rd;
-	u_int8_t		 prefixlen;
-	u_int8_t		 dynamic;
+	uint64_t		 rd;
+	uint8_t			 prefixlen;
+	uint8_t			 dynamic;
 };
 
 struct kif_kr {
@@ -95,8 +95,8 @@ RB_GENERATE(kroute_tree, kroute_node, entry, kroute_compare)
 RB_PROTOTYPE(kroute6_tree, kroute6_node, entry, kroute6_compare)
 RB_GENERATE(kroute6_tree, kroute6_node, entry, kroute6_compare)
 
-struct kroute_node	*kroute_find(struct ktable *, in_addr_t, u_int8_t,
-			    u_int8_t);
+struct kroute_node	*kroute_find(struct ktable *, in_addr_t, uint8_t,
+			    uint8_t);
 struct kroute_node	*kroute_matchgw(struct kroute_node *,
 			    struct sockaddr_in *);
 int			 kroute_insert(struct ktable *, struct kroute_node *);
@@ -104,7 +104,7 @@ int			 kroute_remove(struct ktable *, struct kroute_node *);
 void			 kroute_clear(struct ktable *);
 
 struct kroute6_node	*kroute6_find(struct ktable *, const struct in6_addr *,
-			    u_int8_t, u_int8_t);
+			    uint8_t, uint8_t);
 struct kroute6_node	*kroute6_matchgw(struct kroute6_node *,
 			    struct sockaddr_in6 *);
 int			 kroute6_insert(struct ktable *, struct kroute6_node *);
@@ -131,24 +131,24 @@ const u_int	 krt_size = 1;
 
 struct ktable	*ktable_get(u_int);
 
-static u_int8_t	mask2prefixlen(in_addr_t);
-static u_int8_t	mask2prefixlen6(struct sockaddr_in6 *);
+static uint8_t	mask2prefixlen(in_addr_t);
+static uint8_t	mask2prefixlen6(struct sockaddr_in6 *);
 
-int	kr4_change(struct ktable *, struct kroute_full *, u_int8_t);
-int	kr6_change(struct ktable *, struct kroute_full *, u_int8_t);
+int	kr4_change(struct ktable *, struct kroute_full *, uint8_t);
+int	kr6_change(struct ktable *, struct kroute_full *, uint8_t);
 
-int	kr4_delete(struct ktable *, struct kroute_full *, u_int8_t);
-int	kr6_delete(struct ktable *, struct kroute_full *, u_int8_t);
+int	kr4_delete(struct ktable *, struct kroute_full *, uint8_t);
+int	kr6_delete(struct ktable *, struct kroute_full *, uint8_t);
 
 static int	send_rtmsg(struct mnl_socket *, int, struct ktable *, struct kroute *,
-		    u_int8_t);
+		    uint8_t);
 static int	send_rt6msg(struct mnl_socket *, int, struct ktable *, struct kroute6 *,
-		    u_int8_t);
+		    uint8_t);
 
 static void	kr_redistribute(int type, struct ktable *kt, struct kroute *kr);
 static void	kr_redistribute6(int type, struct ktable *kt, struct kroute6 *kr);
 
-static int	kr_net_match(struct ktable *, struct network_config *, u_int16_t, int);
+static int	kr_net_match(struct ktable *, struct network_config *, uint16_t, int);
 static struct network *kr_net_find(struct ktable *, struct network *);
 static void	kr_net_clear(struct ktable *);
 
@@ -281,7 +281,7 @@ void	knexthop_send_update(struct knexthop_node *);
 
 int
 send_rtmsg(struct mnl_socket *nl, int action, struct ktable *kt, struct kroute *kroute,
-    u_int8_t fib_prio)
+    uint8_t fib_prio)
 {
 	char buf[MNL_SOCKET_BUFFER_SIZE];
 	struct nlmsghdr *nlh;
@@ -326,7 +326,7 @@ send_rtmsg(struct mnl_socket *nl, int action, struct ktable *kt, struct kroute *
 
 int
 send_rt6msg(struct mnl_socket *nl, int action, struct ktable *kt, struct kroute6 *kroute,
-    u_int8_t fib_prio)
+    uint8_t fib_prio)
 {
 	char buf[MNL_SOCKET_BUFFER_SIZE];
 	struct nlmsghdr *nlh;
@@ -741,14 +741,14 @@ kr_init(int *fd)
 }
 
 void
-kr_shutdown(u_int8_t fib_prio, u_int rdomain)
+kr_shutdown(uint8_t fib_prio, u_int rdomain)
 {
 	mnl_socket_close(kr_state.nl);
 	knexthop_clear(&krt);
 }
 
 void
-kr_fib_couple(u_int rtableid, u_int8_t fib_prio)
+kr_fib_couple(u_int rtableid, uint8_t fib_prio)
 {
 	struct ktable		*kt;
 	struct kroute_node	*kr;
@@ -775,7 +775,7 @@ kr_fib_couple(u_int rtableid, u_int8_t fib_prio)
 }
 
 void
-kr_fib_couple_all(u_int8_t fib_prio)
+kr_fib_couple_all(uint8_t fib_prio)
 {
 	u_int	 i;
 
@@ -784,7 +784,7 @@ kr_fib_couple_all(u_int8_t fib_prio)
 }
 
 void
-kr_fib_decouple(u_int rtableid, u_int8_t fib_prio)
+kr_fib_decouple(u_int rtableid, uint8_t fib_prio)
 {
 	struct ktable		*kt;
 	struct kroute_node	*kr;
@@ -812,7 +812,7 @@ kr_fib_decouple(u_int rtableid, u_int8_t fib_prio)
 }
 
 void
-kr_fib_decouple_all(u_int8_t fib_prio)
+kr_fib_decouple_all(uint8_t fib_prio)
 {
 	u_int	 i;
 
@@ -821,7 +821,7 @@ kr_fib_decouple_all(u_int8_t fib_prio)
 }
 
 void
-kr_fib_update_prio_all(u_int8_t fib_prio)
+kr_fib_update_prio_all(uint8_t fib_prio)
 {
 }
 
@@ -913,9 +913,9 @@ dispatch_rtmsg_addr(const struct nlmsghdr *nlh, const struct rtmsg *rm, struct n
 	struct bgpd_addr	 prefix;
 	int			 flags, oflags, mpath = 0, changed = 0;
 	int			 rtlabel_changed = 0;
-	u_int16_t		 ifindex;
-	u_int8_t		 prefixlen;
-	u_int8_t		 prio;
+	uint16_t		 ifindex;
+	uint8_t			 prefixlen;
+	uint8_t			 prio;
 
 	flags = F_KERNEL;
 	ifindex = 0;
@@ -1239,7 +1239,7 @@ kr_dispatch_msg(u_int rdomain)
 }
 
 int
-kr_change(u_int rtableid, struct kroute_full *kl, u_int8_t fib_prio)
+kr_change(u_int rtableid, struct kroute_full *kl, uint8_t fib_prio)
 {
 	struct ktable		*kt;
 
@@ -1264,10 +1264,10 @@ kr_change(u_int rtableid, struct kroute_full *kl, u_int8_t fib_prio)
 }
 
 int
-kr4_change(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
+kr4_change(struct ktable *kt, struct kroute_full *kl, uint8_t fib_prio)
 {
 	struct kroute_node	*kr;
-	u_int16_t		 labelid;
+	uint16_t		 labelid;
 
 	/* for blackhole and reject routes nexthop needs to be 127.0.0.1 */
 	if (kl->flags & (F_BLACKHOLE|F_REJECT))
@@ -1309,11 +1309,11 @@ kr4_change(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
 }
 
 int
-kr6_change(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
+kr6_change(struct ktable *kt, struct kroute_full *kl, uint8_t fib_prio)
 {
 	struct kroute6_node	*kr6;
 	struct in6_addr		 lo6 = IN6ADDR_LOOPBACK_INIT;
-	u_int16_t		 labelid;
+	uint16_t		 labelid;
 
 	/* for blackhole and reject routes nexthop needs to be ::1 */
 	if (kl->flags & (F_BLACKHOLE|F_REJECT))
@@ -1353,7 +1353,7 @@ kr6_change(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
 }
 
 int
-kr_delete(u_int rtableid, struct kroute_full *kl, u_int8_t fib_prio)
+kr_delete(u_int rtableid, struct kroute_full *kl, uint8_t fib_prio)
 {
 	struct ktable		*kt;
 
@@ -1414,7 +1414,7 @@ kr_flush(u_int rtableid)
 }
 
 int
-kr4_delete(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
+kr4_delete(struct ktable *kt, struct kroute_full *kl, uint8_t fib_prio)
 {
 	struct kroute_node	*kr;
 
@@ -1437,7 +1437,7 @@ kr4_delete(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
 }
 
 int
-kr6_delete(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
+kr6_delete(struct ktable *kt, struct kroute_full *kl, uint8_t fib_prio)
 {
 	struct kroute6_node	*kr6;
 
@@ -1546,7 +1546,7 @@ kr_net_delete(struct network *n)
 }
 
 void
-kr_net_reload(u_int rtableid, u_int64_t rd, struct network_head *nh)
+kr_net_reload(u_int rtableid, uint64_t rd, struct network_head *nh)
 {
 	struct network		*n, *xn;
 	struct ktable		*kt;
@@ -1702,13 +1702,13 @@ ktable_get(u_int rtableid)
 }
 
 static void
-ktable_free(u_int rtableid, u_int8_t fib_prio)
+ktable_free(u_int rtableid, uint8_t fib_prio)
 {
 	fatalx("%s not implemented", __func__);
 }
 
 int
-ktable_update(u_int rtableid, char *name, int flags, u_int8_t fib_prio)
+ktable_update(u_int rtableid, char *name, int flags, uint8_t fib_prio)
 {
 	struct ktable	*kt;
 
@@ -1747,7 +1747,7 @@ ktable_preload(void)
 }
 
 void
-ktable_postload(u_int8_t fib_prio)
+ktable_postload(uint8_t fib_prio)
 {
 	struct ktable	*kt;
 	struct network	*n, *xn;
@@ -1780,7 +1780,7 @@ get_mpe_config(const char *name, u_int *rdomain, u_int *label)
 	return (-1);
 }
 
-static u_int8_t
+static uint8_t
 mask2prefixlen(in_addr_t ina)
 {
 	if (ina == 0)
@@ -1789,11 +1789,11 @@ mask2prefixlen(in_addr_t ina)
 		return (33 - ffs(ntohl(ina)));
 }
 
-static u_int8_t
+static uint8_t
 mask2prefixlen6(struct sockaddr_in6 *sa_in6)
 {
-	u_int8_t	*ap, *ep;
-	u_int		 l = 0;
+	uint8_t	*ap, *ep;
+	u_int	 l = 0;
 
 	/*
 	 * There is no sin6_len for portability so calculate the end pointer
@@ -1802,7 +1802,7 @@ mask2prefixlen6(struct sockaddr_in6 *sa_in6)
 	 * assumtion is they behave like OpenBSD or that there is at least
 	 * a 0 byte right after the end of the truncated sockaddr_in6.
 	 */
-	ap = (u_int8_t *)&sa_in6->sin6_addr;
+	ap = (uint8_t *)&sa_in6->sin6_addr;
 	ep = ap + sizeof(struct in6_addr);
 	for (; ap < ep; ap++) {
 		/* this "beauty" is adopted from sbin/route/show.c ... */
@@ -1898,8 +1898,8 @@ kroute6_compare(struct kroute6_node *a, struct kroute6_node *b)
  */
 
 struct kroute_node *
-kroute_find(struct ktable *kt, in_addr_t prefix, u_int8_t prefixlen,
-    u_int8_t prio)
+kroute_find(struct ktable *kt, in_addr_t prefix, uint8_t prefixlen,
+    uint8_t prio)
 {
 	struct kroute_node	s;
 	struct kroute_node	*kn, *tmp;
@@ -2053,7 +2053,7 @@ kroute_clear(struct ktable *kt)
 
 struct kroute6_node *
 kroute6_find(struct ktable *kt, const struct in6_addr *prefix,
-    u_int8_t prefixlen, u_int8_t prio)
+    uint8_t prefixlen, uint8_t prio)
 {
 	struct kroute6_node	s;
 	struct kroute6_node	*kn6, *tmp;
@@ -2213,7 +2213,7 @@ static void
 kr_redistribute(int type, struct ktable *kt, struct kroute *kr)
 {
 	struct network_config	 net;
-	u_int32_t		 a;
+	uint32_t		 a;
 	int			 loflag = 0;
 
 	bzero(&net, sizeof(net));
@@ -2318,7 +2318,7 @@ kr_redistribute6(int type, struct ktable *kt, struct kroute6 *kr6)
 }
 
 int
-kr_net_match(struct ktable *kt, struct network_config *net, u_int16_t flags,
+kr_net_match(struct ktable *kt, struct network_config *net, uint16_t flags,
     int loopback)
 {
 	struct network		*xn;
