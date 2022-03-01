@@ -48,7 +48,11 @@ bgpd_SOURCES += mrt.c
 if HAVE_KROUTE
 bgpd_SOURCES += kroute.c
 else
+if HAVE_MNL
+bgpd_SOURCES += kroute-linux.c
+else
 bgpd_SOURCES += kroute-disabled.c
+endif
 endif
 bgpd_SOURCES += control.c
 if HAVE_PFKEY
