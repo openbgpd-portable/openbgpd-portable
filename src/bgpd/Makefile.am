@@ -48,10 +48,14 @@ bgpd_SOURCES += mrt.c
 if HOST_OPENBSD
 bgpd_SOURCES += kroute.c
 else
+if HOST_FREEBSD
+bgpd_SOURCES += kroute-freebsd.c
+else
 if HAVE_MNL
 bgpd_SOURCES += kroute-linux.c
 else
 bgpd_SOURCES += kroute-disabled.c
+endif
 endif
 endif
 bgpd_SOURCES += control.c
