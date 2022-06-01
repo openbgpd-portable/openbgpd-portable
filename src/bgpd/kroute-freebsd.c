@@ -3100,7 +3100,7 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct kroute_full *kr)
 	struct sockaddr_in	*sa_in;
 	struct sockaddr_in6	*sa_in6;
 
-	sa = (struct sockaddr *)((char *)rtm + rtm->rtm_hdrlen);
+	sa = (struct sockaddr *)(rtm + 1);
 	get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
 
 	/* Skip ARP/ND cache and broadcast routes. */
