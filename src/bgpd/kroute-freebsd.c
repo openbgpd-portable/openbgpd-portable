@@ -2659,7 +2659,6 @@ send_rtmsg(int fd, int action, struct ktable *kt, struct kroute *kroute)
 	bzero(&hdr, sizeof(hdr));
 	hdr.rtm_version = RTM_VERSION;
 	hdr.rtm_type = action;
-	hdr.rtm_tableid = kt->rtableid;
 	hdr.rtm_priority = kr_state.fib_prio;
 	if (kroute->flags & F_BLACKHOLE)
 		hdr.rtm_flags |= RTF_BLACKHOLE;
@@ -2759,7 +2758,6 @@ send_rt6msg(int fd, int action, struct ktable *kt, struct kroute6 *kroute)
 	bzero(&hdr, sizeof(hdr));
 	hdr.rtm_version = RTM_VERSION;
 	hdr.rtm_type = action;
-	hdr.rtm_tableid = kt->rtableid;
 	hdr.rtm_priority = kr_state.fib_prio;
 	if (kroute->flags & F_BLACKHOLE)
 		hdr.rtm_flags |= RTF_BLACKHOLE;
@@ -3054,9 +3052,6 @@ dispatch_rtmsg(u_int rdomain)
 			/* failed attempts */
 			if (rtm->rtm_errno || !(rtm->rtm_flags & RTF_DONE))
 				return (-1);
-
-			if ((kt = ktable_get(rtm->rtm_tableid)) == NULL)
-				continue;
 
 			if (dispatch_rtmsg_addr(rtm, &kl) == -1)
 				continue;
