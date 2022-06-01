@@ -1077,11 +1077,10 @@ kr_net_match(struct ktable *kt, struct network_config *net, uint16_t flags,
 				break;
 			continue;
 		case NETWORK_RTLABEL:
-			/* XXX: no routing label support */
+			/* XXX: no route label support */
 			continue;
 		case NETWORK_PRIORITY:
-			if (net->priority == xn->net.priority)
-				break;
+			/* XXX: no real priority support */
 			continue;
 		case NETWORK_MRTCLONE:
 		case NETWORK_PREFIXSET:
