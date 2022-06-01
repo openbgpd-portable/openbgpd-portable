@@ -215,7 +215,6 @@ int
 kr_init(int *fd, uint8_t fib_prio)
 {
 	int		opt = 0, rcvbuf, default_rcvbuf;
-	unsigned int	tid = RTABLE_ANY;
 	socklen_t	optlen;
 
 	if ((kr_state.fd = socket(AF_ROUTE,
@@ -241,12 +240,6 @@ kr_init(int *fd, uint8_t fib_prio)
 		    &rcvbuf, sizeof(rcvbuf)) == -1 && errno == ENOBUFS;
 		    rcvbuf /= 2)
 			;	/* nothing */
-
-	if (setsockopt(kr_state.fd, AF_ROUTE, ROUTE_TABLEFILTER, &tid,
-	    sizeof(tid)) == -1) {
-		log_warn("%s: setsockopt AF_ROUTE ROUTE_TABLEFILTER", __func__);
-		return (-1);
-	}
 
 	kr_state.pid = getpid();
 	kr_state.rtseq = 1;
@@ -424,28 +417,11 @@ ktable_update(u_int rtableid, char *name, int flags)
 int
 ktable_exists(u_int rtableid, u_int *rdomid)
 {
-	size_t			 len;
-	struct rt_tableinfo	 info;
-	int			 mib[6];
-
-	mib[0] = CTL_NET;
-	mib[1] = PF_ROUTE;
-	mib[2] = 0;
-	mib[3] = 0;
-	mib[4] = NET_RT_TABLE;
-	mib[5] = rtableid;
-
-	len = sizeof(info);
-	if (sysctl(mib, 6, &info, &len, NULL, 0) == -1) {
-		if (errno == ENOENT)
-			/* table nonexistent */
-			return (0);
-		log_warn("sysctl net.route.rtableid");
-		/* must return 0 so that the table is considered non-existent */
+	/* only one FIB at a time */
+	if ((u_int)getrtable() != rtableid)
 		return (0);
-	}
 	if (rdomid)
-		*rdomid = info.rti_domainid;
+		*rdomid = rtableid;
 	return (1);
 }
 
