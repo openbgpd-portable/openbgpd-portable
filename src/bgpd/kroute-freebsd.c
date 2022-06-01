@@ -2514,6 +2514,23 @@ get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
 	}
 }
 
+static int
+get_fib(const char *name)
+{
+        struct ifreq ifr = { 0 };
+	int s, fib = RT_DEFAULT_FIB;
+
+	if ((s = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0)) == -1)
+		fatal("get_fib: socket");
+
+	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	if (ioctl(s, SIOCGIFFIB, (caddr_t)&ifr) == 0)
+		fib = ifr.ifr_fib;
+	close(s);
+
+	return fib;
+}
+
 void
 if_change(u_short ifindex, int flags, struct if_data *ifd,
     u_int rdomain)
@@ -2522,6 +2539,7 @@ if_change(u_short ifindex, int flags, struct if_data *ifd,
 	struct kif_node		*kif;
 	struct kif_kr		*kkr;
 	struct kif_kr6		*kkr6;
+	int			 fib;
 	uint8_t			 reachable;
 
 	if ((kif = kif_find(ifindex)) == NULL) {
@@ -2530,8 +2548,9 @@ if_change(u_short ifindex, int flags, struct if_data *ifd,
 		return;
 	}
 
+	fib = get_fib(kif->k.ifname);
 	log_info("%s: %s: rdomain %u %s, %s, %s, %s",
-	    __func__, kif->k.ifname, ifd->ifi_rdomain,
+	    __func__, kif->k.ifname, fib,
 	    flags & IFF_UP ? "UP" : "DOWN",
 	    get_media_descr(ift2ifm(ifd->ifi_type)),
 	    get_linkstate(ifd->ifi_type, ifd->ifi_link_state),
@@ -2540,7 +2559,7 @@ if_change(u_short ifindex, int flags, struct if_data *ifd,
 	kif->k.flags = flags;
 	kif->k.link_state = ifd->ifi_link_state;
 	kif->k.if_type = ifd->ifi_type;
-	kif->k.rdomain = ifd->ifi_rdomain;
+	kif->k.rdomain = fib;
 	kif->k.baudrate = ifd->ifi_baudrate;
 	kif->k.depend_state = kif_depend_state(&kif->k);
 
@@ -2961,7 +2980,6 @@ fetchifs(int ifindex)
 		kif->k.flags = ifm.ifm_flags;
 		kif->k.link_state = ifm.ifm_data.ifi_link_state;
 		kif->k.if_type = ifm.ifm_data.ifi_type;
-		kif->k.rdomain = ifm.ifm_data.ifi_rdomain;
 		kif->k.baudrate = ifm.ifm_data.ifi_baudrate;
 		kif->k.nh_reachable = kif_validate(&kif->k);
 		kif->k.depend_state = kif_depend_state(&kif->k);
@@ -2978,6 +2996,7 @@ fetchifs(int ifindex)
 				/* string already terminated via calloc() */
 			}
 
+		kif->k.rdomain = get_fib(kif->k.ifname);
 		kif_insert(kif);
 	}
 	free(buf);
