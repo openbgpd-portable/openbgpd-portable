@@ -170,8 +170,8 @@ int		protect_lo(struct ktable *);
 uint8_t		prefixlen_classful(in_addr_t);
 uint8_t		mask2prefixlen(in_addr_t);
 uint8_t		mask2prefixlen6(struct sockaddr_in6 *);
-uint64_t	ift2ifm(uint8_t);
-const char	*get_media_descr(uint64_t);
+int		ift2ifm(uint8_t);
+const char	*get_media_descr(int);
 const char	*get_linkstate(uint8_t, int);
 void		get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 void		if_change(u_short, int, struct if_data *, u_int);
@@ -203,6 +203,9 @@ RB_PROTOTYPE(kif_tree, kif_node, entry, kif_compare)
 RB_GENERATE(kif_tree, kif_node, entry, kif_compare)
 
 #define KT2KNT(x)	(&(ktable_get((x)->nhtableid)->knt))
+
+#define LINK_STATE_IS_UP(_s)    \
+                ((_s) == LINK_STATE_UP || (_s) == LINK_STATE_UNKNOWN)
 
 /*
  * exported functions
@@ -2106,14 +2109,8 @@ kif_depend_state(struct kif *kif)
 	if (!(kif->flags & IFF_UP))
 		return (0);
 
-
-	if (kif->if_type == IFT_CARP &&
-	    kif->link_state == LINK_STATE_UNKNOWN)
-		return (0);
-
 	return LINK_STATE_IS_UP(kif->link_state);
 }
-
 
 int
 kroute_validate(struct kroute *kr)
@@ -2473,30 +2470,27 @@ prefixlen2mask6(uint8_t prefixlen)
 	return (&mask);
 }
 
-const struct if_status_description
-		if_status_descriptions[] = LINK_STATE_DESCRIPTIONS;
+const struct ifmedia_status_description
+		if_status_descriptions[] = IFM_STATUS_DESCRIPTIONS;
 const struct ifmedia_description
 		ifm_type_descriptions[] = IFM_TYPE_DESCRIPTIONS;
 
-uint64_t
+int
 ift2ifm(uint8_t if_type)
 {
 	switch (if_type) {
 	case IFT_ETHER:
 		return (IFM_ETHER);
-	case IFT_FDDI:
-		return (IFM_FDDI);
-	case IFT_CARP:
-		return (IFM_CARP);
 	case IFT_IEEE80211:
 		return (IFM_IEEE80211);
+	/* TODO maybe add ATM (only other media type supported) */
 	default:
 		return (0);
 	}
 }
 
 const char *
-get_media_descr(uint64_t media_type)
+get_media_descr(int media_type)
 {
 	const struct ifmedia_description	*p;
 
@@ -2510,15 +2504,19 @@ get_media_descr(uint64_t media_type)
 const char *
 get_linkstate(uint8_t if_type, int link_state)
 {
-	const struct if_status_description *p;
 	static char buf[8];
 
-	for (p = if_status_descriptions; p->ifs_string != NULL; p++) {
-		if (LINK_STATE_DESC_MATCH(p, if_type, link_state))
-			return (p->ifs_string);
+	switch (link_state) {
+	case LINK_STATE_DOWN:
+		return "no network";
+	case LINK_STATE_UP:
+		return "active";
+	case LINK_STATE_UNKNOWN:
+		return "unknown";
+	default:
+		snprintf(buf, sizeof(buf), "[#%d]", link_state);
+		return (buf);
 	}
-	snprintf(buf, sizeof(buf), "[#%d]", link_state);
-	return (buf);
 }
 
 #define ROUNDUP(a) \
