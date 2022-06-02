@@ -3044,13 +3044,13 @@ dispatch_rtmsg(u_int rdomain)
 
 			/* failed attempts */
 			if (rtm->rtm_errno || !(rtm->rtm_flags & RTF_DONE))
-				return (-1);
+				continue;
+
+			if ((kt = ktable_get(getrtable())) == NULL)
+                                continue;
 
 			if (dispatch_rtmsg_addr(rtm, &kl) == -1)
 				continue;
-
-			if (rtm->rtm_flags & RTF_MPATH)
-				mpath = 1;
 
 			switch (rtm->rtm_type) {
 			case RTM_ADD:
