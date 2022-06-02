@@ -2635,6 +2635,27 @@ get_mpe_config(const char *name, u_int *rdomain, u_int *label)
 	return (-1);
 }
 
+static int
+prio2flags(uint8_t fib_prio)
+{
+	/* XXX this needs to be configurable */
+	return RTF_PROTO3;
+}
+
+static uint8_t
+flags2prio(int flags)
+{
+	uint8_t	prio = 0;
+
+	/* Everything from the kernel is one prio unless it is a bgpd route */
+	/* XXX this needs to be configurable */
+
+	if (flags & RTF_PROTO3)
+		prio = RTP_MINE;
+
+	return prio;
+}
+
 /*
  * rtsock related functions
  */
@@ -2656,7 +2677,7 @@ send_rtmsg(int fd, int action, struct ktable *kt, struct kroute *kroute)
 	bzero(&hdr, sizeof(hdr));
 	hdr.rtm_version = RTM_VERSION;
 	hdr.rtm_type = action;
-	hdr.rtm_priority = kr_state.fib_prio;
+	hdr.rtm_flags = prio2flags(kr_state.fib_prio);
 	if (kroute->flags & F_BLACKHOLE)
 		hdr.rtm_flags |= RTF_BLACKHOLE;
 	if (kroute->flags & F_REJECT)
@@ -2751,7 +2772,7 @@ send_rt6msg(int fd, int action, struct ktable *kt, struct kroute6 *kroute)
 	bzero(&hdr, sizeof(hdr));
 	hdr.rtm_version = RTM_VERSION;
 	hdr.rtm_type = action;
-	hdr.rtm_priority = kr_state.fib_prio;
+	hdr.rtm_flags = prio2flags(kr_state.fib_prio);
 	if (kroute->flags & F_BLACKHOLE)
 		hdr.rtm_flags |= RTF_BLACKHOLE;
 	if (kroute->flags & F_REJECT)
@@ -2893,7 +2914,7 @@ fetchtable(struct ktable *kt)
 			kr->r.ifindex = kl.ifindex;
 			kr->r.priority = kl.priority;
 
-			if (rtm->rtm_priority == kr_state.fib_prio) {
+			if (kr->r.priority == kr_state.fib_prio) {
 				send_rtmsg(kr_state.fd, RTM_DELETE, kt, &kr->r);
 				free(kr);
 			} else
@@ -2914,7 +2935,7 @@ fetchtable(struct ktable *kt)
 			kr6->r.ifindex = kl.ifindex;
 			kr6->r.priority = kl.priority;
 
-			if (rtm->rtm_priority == kr_state.fib_prio) {
+			if (kr6->r.priority == kr_state.fib_prio) {
 				send_rt6msg(kr_state.fd, RTM_DELETE, kt,
 				    &kr6->r);
 				free(kr6);
@@ -3112,7 +3133,7 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct kroute_full *kr)
 	if (rtm->rtm_flags & RTF_DYNAMIC)
 		kr->flags |= F_DYNAMIC;
 
-	kr->priority = rtm->rtm_priority;
+	kr->priority = flags2prio(rtm->rtm_flags);
 
 	sa2addr(sa, &kr->prefix, NULL);
 	switch (sa->sa_family) {
