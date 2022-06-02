@@ -53,12 +53,8 @@ AM_CONDITIONAL([HOST_DARWIN],  [test x$HOST_OS = xdarwin])
 AM_CONDITIONAL([HOST_FREEBSD], [test x$HOST_OS = xfreebsd])
 AM_CONDITIONAL([HOST_LINUX],   [test x$HOST_OS = xlinux])
 AM_CONDITIONAL([HOST_NETBSD],  [test x$HOST_OS = xnetbsd])
+AM_CONDITIONAL([HOST_OPENBSD], [test x$HOST_OS = xopenbsd])
 AM_CONDITIONAL([HOST_SOLARIS], [test x$HOST_OS = xsolaris])
-
-AM_CONDITIONAL([HAVE_CARP], [test x$HOST_OS = xopenbsd])
-AM_CONDITIONAL([HAVE_PFKEY], [test x$HOST_OS = xopenbsd])
-AM_CONDITIONAL([HAVE_PFTABLE], [test x$HOST_OS = xopenbsd])
-AM_CONDITIONAL([HAVE_KROUTE], [test x$HOST_OS = xopenbsd])
 
 AC_PROG_SED
 AC_PROG_CC

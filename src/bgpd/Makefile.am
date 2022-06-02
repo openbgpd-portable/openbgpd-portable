@@ -45,7 +45,7 @@ bgpd_SOURCES += rde_rib.c
 bgpd_SOURCES += rde_decide.c
 bgpd_SOURCES += rde_prefix.c
 bgpd_SOURCES += mrt.c
-if HAVE_KROUTE
+if HOST_OPENBSD
 bgpd_SOURCES += kroute.c
 else
 if HAVE_MNL
@@ -55,7 +55,7 @@ bgpd_SOURCES += kroute-disabled.c
 endif
 endif
 bgpd_SOURCES += control.c
-if HAVE_PFKEY
+if HOST_OPENBSD
 bgpd_SOURCES += pfkey.c
 else
 if HAVE_LINUX_TCPMD5
@@ -71,14 +71,14 @@ bgpd_SOURCES += printconf.c
 bgpd_SOURCES += rde_filter.c
 bgpd_SOURCES += rde_sets.c
 bgpd_SOURCES += rde_trie.c
-if HAVE_PFTABLE
+if HOST_OPENBSD
 bgpd_SOURCES += pftable.c
 else
 bgpd_SOURCES += pftable-disabled.c
 endif
 bgpd_SOURCES += name2id.c
 bgpd_SOURCES += util.c
-if HAVE_CARP
+if HOST_OPENBSD
 bgpd_SOURCES += carp.c
 else
 bgpd_SOURCES += carp-disabled.c
