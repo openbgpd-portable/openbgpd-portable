@@ -418,13 +418,14 @@ ktable_update(u_int rtableid, char *name, int flags)
 int
 ktable_exists(u_int rtableid, u_int *rdomid)
 {
-	int fib;
+	int fib = 0;
 	size_t len = sizeof(fib);
 
-	if (sysctlbyname("net.my_fibnum", &fib, &len, NULL, 0) == -1) {
-		log_warn("sysctl net.my_fibnum");
-		return (0);
-	}
+	if (sysctlbyname("net.my_fibnum", &fib, &len, NULL, 0) == -1)
+		if (errno != ENOENT) {
+			log_warn("sysctl net.my_fibnum");
+			return (0);
+		}
 	/* only one FIB at a time */
 	if ((u_int)fib != rtableid)
 		return (0);
