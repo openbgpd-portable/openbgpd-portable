@@ -2647,10 +2647,6 @@ send_rtmsg(int fd, int action, struct ktable *kt, struct kroute *kroute)
 	struct sockaddr_in	prefix;
 	struct sockaddr_in	nexthop;
 	struct sockaddr_in	mask;
-	struct {
-		struct sockaddr_dl	dl;
-		char			pad[sizeof(long)];
-	}			ifp;
 	int			iovcnt = 0;
 
 	if (!kt->fib_sync)
@@ -2746,10 +2742,6 @@ send_rt6msg(int fd, int action, struct ktable *kt, struct kroute6 *kroute)
 		struct sockaddr_in6	addr;
 		char			pad[sizeof(long)];
 	} prefix, nexthop, mask;
-	struct {
-		struct sockaddr_dl	dl;
-		char			pad[sizeof(long)];
-	}			ifp;
 	int			iovcnt = 0;
 
 	if (!kt->fib_sync)
