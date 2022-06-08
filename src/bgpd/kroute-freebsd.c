@@ -29,7 +29,6 @@
 #include <net/if_media.h>
 #include <net/if_types.h>
 #include <net/route.h>
-#include <netmpls/mpls.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -106,12 +105,8 @@ struct ktable	*ktable_get(u_int);
 
 int	kr4_change(struct ktable *, struct kroute_full *);
 int	kr6_change(struct ktable *, struct kroute_full *);
-int	krVPN4_change(struct ktable *, struct kroute_full *);
-int	krVPN6_change(struct ktable *, struct kroute_full *);
 int	kr4_delete(struct ktable *, struct kroute_full *);
 int	kr6_delete(struct ktable *, struct kroute_full *);
-int	krVPN4_delete(struct ktable *, struct kroute_full *);
-int	krVPN6_delete(struct ktable *, struct kroute_full *);
 void	kr_net_delete(struct network *);
 int	kr_net_match(struct ktable *, struct network_config *, uint16_t, int);
 struct network *kr_net_find(struct ktable *, struct network *);
@@ -465,13 +460,10 @@ kr_change(u_int rtableid, struct kroute_full *kl)
 		return (kr4_change(kt, kl));
 	case AID_INET6:
 		return (kr6_change(kt, kl));
-	case AID_VPN_IPv4:
-		return (krVPN4_change(kt, kl));
-	case AID_VPN_IPv6:
-		return (krVPN6_change(kt, kl));
+	default:
+		log_warnx("%s: not handled AID", __func__);
+		return (-1);
 	}
-	log_warnx("%s: not handled AID", __func__);
-	return (-1);
 }
 
 int
@@ -593,158 +585,6 @@ kr6_change(struct ktable *kt, struct kroute_full *kl)
 }
 
 int
-krVPN4_change(struct ktable *kt, struct kroute_full *kl)
-{
-	struct kroute_node	*kr;
-	int			 action = RTM_ADD;
-	uint32_t		 mplslabel = 0;
-	uint16_t		 labelid;
-
-	/* nexthop within 127/8 -> ignore silently */
-	if ((kl->nexthop.v4.s_addr & htonl(IN_CLASSA_NET)) ==
-	    htonl(INADDR_LOOPBACK & IN_CLASSA_NET))
-		return (0);
-
-	/* only single MPLS label are supported for now */
-	if (kl->prefix.labellen != 3) {
-		log_warnx("%s: %s/%u has not a single label", __func__,
-		    log_addr(&kl->prefix), kl->prefixlen);
-		return (0);
-	}
-	mplslabel = (kl->prefix.labelstack[0] << 24) |
-	    (kl->prefix.labelstack[1] << 16) |
-	    (kl->prefix.labelstack[2] << 8);
-	mplslabel = htonl(mplslabel);
-
-	labelid = rtlabel_name2id(kl->label);
-
-	/* for blackhole and reject routes nexthop needs to be 127.0.0.1 */
-	if (kl->flags & (F_BLACKHOLE|F_REJECT))
-		kl->nexthop.v4.s_addr = htonl(INADDR_LOOPBACK);
-
-	if ((kr = kroute_find(kt, kl->prefix.v4.s_addr, kl->prefixlen,
-	    RTP_MINE)) != NULL)
-		action = RTM_CHANGE;
-
-	if (action == RTM_ADD) {
-		if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL) {
-			log_warn("%s", __func__);
-			return (-1);
-		}
-		kr->r.prefix.s_addr = kl->prefix.v4.s_addr;
-		kr->r.prefixlen = kl->prefixlen;
-		kr->r.nexthop.s_addr = kl->nexthop.v4.s_addr;
-		kr->r.flags = kl->flags | F_BGPD_INSERTED | F_MPLS;
-		kr->r.priority = RTP_MINE;
-		kr->r.labelid = labelid;
-		kr->r.mplslabel = mplslabel;
-		kr->r.ifindex = kl->ifindex;
-
-		if (kroute_insert(kt, kr) == -1) {
-			rtlabel_unref(kr->r.labelid);
-			free(kr);
-			return (-1);
-		}
-	} else {
-		kr->r.mplslabel = mplslabel;
-		kr->r.ifindex = kl->ifindex;
-		kr->r.nexthop.s_addr = kl->nexthop.v4.s_addr;
-		rtlabel_unref(kr->r.labelid);
-		kr->r.labelid = labelid;
-		if (kl->flags & F_BLACKHOLE)
-			kr->r.flags |= F_BLACKHOLE;
-		else
-			kr->r.flags &= ~F_BLACKHOLE;
-		if (kl->flags & F_REJECT)
-			kr->r.flags |= F_REJECT;
-		else
-			kr->r.flags &= ~F_REJECT;
-	}
-
-	if (send_rtmsg(kr_state.fd, action, kt, &kr->r) == -1)
-		return (-1);
-
-	return (0);
-}
-
-int
-krVPN6_change(struct ktable *kt, struct kroute_full *kl)
-{
-	struct kroute6_node	*kr6;
-	struct in6_addr		 lo6 = IN6ADDR_LOOPBACK_INIT;
-	int			 action = RTM_ADD;
-	uint32_t		 mplslabel = 0;
-	uint16_t		 labelid;
-
-	/* nexthop to loopback -> ignore silently */
-	if (IN6_IS_ADDR_LOOPBACK(&kl->nexthop.v6))
-		return (0);
-
-	/* only single MPLS label are supported for now */
-	if (kl->prefix.labellen != 3) {
-		log_warnx("%s: %s/%u has not a single label", __func__,
-		    log_addr(&kl->prefix), kl->prefixlen);
-		return (0);
-	}
-	mplslabel = (kl->prefix.labelstack[0] << 24) |
-	    (kl->prefix.labelstack[1] << 16) |
-	    (kl->prefix.labelstack[2] << 8);
-	mplslabel = htonl(mplslabel);
-
-	/* for blackhole and reject routes nexthop needs to be ::1 */
-	if (kl->flags & (F_BLACKHOLE|F_REJECT))
-		bcopy(&lo6, &kl->nexthop.v6, sizeof(kl->nexthop.v6));
-
-	labelid = rtlabel_name2id(kl->label);
-
-	if ((kr6 = kroute6_find(kt, &kl->prefix.v6, kl->prefixlen,
-	    RTP_MINE)) != NULL)
-		action = RTM_CHANGE;
-
-	if (action == RTM_ADD) {
-		if ((kr6 = calloc(1, sizeof(struct kroute6_node))) == NULL) {
-			log_warn("%s", __func__);
-			return (-1);
-		}
-		memcpy(&kr6->r.prefix, &kl->prefix.v6, sizeof(struct in6_addr));
-		kr6->r.prefixlen = kl->prefixlen;
-		memcpy(&kr6->r.nexthop, &kl->nexthop.v6,
-		    sizeof(struct in6_addr));
-		kr6->r.flags = kl->flags | F_BGPD_INSERTED | F_MPLS;
-		kr6->r.priority = RTP_MINE;
-		kr6->r.labelid = labelid;
-		kr6->r.mplslabel = mplslabel;
-		kr6->r.ifindex = kl->ifindex;
-
-		if (kroute6_insert(kt, kr6) == -1) {
-			rtlabel_unref(kr6->r.labelid);
-			free(kr6);
-			return (-1);
-		}
-	} else {
-		kr6->r.mplslabel = mplslabel;
-		kr6->r.ifindex = kl->ifindex;
-		memcpy(&kr6->r.nexthop, &kl->nexthop.v6,
-		    sizeof(struct in6_addr));
-		rtlabel_unref(kr6->r.labelid);
-		kr6->r.labelid = labelid;
-		if (kl->flags & F_BLACKHOLE)
-			kr6->r.flags |= F_BLACKHOLE;
-		else
-			kr6->r.flags &= ~F_BLACKHOLE;
-		if (kl->flags & F_REJECT)
-			kr6->r.flags |= F_REJECT;
-		else
-			kr6->r.flags &= ~F_REJECT;
-	}
-
-	if (send_rt6msg(kr_state.fd, action, kt, &kr6->r) == -1)
-		return (-1);
-
-	return (0);
-}
-
-int
 kr_delete(u_int rtableid, struct kroute_full *kl)
 {
 	struct ktable		*kt;
@@ -758,13 +598,10 @@ kr_delete(u_int rtableid, struct kroute_full *kl)
 		return (kr4_delete(kt, kl));
 	case AID_INET6:
 		return (kr6_delete(kt, kl));
-	case AID_VPN_IPv4:
-		return (krVPN4_delete(kt, kl));
-	case AID_VPN_IPv6:
-		return (krVPN6_delete(kt, kl));
+	default:
+		log_warnx("%s: not handled AID", __func__);
+		return (-1);
 	}
-	log_warnx("%s: not handled AID", __func__);
-	return (-1);
 }
 
 int
@@ -2858,39 +2695,7 @@ if_announce(void *msg, u_int rdomain)
 int
 get_mpe_config(const char *name, u_int *rdomain, u_int *label)
 {
-	struct  ifreq	ifr;
-	struct shim_hdr	shim;
-	int		s;
-
-	*label = 0;
-	*rdomain = 0;
-
-	s = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0);
-	if (s == -1)
-		return (-1);
-
-	bzero(&shim, sizeof(shim));
-	bzero(&ifr, sizeof(ifr));
-	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	ifr.ifr_data = (caddr_t)&shim;
-
-	if (ioctl(s, SIOCGETLABEL, (caddr_t)&ifr) == -1) {
-		close(s);
-		return (-1);
-	}
-
-	ifr.ifr_data = NULL;
-	if (ioctl(s, SIOCGIFRDOMAIN, (caddr_t)&ifr) == -1) {
-		close(s);
-		return (-1);
-	}
-
-	close(s);
-
-	*rdomain = ifr.ifr_rdomainid;
-	*label = shim.shim_label;
-
-	return (0);
+	return (-1);
 }
 
 /*
@@ -2971,32 +2776,8 @@ send_rtmsg(int fd, int action, struct ktable *kt, struct kroute *kroute)
 	iov[iovcnt++].iov_len = sizeof(mask);
 
 	if (kroute->flags & F_MPLS) {
-		/* need to force interface for mpe(4) routes */
-		bzero(&ifp, sizeof(ifp));
-		ifp.dl.sdl_len = sizeof(struct sockaddr_dl);
-		ifp.dl.sdl_family = AF_LINK;
-		ifp.dl.sdl_index = kroute->ifindex;
-		/* adjust header */
-		hdr.rtm_addrs |= RTA_IFP;
-		hdr.rtm_msglen += ROUNDUP(sizeof(struct sockaddr_dl));
-		/* adjust iovec */
-		iov[iovcnt].iov_base = &ifp;
-		iov[iovcnt++].iov_len = ROUNDUP(sizeof(struct sockaddr_dl));
-
-		bzero(&mpls, sizeof(mpls));
-		mpls.smpls_len = sizeof(mpls);
-		mpls.smpls_family = AF_MPLS;
-		mpls.smpls_label = kroute->mplslabel;
-		/* adjust header */
-		hdr.rtm_flags |= RTF_MPLS;
-		hdr.rtm_mpls = MPLS_OP_PUSH;
-		hdr.rtm_addrs |= RTA_SRC;
-		hdr.rtm_msglen += sizeof(mpls);
-		/* clear gateway flag since this is for mpe(4) */
-		hdr.rtm_flags &= ~RTF_GATEWAY;
-		/* adjust iovec */
-		iov[iovcnt].iov_base = &mpls;
-		iov[iovcnt++].iov_len = sizeof(mpls);
+		/* no MPLS support */
+		return (-1);
 	}
 
 	if (kroute->labelid) {
@@ -3112,32 +2893,8 @@ send_rt6msg(int fd, int action, struct ktable *kt, struct kroute6 *kroute)
 	iov[iovcnt++].iov_len = ROUNDUP(sizeof(struct sockaddr_in6));
 
 	if (kroute->flags & F_MPLS) {
-		/* need to force interface for mpe(4) routes */
-		bzero(&ifp, sizeof(ifp));
-		ifp.dl.sdl_len = sizeof(struct sockaddr_dl);
-		ifp.dl.sdl_family = AF_LINK;
-		ifp.dl.sdl_index = kroute->ifindex;
-		/* adjust header */
-		hdr.rtm_addrs |= RTA_IFP;
-		hdr.rtm_msglen += ROUNDUP(sizeof(struct sockaddr_dl));
-		/* adjust iovec */
-		iov[iovcnt].iov_base = &ifp;
-		iov[iovcnt++].iov_len = ROUNDUP(sizeof(struct sockaddr_dl));
-
-		bzero(&mpls, sizeof(mpls));
-		mpls.smpls_len = sizeof(mpls);
-		mpls.smpls_family = AF_MPLS;
-		mpls.smpls_label = kroute->mplslabel;
-		/* adjust header */
-		hdr.rtm_flags |= RTF_MPLS;
-		hdr.rtm_mpls = MPLS_OP_PUSH;
-		hdr.rtm_addrs |= RTA_SRC;
-		hdr.rtm_msglen += ROUNDUP(sizeof(struct sockaddr_mpls));
-		/* clear gateway flag since this is for mpe(4) */
-		hdr.rtm_flags &= ~RTF_GATEWAY;
-		/* adjust iovec */
-		iov[iovcnt].iov_base = &mpls;
-		iov[iovcnt++].iov_len = ROUNDUP(sizeof(struct sockaddr_mpls));
+		/* no MPLS support */
+		return (-1);
 	}
 
 	if (kroute->labelid) {
