@@ -147,8 +147,8 @@ void			 knexthop_clear(struct ktable *);
 
 struct kif_node		*kif_find(int);
 int			 kif_insert(struct kif_node *);
-int			 kif_remove(struct kif_node *, u_int);
-void			 kif_clear(u_int);
+int			 kif_remove(struct kif_node *);
+void			 kif_clear(void);
 
 int			 kif_kr_insert(struct kroute_node *);
 int			 kif_kr_remove(struct kroute_node *);
@@ -175,12 +175,12 @@ int		ift2ifm(uint8_t);
 const char	*get_media_descr(int);
 const char	*get_linkstate(uint8_t, int);
 void		get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
-void		if_change(u_short, int, struct if_data *, u_int);
-void		if_announce(void *, u_int);
+void		if_change(u_short, int, struct if_data *);
+void		if_announce(void *);
 
 int		send_rtmsg(int, int, struct ktable *, struct kroute *);
 int		send_rt6msg(int, int, struct ktable *, struct kroute6 *);
-int		dispatch_rtmsg(u_int);
+int		dispatch_rtmsg(void);
 int		fetchtable(struct ktable *);
 int		fetchifs(int);
 int		dispatch_rtmsg_addr(struct rt_msghdr *, struct kroute_full *);
@@ -655,13 +655,13 @@ kr6_delete(struct ktable *kt, struct kroute_full *kl)
 }
 
 void
-kr_shutdown(u_int rdomain)
+kr_shutdown(void)
 {
 	u_int	i;
 
 	for (i = krt_size; i > 0; i--)
 		ktable_free(i - 1);
-	kif_clear(rdomain);
+	kif_clear();
 	free(krt);
 }
 
@@ -742,19 +742,16 @@ kr_fib_prio_set(uint8_t prio)
 }
 
 int
-kr_dispatch_msg(u_int rdomain)
+kr_dispatch_msg(void)
 {
-	return (dispatch_rtmsg(rdomain));
+	return (dispatch_rtmsg());
 }
 
 int
-kr_nexthop_add(u_int rtableid, struct bgpd_addr *addr, struct bgpd_config *conf)
+kr_nexthop_add(u_int rtableid, struct bgpd_addr *addr)
 {
 	struct ktable		*kt;
 	struct knexthop_node	*h;
-
-	if (rtableid == 0)
-		rtableid = conf->default_tableid;
 
 	if ((kt = ktable_get(rtableid)) == NULL) {
 		log_warnx("%s: non-existent rtableid %d", __func__, rtableid);
@@ -778,14 +775,10 @@ kr_nexthop_add(u_int rtableid, struct bgpd_addr *addr, struct bgpd_config *conf)
 }
 
 void
-kr_nexthop_delete(u_int rtableid, struct bgpd_addr *addr,
-    struct bgpd_config *conf)
+kr_nexthop_delete(u_int rtableid, struct bgpd_addr *addr)
 {
 	struct ktable		*kt;
 	struct knexthop_node	*kn;
-
-	if (rtableid == 0)
-		rtableid = conf->default_tableid;
 
 	if ((kt = ktable_get(rtableid)) == NULL) {
 		log_warnx("%s: non-existent rtableid %d", __func__,
@@ -1901,7 +1894,7 @@ kif_insert(struct kif_node *kif)
 }
 
 int
-kif_remove(struct kif_node *kif, u_int rdomain)
+kif_remove(struct kif_node *kif)
 {
 	struct ktable	*kt;
 	struct kif_kr	*kkr;
@@ -1912,7 +1905,7 @@ kif_remove(struct kif_node *kif, u_int rdomain)
 		return (-1);
 	}
 
-	if ((kt = ktable_get(rdomain)) == NULL)
+	if ((kt = ktable_get(kif->k.rdomain)) == NULL)
 		goto done;
 
 	while ((kkr = LIST_FIRST(&kif->kroute_l)) != NULL) {
@@ -1934,12 +1927,12 @@ done:
 }
 
 void
-kif_clear(u_int rdomain)
+kif_clear(void)
 {
 	struct kif_node	*kif;
 
 	while ((kif = RB_MIN(kif_tree, &kit)) != NULL)
-		kif_remove(kif, rdomain);
+		kif_remove(kif);
 }
 
 int
@@ -2539,8 +2532,7 @@ get_fib(const char *name)
 }
 
 void
-if_change(u_short ifindex, int flags, struct if_data *ifd,
-    u_int rdomain)
+if_change(u_short ifindex, int flags, struct if_data *ifd)
 {
 	struct ktable		*kt;
 	struct kif_node		*kif;
@@ -2577,7 +2569,7 @@ if_change(u_short ifindex, int flags, struct if_data *ifd,
 
 	kif->k.nh_reachable = reachable;
 
-	kt = ktable_get(rdomain);
+	kt = ktable_get(ifd->ifi_rdomain);
 
 	LIST_FOREACH(kkr, &kif->kroute_l, entry) {
 		if (reachable)
@@ -2604,7 +2596,7 @@ if_change(u_short ifindex, int flags, struct if_data *ifd,
 }
 
 void
-if_announce(void *msg, u_int rdomain)
+if_announce(void *msg)
 {
 	struct if_announcemsghdr	*ifan;
 	struct kif_node			*kif;
@@ -2624,7 +2616,7 @@ if_announce(void *msg, u_int rdomain)
 		break;
 	case IFAN_DEPARTURE:
 		kif = kif_find(ifan->ifan_index);
-		kif_remove(kif, rdomain);
+		kif_remove(kif);
 		break;
 	}
 }
@@ -2914,7 +2906,7 @@ fetchtable(struct ktable *kt)
 			kr->r.ifindex = kl.ifindex;
 			kr->r.priority = kl.priority;
 
-			if (kr->r.priority == kr_state.fib_prio) {
+			if (kl.priority == kr_state.fib_prio) {
 				send_rtmsg(kr_state.fd, RTM_DELETE, kt, &kr->r);
 				free(kr);
 			} else
@@ -2935,7 +2927,7 @@ fetchtable(struct ktable *kt)
 			kr6->r.ifindex = kl.ifindex;
 			kr6->r.priority = kl.priority;
 
-			if (kr6->r.priority == kr_state.fib_prio) {
+			if (kl.priority == kr_state.fib_prio) {
 				send_rt6msg(kr_state.fd, RTM_DELETE, kt,
 				    &kr6->r);
 				free(kr6);
@@ -3024,7 +3016,7 @@ fetchifs(int ifindex)
 }
 
 int
-dispatch_rtmsg(u_int rdomain)
+dispatch_rtmsg(void)
 {
 	char			 buf[RT_BUF_SIZE];
 	ssize_t			 n;
@@ -3088,11 +3080,10 @@ dispatch_rtmsg(u_int rdomain)
 			break;
 		case RTM_IFINFO:
 			memcpy(&ifm, next, sizeof(ifm));
-			if_change(ifm.ifm_index, ifm.ifm_flags,
-			    &ifm.ifm_data, rdomain);
+			if_change(ifm.ifm_index, ifm.ifm_flags, &ifm.ifm_data);
 			break;
 		case RTM_IFANNOUNCE:
-			if_announce(next, rdomain);
+			if_announce(next);
 			break;
 		default:
 			/* ignore for now */
