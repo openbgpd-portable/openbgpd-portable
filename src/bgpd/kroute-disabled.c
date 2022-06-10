@@ -189,13 +189,10 @@ knexthop_clear(struct ktable *kt)
 }
 
 int
-kr_nexthop_add(u_int rtableid, struct bgpd_addr *addr, struct bgpd_config *conf)
+kr_nexthop_add(u_int rtableid, struct bgpd_addr *addr)
 {
 	struct ktable		*kt;
 	struct knexthop_node	*h;
-
-	if (rtableid == 0)
-		rtableid = conf->default_tableid;
 
 	if ((kt = ktable_get(rtableid)) == NULL) {
 		log_warnx("%s: non-existent rtableid %d", __func__, rtableid);
@@ -219,14 +216,10 @@ kr_nexthop_add(u_int rtableid, struct bgpd_addr *addr, struct bgpd_config *conf)
 }
 
 void
-kr_nexthop_delete(u_int rtableid, struct bgpd_addr *addr,
-    struct bgpd_config *conf)
+kr_nexthop_delete(u_int rtableid, struct bgpd_addr *addr)
 {
 	struct ktable		*kt;
 	struct knexthop_node	*kn;
-
-	if (rtableid == 0)
-		rtableid = conf->default_tableid;
 
 	if ((kt = ktable_get(rtableid)) == NULL) {
 		log_warnx("%s: non-existent rtableid %d", __func__,
@@ -363,7 +356,7 @@ kr_init(int *fd, uint8_t fib_prio)
 }
 
 void
-kr_shutdown(u_int rdomain)
+kr_shutdown(void)
 {
 	knexthop_clear(&krt);
 }
@@ -394,7 +387,7 @@ kr_fib_prio_set(uint8_t prio)
 }
 
 int
-kr_dispatch_msg(u_int rdomain)
+kr_dispatch_msg(void)
 {
 	return (0);
 }

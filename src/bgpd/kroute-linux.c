@@ -548,13 +548,10 @@ knexthop_clear(struct ktable *kt)
 }
 
 int
-kr_nexthop_add(u_int rtableid, struct bgpd_addr *addr, struct bgpd_config *conf)
+kr_nexthop_add(u_int rtableid, struct bgpd_addr *addr)
 {
 	struct ktable		*kt;
 	struct knexthop_node	*h;
-
-	if (rtableid == 0)
-		rtableid = conf->default_tableid;
 
 	if ((kt = ktable_get(rtableid)) == NULL) {
 		log_warnx("%s: non-existent rtableid %d", __func__, rtableid);
@@ -578,14 +575,10 @@ kr_nexthop_add(u_int rtableid, struct bgpd_addr *addr, struct bgpd_config *conf)
 }
 
 void
-kr_nexthop_delete(u_int rtableid, struct bgpd_addr *addr,
-    struct bgpd_config *conf)
+kr_nexthop_delete(u_int rtableid, struct bgpd_addr *addr)
 {
 	struct ktable		*kt;
 	struct knexthop_node	*kn;
-
-	if (rtableid == 0)
-		rtableid = conf->default_tableid;
 
 	if ((kt = ktable_get(rtableid)) == NULL) {
 		log_warnx("%s: non-existent rtableid %d", __func__,
@@ -746,7 +739,7 @@ kr_init(int *fd, uint8_t fib_prio)
 }
 
 void
-kr_shutdown(u_int rdomain)
+kr_shutdown(void)
 {
 	mnl_socket_close(kr_state.nl);
 	knexthop_clear(&krt);
@@ -1043,7 +1036,6 @@ dispatch_rtmsg_addr(const struct nlmsghdr *nlh, const struct rtmsg *rm,
 				if (kr->r.labelid) {
 					rtlabel_unref(kr->r.labelid);
 					kr->r.labelid = 0;
-					flags &= ~F_RTLABEL;
 					rtlabel_changed = 1;
 				}
 
@@ -1123,7 +1115,6 @@ add4:
 				if (kr6->r.labelid) {
 					rtlabel_unref(kr6->r.labelid);
 					kr6->r.labelid = 0;
-					flags &= ~F_RTLABEL;
 					rtlabel_changed = 1;
 				}
 
@@ -1224,7 +1215,7 @@ dispatch_rtmsg(const struct nlmsghdr *nlh, void *data)
 }
 
 int
-kr_dispatch_msg(u_int rdomain)
+kr_dispatch_msg(void)
 {
 	char buf[MNL_SOCKET_BUFFER_SIZE];
 	int ret;
