@@ -133,8 +133,10 @@ listener_match_peer(struct listen_addr *la, struct peer *p)
 	switch (p->conf.remote_addr.aid) {
 	case AID_INET:
 		sa = addr2sa(&p->conf.local_addr_v4, BGP_PORT, &sa_len);
+		break;
 	case AID_INET6:
 		sa = addr2sa(&p->conf.local_addr_v6, BGP_PORT, &sa_len);
+		break;
 	default:
 		return 0;
 	}
