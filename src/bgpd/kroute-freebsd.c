@@ -2569,7 +2569,7 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 
 	kif->k.nh_reachable = reachable;
 
-	kt = ktable_get(ifd->ifi_rdomain);
+	kt = ktable_get(kif->k.rdomain);
 
 	LIST_FOREACH(kkr, &kif->kroute_l, entry) {
 		if (reachable)
