@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.251 2022/06/07 16:42:07 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.254 2022/06/13 09:57:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -474,7 +474,7 @@ kr4_change(struct ktable *kt, struct kroute_full *kl)
 		action = RTM_CHANGE;
 
 	if (action == RTM_ADD) {
-		if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL) {
+		if ((kr = calloc(1, sizeof(*kr))) == NULL) {
 			log_warn("%s", __func__);
 			return (-1);
 		}
@@ -527,7 +527,7 @@ kr6_change(struct ktable *kt, struct kroute_full *kl)
 		action = RTM_CHANGE;
 
 	if (action == RTM_ADD) {
-		if ((kr6 = calloc(1, sizeof(struct kroute6_node))) == NULL) {
+		if ((kr6 = calloc(1, sizeof(*kr6))) == NULL) {
 			log_warn("%s", __func__);
 			return (-1);
 		}
@@ -761,7 +761,7 @@ kr_nexthop_add(u_int rtableid, struct bgpd_addr *addr)
 		/* should not happen... this is actually an error path */
 		knexthop_send_update(h);
 	} else {
-		if ((h = calloc(1, sizeof(struct knexthop_node))) == NULL) {
+		if ((h = calloc(1, sizeof(*h))) == NULL) {
 			log_warn("%s", __func__);
 			return (-1);
 		}
@@ -1356,7 +1356,8 @@ kr_tofull(struct kroute *kr)
 	kf.flags = kr->flags;
 	kf.ifindex = kr->ifindex;
 	kf.prefixlen = kr->prefixlen;
-	kf.priority = kr->priority;
+	kf.priority = kr->priority == RTP_MINE ?
+	    kr_state.fib_prio : kr->priority;
 
 	return (&kf);
 }
@@ -1375,7 +1376,8 @@ kr6_tofull(struct kroute6 *kr6)
 	kf.flags = kr6->flags;
 	kf.ifindex = kr6->ifindex;
 	kf.prefixlen = kr6->prefixlen;
-	kf.priority = kr6->priority;
+	kf.priority = kr6->priority == RTP_MINE ?
+	    kr_state.fib_prio : kr6->priority;
 
 	return (&kf);
 }
@@ -1953,7 +1955,7 @@ kif_kr_insert(struct kroute_node *kr)
 	else
 		kr->r.flags |= F_DOWN;
 
-	if ((kkr = calloc(1, sizeof(struct kif_kr))) == NULL) {
+	if ((kkr = calloc(1, sizeof(*kkr))) == NULL) {
 		log_warn("%s", __func__);
 		return (-1);
 	}
@@ -2012,7 +2014,7 @@ kif_kr6_insert(struct kroute6_node *kr)
 	else
 		kr->r.flags |= F_DOWN;
 
-	if ((kkr6 = calloc(1, sizeof(struct kif_kr6))) == NULL) {
+	if ((kkr6 = calloc(1, sizeof(*kkr6))) == NULL) {
 		log_warn("%s", __func__);
 		return (-1);
 	}
@@ -2327,7 +2329,7 @@ protect_lo(struct ktable *kt)
 	struct kroute6_node	*kr6;
 
 	/* special protection for 127/8 */
-	if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL) {
+	if ((kr = calloc(1, sizeof(*kr))) == NULL) {
 		log_warn("%s", __func__);
 		return (-1);
 	}
@@ -2339,7 +2341,7 @@ protect_lo(struct ktable *kt)
 		free(kr);	/* kernel route already there, no problem */
 
 	/* special protection for loopback */
-	if ((kr6 = calloc(1, sizeof(struct kroute6_node))) == NULL) {
+	if ((kr6 = calloc(1, sizeof(*kr6))) == NULL) {
 		log_warn("%s", __func__);
 		return (-1);
 	}
@@ -2605,7 +2607,7 @@ if_announce(void *msg)
 
 	switch (ifan->ifan_what) {
 	case IFAN_ARRIVAL:
-		if ((kif = calloc(1, sizeof(struct kif_node))) == NULL) {
+		if ((kif = calloc(1, sizeof(*kif))) == NULL) {
 			log_warn("%s", __func__);
 			return;
 		}
@@ -2893,8 +2895,7 @@ fetchtable(struct ktable *kt)
 			continue;
 
 		if (kl.prefix.aid == AID_INET) {
-			if ((kr = calloc(1,
-			    sizeof(struct kroute_node))) == NULL) {
+			if ((kr = calloc(1, sizeof(*kr))) == NULL) {
 				log_warn("%s", __func__);
 				return (-1);
 			}
@@ -2912,8 +2913,7 @@ fetchtable(struct ktable *kt)
 			} else
 				kroute_insert(kt, kr);
 		} else if (kl.prefix.aid == AID_INET6) {
-			if ((kr6 = calloc(1,
-			    sizeof(struct kroute6_node))) == NULL) {
+			if ((kr6 = calloc(1, sizeof(*kr6))) == NULL) {
 				log_warn("%s", __func__);
 				return (-1);
 			}
@@ -2982,7 +2982,7 @@ fetchifs(int ifindex)
 		sa = (struct sockaddr *)(next + sizeof(ifm));
 		get_rtaddrs(ifm.ifm_addrs, sa, rti_info);
 
-		if ((kif = calloc(1, sizeof(struct kif_node))) == NULL) {
+		if ((kif = calloc(1, sizeof(*kif))) == NULL) {
 			log_warn("%s", __func__);
 			free(buf);
 			return (-1);
@@ -3094,7 +3094,7 @@ dispatch_rtmsg(void)
 }
 
 int
-dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct kroute_full *kr)
+dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct kroute_full *kl)
 {
 	struct sockaddr		*sa, *rti_info[RTAX_MAX];
 	struct sockaddr_in	*sa_in;
@@ -3112,41 +3112,41 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct kroute_full *kr)
 		return (-1);
 	}
 
-	memset(kr, 0, sizeof(*kr));
-	kr->flags = F_KERNEL;
+	memset(kl, 0, sizeof(*kl));
+	kl->flags = F_KERNEL;
 
 	if (rtm->rtm_flags & RTF_STATIC)
-		kr->flags |= F_STATIC;
+		kl->flags |= F_STATIC;
 	if (rtm->rtm_flags & RTF_BLACKHOLE)
-		kr->flags |= F_BLACKHOLE;
+		kl->flags |= F_BLACKHOLE;
 	if (rtm->rtm_flags & RTF_REJECT)
-		kr->flags |= F_REJECT;
+		kl->flags |= F_REJECT;
 	if (rtm->rtm_flags & RTF_DYNAMIC)
-		kr->flags |= F_DYNAMIC;
+		kl->flags |= F_DYNAMIC;
 
-	kr->priority = flags2prio(rtm->rtm_flags);
+	kl->priority = flags2prio(rtm->rtm_flags);
 
-	sa2addr(sa, &kr->prefix, NULL);
+	sa2addr(sa, &kl->prefix, NULL);
 	switch (sa->sa_family) {
 	case AF_INET:
 		sa_in = (struct sockaddr_in *)rti_info[RTAX_NETMASK];
 		if (sa_in != NULL) {
 			if (sa_in->sin_len != 0)
-				kr->prefixlen = mask2prefixlen(
-				    sa_in->sin_addr.s_addr);
+				kl->prefixlen =
+				    mask2prefixlen(sa_in->sin_addr.s_addr);
 		} else if (rtm->rtm_flags & RTF_HOST)
-			kr->prefixlen = 32;
+			kl->prefixlen = 32;
 		else
-			kr->prefixlen =
-			    prefixlen_classful(kr->prefix.v4.s_addr);
+			kl->prefixlen =
+			    prefixlen_classful(kl->prefix.v4.s_addr);
 		break;
 	case AF_INET6:
 		sa_in6 = (struct sockaddr_in6 *)rti_info[RTAX_NETMASK];
 		if (sa_in6 != NULL) {
 			if (sa_in6->sin6_len != 0)
-				kr->prefixlen = mask2prefixlen6(sa_in6);
+				kl->prefixlen = mask2prefixlen6(sa_in6);
 		} else if (rtm->rtm_flags & RTF_HOST)
-			kr->prefixlen = 128;
+			kl->prefixlen = 128;
 		else
 			fatalx("in6 net addr without netmask");
 		break;
@@ -3156,24 +3156,23 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct kroute_full *kr)
 
 	if ((sa = rti_info[RTAX_GATEWAY]) == NULL) {
 		log_warnx("route %s/%u without gateway",
-		    log_addr(&kr->prefix), kr->prefixlen);
+		    log_addr(&kl->prefix), kl->prefixlen);
 		return (-1);
 	}
 
+	kl->ifindex = rtm->rtm_index;
 	if (rtm->rtm_flags & RTF_GATEWAY) {
 		switch (sa->sa_family) {
 		case AF_LINK:
-			kr->flags |= F_CONNECTED;
-			kr->ifindex = rtm->rtm_index;
+			kl->flags |= F_CONNECTED;
 			break;
 		case AF_INET:
 		case AF_INET6:
-			sa2addr(rti_info[RTAX_GATEWAY], &kr->nexthop, NULL);
+			sa2addr(rti_info[RTAX_GATEWAY], &kl->nexthop, NULL);
 			break;
 		}
 	} else {
-		kr->flags |= F_CONNECTED;
-		kr->ifindex = rtm->rtm_index;
+		kl->flags |= F_CONNECTED;
 	}
 
 	return (0);
@@ -3289,8 +3288,7 @@ kr_fib_change(struct ktable *kt, struct kroute_full *kl, int type, int mpath)
 			}
 		} else {
 add4:
-			if ((kr = calloc(1,
-			    sizeof(struct kroute_node))) == NULL) {
+			if ((kr = calloc(1, sizeof(*kr))) == NULL) {
 				log_warn("%s", __func__);
 				return (-1);
 			}
@@ -3360,8 +3358,7 @@ add4:
 			}
 		} else {
 add6:
-			if ((kr6 = calloc(1,
-			    sizeof(struct kroute6_node))) == NULL) {
+			if ((kr6 = calloc(1, sizeof(*kr6))) == NULL) {
 				log_warn("%s", __func__);
 				return (-1);
 			}
