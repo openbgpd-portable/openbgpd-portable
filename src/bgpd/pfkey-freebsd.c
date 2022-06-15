@@ -195,7 +195,7 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 	sa_dst.sadb_address_len = (sizeof(sa_dst) + ROUNDUP(sdst.ss_len)) / 8;
 
 	sa.sadb_sa_auth = aalg;
-	sa.sadb_sa_encrypt = SADB_X_EALG_AES; /* XXX */
+	sa.sadb_sa_encrypt = ealg;
 
 	switch (mtype) {
 	case SADB_ADD:
@@ -475,10 +475,13 @@ pfkey_reply(int sd, uint32_t *spi)
 
 	if (hdr.sadb_msg_errno != 0) {
 		errno = hdr.sadb_msg_errno;
-		if (errno == ESRCH)
+		if (errno == ESRCH || errno == EEXIST)
 			return (0);
 		else {
 			log_warn("pfkey");
+			/* discard error message */
+			if (read(sd, &hdr, sizeof(hdr)) == -1)
+				log_warn("pfkey read");
 			return (-1);
 		}
 	}
@@ -521,13 +524,16 @@ static int
 pfkey_sa_add(struct bgpd_addr *src, struct bgpd_addr *dst, uint8_t keylen,
     char *key, uint32_t *spi)
 {
-	if (pfkey_send(pfkey_fd, SADB_X_SATYPE_TCPSIGNATURE, SADB_GETSPI, 0,
-	    src, dst, 0, 0, 0, NULL, 0, 0, NULL, 0, 0) == -1)
-		return (-1);
-	if (pfkey_reply(pfkey_fd, spi) == -1)
-		return (-1);
-	if (pfkey_send(pfkey_fd, SADB_X_SATYPE_TCPSIGNATURE, SADB_UPDATE, 0,
-		src, dst, *spi, 0, keylen, key, 0, 0, NULL, 0, 0) == -1)
+	/*
+	 * From setkey(8):
+	 * TCP-MD5 associations must use 0x1000 and therefore only
+	 * have per-host granularity at this time.
+	 */
+	*spi = 0x1000;
+
+	if (pfkey_send(pfkey_fd, SADB_X_SATYPE_TCPSIGNATURE, SADB_ADD, 0,
+	    src, dst, *spi, SADB_X_AALG_TCP_MD5, keylen, key,
+	    SADB_EALG_NONE, 0, NULL, 0, 0) == -1)
 		return (-1);
 	if (pfkey_reply(pfkey_fd, NULL) == -1)
 		return (-1);
@@ -538,7 +544,8 @@ static int
 pfkey_sa_remove(struct bgpd_addr *src, struct bgpd_addr *dst, uint32_t *spi)
 {
 	if (pfkey_send(pfkey_fd, SADB_X_SATYPE_TCPSIGNATURE, SADB_DELETE, 0,
-	    src, dst, *spi, 0, 0, NULL, 0, 0, NULL, 0, 0) == -1)
+	    src, dst, *spi, SADB_X_AALG_TCP_MD5, 0, NULL,
+	    0, 0, NULL, 0, 0) == -1)
 		return (-1);
 	if (pfkey_reply(pfkey_fd, NULL) == -1)
 		return (-1);
@@ -552,6 +559,12 @@ pfkey_md5sig_establish(struct peer *p)
 	uint32_t spi_out = 0;
 	uint32_t spi_in = 0;
 
+	/* cleanup old flow if one was present */
+	if (p->auth.established) {
+		if (pfkey_remove(p) == -1)
+			return (-1);
+	}
+
 	if (pfkey_sa_add(pfkey_localaddr(p), &p->conf.remote_addr,
 	    p->conf.auth.md5key_len, p->conf.auth.md5key,
 	    &spi_out) == -1)
@@ -561,12 +574,6 @@ pfkey_md5sig_establish(struct peer *p)
 	    p->conf.auth.md5key_len, p->conf.auth.md5key,
 	    &spi_in) == -1)
 		goto fail;
-
-	/* cleanup old flow if one was present */
-	if (p->auth.established) {
-		if (pfkey_remove(p) == -1)
-			return (-1);
-	}
 
 	p->auth.established = 1;
 	p->auth.spi_out = spi_out;
