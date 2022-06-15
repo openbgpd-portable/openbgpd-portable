@@ -41,6 +41,7 @@
 #include "bgpd.h"
 #include "log.h"
 
+#define	RTP_KERN	0x01
 #define	RTP_MINE	0xff
 
 struct ktable		**krt;
@@ -481,7 +482,7 @@ kr4_change(struct ktable *kt, struct kroute_full *kl)
 		kr->r.prefix.s_addr = kl->prefix.v4.s_addr;
 		kr->r.prefixlen = kl->prefixlen;
 		kr->r.nexthop.s_addr = kl->nexthop.v4.s_addr;
-		kr->r.flags = kl->flags | F_BGPD_INSERTED;
+		kr->r.flags = kl->flags;
 		kr->r.priority = RTP_MINE;
 
 		if (kroute_insert(kt, kr) == -1) {
@@ -500,9 +501,15 @@ kr4_change(struct ktable *kt, struct kroute_full *kl)
 			kr->r.flags &= ~F_REJECT;
 	}
 
+	/* check if there is already a kernel, higher prio route */
+	if (kroute_find(kt, kl->prefix.v4.s_addr, kl->prefixlen, RTP_KERN) !=
+	    NULL)
+		return (0);
+
 	if (send_rtmsg(kr_state.fd, action, kt, &kr->r) == -1)
 		return (-1);
 
+	kr->r.flags |= F_BGPD_INSERTED;
 	return (0);
 }
 
@@ -535,7 +542,7 @@ kr6_change(struct ktable *kt, struct kroute_full *kl)
 		kr6->r.prefixlen = kl->prefixlen;
 		memcpy(&kr6->r.nexthop, &kl->nexthop.v6,
 		    sizeof(struct in6_addr));
-		kr6->r.flags = kl->flags | F_BGPD_INSERTED;
+		kr6->r.flags = kl->flags;
 		kr6->r.priority = RTP_MINE;
 
 		if (kroute6_insert(kt, kr6) == -1) {
@@ -555,9 +562,14 @@ kr6_change(struct ktable *kt, struct kroute_full *kl)
 			kr6->r.flags &= ~F_REJECT;
 	}
 
+	/* check if there is already a kernel, higher prio route */
+	if (kroute6_find(kt, &kl->prefix.v6, kl->prefixlen, RTP_KERN) != NULL)
+		return (0);
+
 	if (send_rt6msg(kr_state.fd, action, kt, &kr6->r) == -1)
 		return (-1);
 
+	kr6->r.flags |= F_BGPD_INSERTED;
 	return (0);
 }
 
@@ -681,12 +693,15 @@ kr_fib_couple(u_int rtableid)
 	kt->fib_sync = 1;
 
 	RB_FOREACH(kr, kroute_tree, &kt->krt)
-		if ((kr->r.flags & F_BGPD_INSERTED))
+		if ((kr->r.flags & F_KERNEL) == 0) {
 			send_rtmsg(kr_state.fd, RTM_ADD, kt, &kr->r);
+			kr->r.flags |= F_BGPD_INSERTED;
+		}
 	RB_FOREACH(kr6, kroute6_tree, &kt->krt6)
-		if ((kr6->r.flags & F_BGPD_INSERTED))
+		if ((kr6->r.flags & F_KERNEL) == 0) {
 			send_rt6msg(kr_state.fd, RTM_ADD, kt, &kr6->r);
-
+			kr6->r.flags |= F_BGPD_INSERTED;
+		}
 	log_info("kernel routing table %u (%s) coupled", kt->rtableid,
 	    kt->descr);
 }
@@ -714,11 +729,15 @@ kr_fib_decouple(u_int rtableid)
 		return;
 
 	RB_FOREACH(kr, kroute_tree, &kt->krt)
-		if ((kr->r.flags & F_BGPD_INSERTED))
+		if ((kr->r.flags & F_BGPD_INSERTED)) {
 			send_rtmsg(kr_state.fd, RTM_DELETE, kt, &kr->r);
+			kr->r.flags &= ~F_BGPD_INSERTED;
+		}
 	RB_FOREACH(kr6, kroute6_tree, &kt->krt6)
-		if ((kr6->r.flags & F_BGPD_INSERTED))
+		if ((kr6->r.flags & F_BGPD_INSERTED)) {
 			send_rt6msg(kr_state.fd, RTM_DELETE, kt, &kr6->r);
+			kr6->r.flags &= ~F_BGPD_INSERTED;
+		}
 
 	kt->fib_sync = 0;
 
@@ -2639,7 +2658,7 @@ prio2flags(uint8_t fib_prio)
 static uint8_t
 flags2prio(int flags)
 {
-	uint8_t	prio = 0;
+	uint8_t	prio = RTP_KERN;
 
 	/* Everything from the kernel is one prio unless it is a bgpd route */
 	/* XXX this needs to be configurable */
@@ -3202,6 +3221,14 @@ kr_fib_delete(struct ktable *kt, struct kroute_full *kl, int mpath)
 		}
 		if (kroute_remove(kt, kr) == -1)
 			return (-1);
+
+		/* check if lower pref bgp route exists */
+		if ((kr = kroute_find(kt, kl->prefix.v4.s_addr,
+		    kl->prefixlen, RTP_MINE)) != NULL) {
+			send_rtmsg(kr_state.fd, RTM_ADD, kt, &kr->r);
+			kr->r.flags |= F_BGPD_INSERTED;
+		}
+
 		break;
 	case AID_INET6:
 		if ((kr6 = kroute6_find(kt, &kl->prefix.v6, kl->prefixlen,
@@ -3221,6 +3248,13 @@ kr_fib_delete(struct ktable *kt, struct kroute_full *kl, int mpath)
 		}
 		if (kroute6_remove(kt, kr6) == -1)
 			return (-1);
+
+		/* check if lower pref bgp route exists */
+		if ((kr6 = kroute6_find(kt, &kl->prefix.v6, kl->prefixlen,
+		    kl->priority)) != NULL) {
+			send_rt6msg(kr_state.fd, RTM_ADD, kt, &kr6->r);
+			kr6->r.flags |= F_BGPD_INSERTED;
+		}
 		break;
 	}
 	return (0);
