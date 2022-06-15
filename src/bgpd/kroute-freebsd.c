@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.254 2022/06/13 09:57:44 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.256 2022/06/15 10:10:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -168,7 +168,6 @@ struct kroute6_node	*kroute6_match(struct ktable *, struct in6_addr *, int);
 void			 kroute_detach_nexthop(struct ktable *,
 			    struct knexthop_node *);
 
-int		protect_lo(struct ktable *);
 uint8_t		prefixlen_classful(in_addr_t);
 uint8_t		mask2prefixlen(in_addr_t);
 uint8_t		mask2prefixlen6(struct sockaddr_in6 *);
@@ -301,8 +300,6 @@ ktable_new(u_int rtableid, u_int rdomid, char *name, int fs)
 
 	/* ... and load it */
 	if (fetchtable(kt) == -1)
-		return (-1);
-	if (protect_lo(kt) == -1)
 		return (-1);
 
 	/* everything is up and running */
@@ -482,7 +479,7 @@ kr4_change(struct ktable *kt, struct kroute_full *kl)
 		kr->r.prefix.s_addr = kl->prefix.v4.s_addr;
 		kr->r.prefixlen = kl->prefixlen;
 		kr->r.nexthop.s_addr = kl->nexthop.v4.s_addr;
-		kr->r.flags = kl->flags;
+		kr->r.flags = kl->flags | F_BGPD;
 		kr->r.priority = RTP_MINE;
 
 		if (kroute_insert(kt, kr) == -1) {
@@ -506,10 +503,9 @@ kr4_change(struct ktable *kt, struct kroute_full *kl)
 	    NULL)
 		return (0);
 
-	if (send_rtmsg(kr_state.fd, action, kt, &kr->r) == -1)
-		return (-1);
+	if (send_rtmsg(kr_state.fd, action, kt, &kr->r))
+		kr->r.flags |= F_BGPD_INSERTED;
 
-	kr->r.flags |= F_BGPD_INSERTED;
 	return (0);
 }
 
@@ -542,7 +538,7 @@ kr6_change(struct ktable *kt, struct kroute_full *kl)
 		kr6->r.prefixlen = kl->prefixlen;
 		memcpy(&kr6->r.nexthop, &kl->nexthop.v6,
 		    sizeof(struct in6_addr));
-		kr6->r.flags = kl->flags;
+		kr6->r.flags = kl->flags | F_BGPD;
 		kr6->r.priority = RTP_MINE;
 
 		if (kroute6_insert(kt, kr6) == -1) {
@@ -566,10 +562,9 @@ kr6_change(struct ktable *kt, struct kroute_full *kl)
 	if (kroute6_find(kt, &kl->prefix.v6, kl->prefixlen, RTP_KERN) != NULL)
 		return (0);
 
-	if (send_rt6msg(kr_state.fd, action, kt, &kr6->r) == -1)
-		return (-1);
+	if (send_rt6msg(kr_state.fd, action, kt, &kr6->r))
+		kr6->r.flags |= F_BGPD_INSERTED;
 
-	kr6->r.flags |= F_BGPD_INSERTED;
 	return (0);
 }
 
@@ -636,8 +631,7 @@ kr4_delete(struct ktable *kt, struct kroute_full *kl)
 	if (!(kr->r.flags & F_BGPD_INSERTED))
 		return (0);
 
-	if (send_rtmsg(kr_state.fd, RTM_DELETE, kt, &kr->r) == -1)
-		return (-1);
+	send_rtmsg(kr_state.fd, RTM_DELETE, kt, &kr->r);
 
 	if (kroute_remove(kt, kr) == -1)
 		return (-1);
@@ -657,8 +651,7 @@ kr6_delete(struct ktable *kt, struct kroute_full *kl)
 	if (!(kr6->r.flags & F_BGPD_INSERTED))
 		return (0);
 
-	if (send_rt6msg(kr_state.fd, RTM_DELETE, kt, &kr6->r) == -1)
-		return (-1);
+	send_rt6msg(kr_state.fd, RTM_DELETE, kt, &kr6->r);
 
 	if (kroute6_remove(kt, kr6) == -1)
 		return (-1);
@@ -693,14 +686,14 @@ kr_fib_couple(u_int rtableid)
 	kt->fib_sync = 1;
 
 	RB_FOREACH(kr, kroute_tree, &kt->krt)
-		if ((kr->r.flags & F_KERNEL) == 0) {
-			send_rtmsg(kr_state.fd, RTM_ADD, kt, &kr->r);
-			kr->r.flags |= F_BGPD_INSERTED;
+		if (kr->r.flags & F_BGPD) {
+			if (send_rtmsg(kr_state.fd, RTM_ADD, kt, &kr->r))
+				kr->r.flags |= F_BGPD_INSERTED;
 		}
 	RB_FOREACH(kr6, kroute6_tree, &kt->krt6)
-		if ((kr6->r.flags & F_KERNEL) == 0) {
-			send_rt6msg(kr_state.fd, RTM_ADD, kt, &kr6->r);
-			kr6->r.flags |= F_BGPD_INSERTED;
+		if (kr6->r.flags & F_BGPD) {
+			if (send_rt6msg(kr_state.fd, RTM_ADD, kt, &kr6->r))
+				kr6->r.flags |= F_BGPD_INSERTED;
 		}
 	log_info("kernel routing table %u (%s) coupled", kt->rtableid,
 	    kt->descr);
@@ -730,13 +723,13 @@ kr_fib_decouple(u_int rtableid)
 
 	RB_FOREACH(kr, kroute_tree, &kt->krt)
 		if ((kr->r.flags & F_BGPD_INSERTED)) {
-			send_rtmsg(kr_state.fd, RTM_DELETE, kt, &kr->r);
-			kr->r.flags &= ~F_BGPD_INSERTED;
+			if (send_rtmsg(kr_state.fd, RTM_DELETE, kt, &kr->r))
+				kr->r.flags &= ~F_BGPD_INSERTED;
 		}
 	RB_FOREACH(kr6, kroute6_tree, &kt->krt6)
 		if ((kr6->r.flags & F_BGPD_INSERTED)) {
-			send_rt6msg(kr_state.fd, RTM_DELETE, kt, &kr6->r);
-			kr6->r.flags &= ~F_BGPD_INSERTED;
+			if (send_rt6msg(kr_state.fd, RTM_DELETE, kt, &kr6->r))
+				kr6->r.flags &= ~F_BGPD_INSERTED;
 		}
 
 	kt->fib_sync = 0;
@@ -1193,10 +1186,6 @@ kr_redistribute(int type, struct ktable *kt, struct kroute *kr)
 	if (!(kr->flags & F_KERNEL))
 		return;
 
-	/* Dynamic routes are not redistributable. */
-	if (kr->flags & F_DYNAMIC)
-		return;
-
 	/*
 	 * We consider the loopback net and multicast addresses
 	 * as not redistributable.
@@ -1240,10 +1229,6 @@ kr_redistribute6(int type, struct ktable *kt, struct kroute6 *kr6)
 	}
 
 	if (!(kr6->flags & F_KERNEL))
-		return;
-
-	/* Dynamic routes are not redistributable. */
-	if (kr6->flags & F_DYNAMIC)
 		return;
 
 	/*
@@ -2341,39 +2326,6 @@ kroute_detach_nexthop(struct ktable *kt, struct knexthop_node *kn)
  * misc helpers
  */
 
-int
-protect_lo(struct ktable *kt)
-{
-	struct kroute_node	*kr;
-	struct kroute6_node	*kr6;
-
-	/* special protection for 127/8 */
-	if ((kr = calloc(1, sizeof(*kr))) == NULL) {
-		log_warn("%s", __func__);
-		return (-1);
-	}
-	kr->r.prefix.s_addr = htonl(INADDR_LOOPBACK & IN_CLASSA_NET);
-	kr->r.prefixlen = 8;
-	kr->r.flags = F_KERNEL|F_CONNECTED;
-
-	if (RB_INSERT(kroute_tree, &kt->krt, kr) != NULL)
-		free(kr);	/* kernel route already there, no problem */
-
-	/* special protection for loopback */
-	if ((kr6 = calloc(1, sizeof(*kr6))) == NULL) {
-		log_warn("%s", __func__);
-		return (-1);
-	}
-	memcpy(&kr6->r.prefix, &in6addr_loopback, sizeof(kr6->r.prefix));
-	kr6->r.prefixlen = 128;
-	kr6->r.flags = F_KERNEL|F_CONNECTED;
-
-	if (RB_INSERT(kroute6_tree, &kt->krt6, kr6) != NULL)
-		free(kr6);	/* kernel route already there, no problem */
-
-	return (0);
-}
-
 uint8_t
 prefixlen_classful(in_addr_t ina)
 {
@@ -2741,7 +2693,7 @@ send_rtmsg(int fd, int action, struct ktable *kt, struct kroute *kroute)
 
 	if (kroute->flags & F_MPLS) {
 		/* no MPLS support */
-		return (-1);
+		return (0);
 	}
 
 	/* Silently ignore set routing labels */
@@ -2756,7 +2708,7 @@ retry:
 				log_info("route %s/%u vanished before delete",
 				    inet_ntoa(kroute->prefix),
 				    kroute->prefixlen);
-				return (0);
+				return (1);
 			}
 		}
 		log_warn("%s: action %u, prefix %s/%u", __func__, hdr.rtm_type,
@@ -2764,7 +2716,7 @@ retry:
 		return (0);
 	}
 
-	return (0);
+	return (1);
 }
 
 int
@@ -2840,7 +2792,7 @@ send_rt6msg(int fd, int action, struct ktable *kt, struct kroute6 *kroute)
 
 	if (kroute->flags & F_MPLS) {
 		/* no MPLS support */
-		return (-1);
+		return (0);
 	}
 
 	/* Silently ignore set routing labels */
@@ -2855,7 +2807,7 @@ retry:
 				log_info("route %s/%u vanished before delete",
 				    log_in6addr(&kroute->prefix),
 				    kroute->prefixlen);
-				return (0);
+				return (1);
 			}
 		}
 		log_warn("%s: action %u, prefix %s/%u", __func__, hdr.rtm_type,
@@ -2863,7 +2815,7 @@ retry:
 		return (0);
 	}
 
-	return (0);
+	return (1);
 }
 
 int
@@ -3122,8 +3074,8 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct kroute_full *kl)
 	sa = (struct sockaddr *)(rtm + 1);
 	get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
 
-	/* Skip ARP/ND cache and broadcast routes. */
-	if (rtm->rtm_flags & (RTF_LLINFO|RTF_BROADCAST))
+	/* Skip ARP/ND cache, broadcast and dynamic routes. */
+	if (rtm->rtm_flags & (RTF_LLINFO|RTF_BROADCAST|RTF_DYNAMIC))
 		return (-1);
 
 	if ((sa = rti_info[RTAX_DST]) == NULL) {
@@ -3140,8 +3092,6 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct kroute_full *kl)
 		kl->flags |= F_BLACKHOLE;
 	if (rtm->rtm_flags & RTF_REJECT)
 		kl->flags |= F_REJECT;
-	if (rtm->rtm_flags & RTF_DYNAMIC)
-		kl->flags |= F_DYNAMIC;
 
 	kl->priority = flags2prio(rtm->rtm_flags);
 
@@ -3225,8 +3175,8 @@ kr_fib_delete(struct ktable *kt, struct kroute_full *kl, int mpath)
 		/* check if lower pref bgp route exists */
 		if ((kr = kroute_find(kt, kl->prefix.v4.s_addr,
 		    kl->prefixlen, RTP_MINE)) != NULL) {
-			send_rtmsg(kr_state.fd, RTM_ADD, kt, &kr->r);
-			kr->r.flags |= F_BGPD_INSERTED;
+			if (send_rtmsg(kr_state.fd, RTM_ADD, kt, &kr->r))
+				kr->r.flags |= F_BGPD_INSERTED;
 		}
 
 		break;
@@ -3252,8 +3202,8 @@ kr_fib_delete(struct ktable *kt, struct kroute_full *kl, int mpath)
 		/* check if lower pref bgp route exists */
 		if ((kr6 = kroute6_find(kt, &kl->prefix.v6, kl->prefixlen,
 		    kl->priority)) != NULL) {
-			send_rt6msg(kr_state.fd, RTM_ADD, kt, &kr6->r);
-			kr6->r.flags |= F_BGPD_INSERTED;
+			if (send_rt6msg(kr_state.fd, RTM_ADD, kt, &kr6->r))
+				kr6->r.flags |= F_BGPD_INSERTED;
 		}
 		break;
 	}
