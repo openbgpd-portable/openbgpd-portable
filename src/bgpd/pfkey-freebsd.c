@@ -75,15 +75,19 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 {
 	struct sadb_msg		smsg;
 	struct sadb_sa		sa;
-	struct sadb_address	sa_src, sa_dst, sa_peer, sa_smask, sa_dmask;
+	struct sadb_address	sa_src, sa_dst;
+	struct sockaddr_storage	ssrc, sdst, smask, dmask;
 	struct sadb_key		sa_akey, sa_ekey;
 	struct sadb_spirange	sa_spirange;
+#ifdef NOTYET
+	struct sadb_address	sa_peer, sa_smask, sa_dmask;
+	struct sockaddr_storage	speer;
 	struct sadb_protocol	sa_flowtype, sa_protocol;
+#endif
 	struct iovec		iov[IOV_CNT];
 	ssize_t			n;
 	int			len = 0;
 	int			iov_cnt;
-	struct sockaddr_storage	ssrc, sdst, speer, smask, dmask;
 	struct sockaddr		*saptr;
 	socklen_t		 salen;
 
@@ -164,6 +168,7 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 		sa.sadb_sa_spi = htonl(spi);
 		sa.sadb_sa_state = SADB_SASTATE_MATURE;
 		break;
+#ifdef NOTYET
 	case SADB_X_ADDFLOW:
 	case SADB_X_DELFLOW:
 		bzero(&sa_flowtype, sizeof(sa_flowtype));
@@ -178,6 +183,7 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 		sa_protocol.sadb_protocol_direction = 0;
 		sa_protocol.sadb_protocol_proto = 6;
 		break;
+#endif
 	}
 
 	bzero(&sa_src, sizeof(sa_src));
@@ -207,6 +213,7 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 		sa_ekey.sadb_key_bits = 8 * elen;
 
 		break;
+#ifdef NOTYET
 	case SADB_X_ADDFLOW:
 	case SADB_X_DELFLOW:
 		/* sa_peer always points to the remote machine */
@@ -290,6 +297,7 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 		sa_dmask.sadb_address_len =
 		    (sizeof(sa_dmask) + ROUNDUP(dmask.ss_len)) / 8;
 		break;
+#endif
 	}
 
 	iov_cnt = 0;
@@ -316,6 +324,7 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 		smsg.sadb_msg_len += sa_spirange.sadb_spirange_len;
 		iov_cnt++;
 		break;
+#ifdef NOTYET
 	case SADB_X_ADDFLOW:
 		/* sa_peer always points to the remote machine */
 		iov[iov_cnt].iov_base = &sa_peer;
@@ -357,6 +366,7 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 		smsg.sadb_msg_len += sa_dmask.sadb_address_len;
 		iov_cnt++;
 		break;
+#endif
 	}
 
 	/* dest addr */
@@ -590,6 +600,7 @@ fail:
 	return (-1);
 }
 
+#ifdef NOTYET
 static int
 pfkey_ipsec_establish(struct peer *p)
 {
@@ -754,6 +765,7 @@ fail_flow:
 	log_peer_warn(&p->conf, "%s: failed to remove flow", __func__);
 	return (-1);
 }
+#endif
 
 int
 pfkey_establish(struct peer *p)
@@ -770,7 +782,11 @@ pfkey_establish(struct peer *p)
 		rv = pfkey_md5sig_establish(p);
 		break;
 	default:
+#ifdef NOTYET
 		rv = pfkey_ipsec_establish(p);
+#else
+		rv = -1;
+#endif
 		break;
 	}
 	/*
@@ -800,7 +816,11 @@ pfkey_remove(struct peer *p)
 	case AUTH_MD5SIG:
 		return (pfkey_md5sig_remove(p));
 	default:
+#ifdef NOTYET
 		return (pfkey_ipsec_remove(p));
+#else
+		return (-1);
+#endif
 	}
 }
 
