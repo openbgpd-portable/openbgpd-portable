@@ -440,6 +440,7 @@ knexthop_remove(struct ktable *kt, struct knexthop *kn)
 	return (0);
 }
 
+static struct kroute *
 kroute_match(struct ktable *kt, struct bgpd_addr *key, int matchall)
 {
 	int			 i;
