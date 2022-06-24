@@ -26,20 +26,34 @@
 #include "session.h"
 #include "log.h"
 
-struct kroute_node {
-	RB_ENTRY(kroute_node)	 entry;
-	struct kroute		 r;
-	struct kroute_node	*next;
+struct kroute {
+	RB_ENTRY(kroute)	 entry;
+	struct kroute		*next;
+	struct in_addr		 prefix;
+	struct in_addr		 nexthop;
+	uint32_t		 mplslabel;
+	uint16_t		 flags;
+	uint16_t		 labelid;
+	u_short			 ifindex;
+	uint8_t			 prefixlen;
+	uint8_t			 priority;
 };
 
-struct kroute6_node {
-	RB_ENTRY(kroute6_node)	 entry;
-	struct kroute6		 r;
-	struct kroute6_node	*next;
+struct kroute6 {
+	RB_ENTRY(kroute6)	 entry;
+	struct kroute6		*next;
+	struct in6_addr		 prefix;
+	struct in6_addr		 nexthop;
+	uint32_t		 mplslabel;
+	uint16_t		 flags;
+	uint16_t		 labelid;
+	u_short			 ifindex;
+	uint8_t			 prefixlen;
+	uint8_t			 priority;
 };
 
-struct knexthop_node {
-	RB_ENTRY(knexthop_node)	 entry;
+struct knexthop {
+	RB_ENTRY(knexthop)	 entry;
 	struct bgpd_addr	 nexthop;
 	void			*kroute;
 };
@@ -61,7 +75,7 @@ static uint8_t	mask2prefixlen(in_addr_t);
 static uint8_t	mask2prefixlen6(struct sockaddr_in6 *);
 
 static inline int
-knexthop_compare(struct knexthop_node *a, struct knexthop_node *b)
+knexthop_compare(struct knexthop *a, struct knexthop *b)
 {
 	int	i;
 
@@ -130,20 +144,20 @@ kredist_compare(struct kredist_node *a, struct kredist_node *b)
 	return (0);
 }
 
-RB_PROTOTYPE(knexthop_tree, knexthop_node, entry, knexthop_compare)
-RB_GENERATE(knexthop_tree, knexthop_node, entry, knexthop_compare)
+RB_PROTOTYPE(knexthop_tree, knexthop, entry, knexthop_compare)
+RB_GENERATE(knexthop_tree, knexthop, entry, knexthop_compare)
 
 RB_PROTOTYPE(kredist_tree, kredist_node, entry, kredist_compare)
 RB_GENERATE(kredist_tree, kredist_node, entry, kredist_compare)
 
 #define KT2KNT(x)	(&(ktable_get((x)->nhtableid)->knt))
 
-void	knexthop_send_update(struct knexthop_node *);
+void	knexthop_send_update(struct knexthop *);
 
-static struct knexthop_node *
+static struct knexthop *
 knexthop_find(struct ktable *kt, struct bgpd_addr *addr)
 {
-	struct knexthop_node	s;
+	struct knexthop	s;
 
 	bzero(&s, sizeof(s));
 	memcpy(&s.nexthop, addr, sizeof(s.nexthop));
@@ -152,7 +166,7 @@ knexthop_find(struct ktable *kt, struct bgpd_addr *addr)
 }
 
 static int
-knexthop_insert(struct ktable *kt, struct knexthop_node *kn)
+knexthop_insert(struct ktable *kt, struct knexthop *kn)
 {
 	if (RB_INSERT(knexthop_tree, KT2KNT(kt), kn) != NULL) {
 		log_warnx("%s: failed for %s", __func__,
@@ -167,7 +181,7 @@ knexthop_insert(struct ktable *kt, struct knexthop_node *kn)
 }
 
 static int
-knexthop_remove(struct ktable *kt, struct knexthop_node *kn)
+knexthop_remove(struct ktable *kt, struct knexthop *kn)
 {
 	if (RB_REMOVE(knexthop_tree, KT2KNT(kt), kn) == NULL) {
 		log_warnx("%s: failed for %s", __func__,
@@ -182,7 +196,7 @@ knexthop_remove(struct ktable *kt, struct knexthop_node *kn)
 static void
 knexthop_clear(struct ktable *kt)
 {
-	struct knexthop_node	*kn;
+	struct knexthop	*kn;
 
 	while ((kn = RB_MIN(knexthop_tree, KT2KNT(kt))) != NULL)
 		knexthop_remove(kt, kn);
@@ -192,7 +206,7 @@ int
 kr_nexthop_add(u_int rtableid, struct bgpd_addr *addr)
 {
 	struct ktable		*kt;
-	struct knexthop_node	*h;
+	struct knexthop	*h;
 
 	if ((kt = ktable_get(rtableid)) == NULL) {
 		log_warnx("%s: non-existent rtableid %d", __func__, rtableid);
@@ -202,7 +216,7 @@ kr_nexthop_add(u_int rtableid, struct bgpd_addr *addr)
 		/* should not happen... this is actually an error path */
 		knexthop_send_update(h);
 	} else {
-		if ((h = calloc(1, sizeof(struct knexthop_node))) == NULL) {
+		if ((h = calloc(1, sizeof(struct knexthop))) == NULL) {
 			log_warn("%s", __func__);
 			return (-1);
 		}
@@ -218,8 +232,8 @@ kr_nexthop_add(u_int rtableid, struct bgpd_addr *addr)
 void
 kr_nexthop_delete(u_int rtableid, struct bgpd_addr *addr)
 {
-	struct ktable		*kt;
-	struct knexthop_node	*kn;
+	struct ktable	*kt;
+	struct knexthop	*kn;
 
 	if ((kt = ktable_get(rtableid)) == NULL) {
 		log_warnx("%s: non-existent rtableid %d", __func__,
@@ -233,12 +247,12 @@ kr_nexthop_delete(u_int rtableid, struct bgpd_addr *addr)
 }
 
 void
-knexthop_send_update(struct knexthop_node *kn)
+knexthop_send_update(struct knexthop *kn)
 {
 	struct kroute_nexthop	 n;
 #if 0
-	struct kroute_node	*kr;
-	struct kroute6_node	*kr6;
+	struct kroute	*kr;
+	struct kroute6	*kr6;
 #endif
 	struct ifaddrs		*ifap, *ifa;
 
@@ -558,7 +572,7 @@ kr_show_route(struct imsg *imsg)
 {
 	struct ctl_show_nexthop	 snh;
 	struct ktable		*kt;
-	struct knexthop_node	*h;
+	struct knexthop		*h;
 	int			 code;
 
 	switch (imsg->hdr.type) {
