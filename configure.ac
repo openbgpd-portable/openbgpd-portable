@@ -223,7 +223,12 @@ AC_CHECK_MEMBERS([struct tcp_md5sig.tcpm_key], , ,
 	  #include <netinet/in.h>
 	  #include <netinet/tcp.h> ]
 )
-AM_CONDITIONAL([HAVE_LINUX_TCPMD5], [test "x$ac_cv_member_struct_tcp_md5sig_tcpm_key" = xyes])
+AM_CONDITIONAL([HAVE_LINUX_TCPMD5],
+	[test "x$ac_cv_member_struct_tcp_md5sig_tcpm_key" = xyes])
+
+AC_CHECK_FUNCS([setfib])
+AM_CONDITIONAL([HAVE_SETFIB], [test "x$HOST_OS" = xfreebsd \
+	    -a "x$ac_cv_func_setfib" = "xyes"])
 
 AC_ARG_WITH([privsep-user],
 	AS_HELP_STRING([--with-privsep-user=user],

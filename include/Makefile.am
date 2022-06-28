@@ -1,6 +1,5 @@
 noinst_HEADERS =
 noinst_HEADERS += linux/rtnetlink.h
-noinst_HEADERS += net/pfkeyv2.h
 noinst_HEADERS += net/route.h
 noinst_HEADERS += netinet/in.h
 noinst_HEADERS += netinet/ip_ipsp.h

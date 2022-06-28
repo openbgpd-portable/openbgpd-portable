@@ -48,20 +48,28 @@ bgpd_SOURCES += mrt.c
 if HOST_OPENBSD
 bgpd_SOURCES += kroute.c
 else
+if HOST_FREEBSD
+bgpd_SOURCES += kroute-freebsd.c
+else
 if HAVE_MNL
 bgpd_SOURCES += kroute-linux.c
 else
 bgpd_SOURCES += kroute-disabled.c
 endif
 endif
+endif
 bgpd_SOURCES += control.c
 if HOST_OPENBSD
 bgpd_SOURCES += pfkey.c
+else
+if HOST_FREEBSD
+bgpd_SOURCES += pfkey-freebsd.c
 else
 if HAVE_LINUX_TCPMD5
 bgpd_SOURCES += pfkey-linux.c
 else
 bgpd_SOURCES += pfkey-disabled.c
+endif
 endif
 endif
 bgpd_SOURCES += rde_update.c
