@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: install missing deps
-        run: doas apt-get install libevent-dev
+        run: sudo apt-get install libevent-dev
       - name: autogen
         run: ./autogen.sh
       - name: compiler
