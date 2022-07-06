@@ -15,7 +15,7 @@
 #endif
 
 #if !defined(HAVE_ATTRIBUTE__DEAD) && !defined(__dead)
-#define __dead      __attribute__((__noreturn__))
+#define __dead		__attribute__((__noreturn__))
 #endif
 
 #if !defined(HAVE_ATTRIBUTE__BOUNDED__) && !defined(__bounded__)
@@ -23,7 +23,7 @@
 #endif
 
 #if !defined(HAVE_ATTRIBUTE__PACKED) && !defined(__packed)
-#define __packed      __attribute__((__packed__))
+#define __packed	__attribute__((__packed__))
 #endif
 
 #endif
