@@ -230,6 +230,37 @@ AC_CHECK_FUNCS([setfib])
 AM_CONDITIONAL([HAVE_SETFIB], [test "x$HOST_OS" = xfreebsd \
 	    -a "x$ac_cv_func_setfib" = "xyes"])
 
+AC_ARG_WITH([event],
+	AS_HELP_STRING([--with-event=pkg-name],
+		[Use pkg-config(1) pkg-name to find libevent]),
+	PKG_NAME="$withval"
+)
+if test X"$PKG_NAME" != X; then
+	LIBEVENT_CFLAGS=`pkg-config --cflags-only-I $PKG_NAME 2>/dev/null`
+	LIBEVENT_LDFLAGS=`pkg-config --libs-only-L $PKG_NAME 2>/dev/null`
+fi
+
+AC_ARG_WITH([event-cflags],
+	AS_HELP_STRING([--with-event-cflags=STRING],
+		[Extra compiler flags to build with libevent]),
+	LIBEVENT_CFLAGS="$withval"
+)
+AC_ARG_WITH([event-ldflags],
+	AS_HELP_STRING([--with-libtls-ldflags=STRING],
+		[Extra flags for linker to link with libevent]),
+	LIBEVENT_LDFLAGS="$withval"
+)
+AC_SUBST(LIBEVENT_CFLAGS)
+AC_SUBST(LIBEVENT_LDFLAGS)
+
+CFLAGS="$CFLAGS $LIBEVENT_CFLAGS"
+CPPFLAGS="$CPPFLAGS $LIBEVENT_CFLAGS"
+LDFLAGS="$LDFLAGS $LIBEVENT_LDFLAGS"
+
+AC_CHECK_HEADERS([event.h], [], [AC_MSG_ERROR([libevent headers required])])
+AC_CHECK_LIB([event], [event_init], [], [AC_MSG_ERROR([libevent required])])
+AC_CHECK_FUNCS([event_init event_dispatch], [], [AC_MSG_ERROR([libevent required])])
+
 AC_ARG_WITH([privsep-user],
 	AS_HELP_STRING([--with-privsep-user=user],
 		[Privilege separation user for bgpd to use]),
@@ -258,6 +289,7 @@ AC_CONFIG_FILES([
 	compat/Makefile
 	src/bgpctl/Makefile
 	src/bgpd/Makefile
+	src/bgplgd/Makefile
 ])
 
 AC_OUTPUT
