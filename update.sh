@@ -75,12 +75,12 @@ for i in "${arc4random_src}"/getentropy_*.c; do
 done
 ${CP} "${arc4random_src}"/arc4random_*.h compat
 
-for j in bgpd bgpctl ; do
+for j in bgpd bgpctl bgplgd ; do
 	for i in `awk '/SOURCES|HEADERS|MANS/ { print $3 }' src/$j/Makefile.am |grep -v top_srcdir` ; do
 		src=$j
 		[ ! -f $sbin_src/$src/$i ] && src=bgpd
 		[ ! -f $sbin_src/$src/$i ] && continue
-		echo Copying $i
+		echo Copying $i to $j
 		$CP $sbin_src/$src/$i src/$j/$i
 	done
 done
@@ -95,7 +95,7 @@ if [ -n "$(ls -A patches/*.patch 2>/dev/null)" ]; then
 fi
 
 # after patching rename man-page so that configure can adjust placeholders
-for j in bgpd bgpctl ; do
+for j in bgpd bgpctl bgplgd ; do
 	for i in `awk '/MANS (\+)?=/ { print $3 }' src/$j/Makefile.am |grep -v top_srcdir` ; do
 		${MV} src/$j/$i src/$j/$i.in
 	done

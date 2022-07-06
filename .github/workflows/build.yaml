@@ -16,6 +16,8 @@ jobs:
         compiler: [cc, clang, clang-12, gcc-10]
     steps:
       - uses: actions/checkout@v2
+      - name: install missing deps
+        run: sudo apt-get install libevent-dev
       - name: autogen
         run: ./autogen.sh
       - name: compiler

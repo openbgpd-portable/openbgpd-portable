@@ -14,6 +14,10 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 SUBDIRS = include compat src/bgpd src/bgpctl
+if BUILD_BGPLGD
+SUBDIRS += src/bgplgd
+endif
+
 ACLOCAL_AMFLAGS = -I m4
 
 EXTRA_DIST = README.md LICENSE VERSION bgpd.conf

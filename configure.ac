@@ -41,6 +41,7 @@ case $host_os in
 		HOST_OS=openbsd
 		AC_DEFINE([HAVE_ATTRIBUTE__BOUNDED__], [1], [OpenBSD has __bounded__])
 		AC_DEFINE([HAVE_ATTRIBUTE__DEAD], [1], [OpenBSD has __dead])
+		AC_DEFINE([HAVE_ATTRIBUTE__PACKED], [1], [OpenBSD has __packed])
 		;;
 	*solaris*)
 		HOST_OS=solaris
@@ -62,6 +63,15 @@ AC_PROG_CC_STDC
 AM_PROG_CC_C_O
 AC_PROG_LIBTOOL
 AC_PROG_YACC
+
+AC_ARG_ENABLE(bgplgd,
+	AS_HELP_STRING([--disable-bgplgd],
+		[ build bgplgd [default=enabled]]),
+	[case $enableval in
+		yes) enable_bgplgd=yes;;
+		no) enable_bgplgd=no;;
+		*) enable_bgplgd=yes;; esac],
+	enable_bgplgd=yes)
 
 AC_ARG_ENABLE(warnings,
 	AS_HELP_STRING([--disable-warnings],
@@ -230,14 +240,65 @@ AC_CHECK_FUNCS([setfib])
 AM_CONDITIONAL([HAVE_SETFIB], [test "x$HOST_OS" = xfreebsd \
 	    -a "x$ac_cv_func_setfib" = "xyes"])
 
+
+if test "$enable_bgplgd" = yes; then
+	AC_ARG_WITH([event],
+		AS_HELP_STRING([--with-event=pkg-name],
+			[Use pkg-config(1) pkg-name to find libevent]),
+		PKG_NAME="$withval"
+	)
+	if test X"$PKG_NAME" != X; then
+		LIBEVENT_CFLAGS=`pkg-config --cflags-only-I $PKG_NAME 2>/dev/null`
+		LIBEVENT_LDFLAGS=`pkg-config --libs-only-L $PKG_NAME 2>/dev/null`
+	fi
+
+	AC_ARG_WITH([event-cflags],
+		AS_HELP_STRING([--with-event-cflags=STRING],
+			[Extra compiler flags to build with libevent]),
+		LIBEVENT_CFLAGS="$withval"
+	)
+	AC_ARG_WITH([event-ldflags],
+		AS_HELP_STRING([--with-libtls-ldflags=STRING],
+			[Extra flags for linker to link with libevent]),
+		LIBEVENT_LDFLAGS="$withval"
+	)
+	AC_SUBST(LIBEVENT_CFLAGS)
+	AC_SUBST(LIBEVENT_LDFLAGS)
+
+	CFLAGS="$CFLAGS $LIBEVENT_CFLAGS"
+	CPPFLAGS="$CPPFLAGS $LIBEVENT_CFLAGS"
+	LDFLAGS="$LDFLAGS $LIBEVENT_LDFLAGS"
+
+	AC_CHECK_HEADERS([event.h], [],
+		[AC_MSG_ERROR([libevent headers required])])
+	AC_CHECK_LIB([event], [event_init], [],
+		[AC_MSG_ERROR([libevent required])])
+	AC_CHECK_FUNCS([event_init event_dispatch], [],
+		[AC_MSG_ERROR([libevent required])])
+fi
+
 AC_ARG_WITH([privsep-user],
 	AS_HELP_STRING([--with-privsep-user=user],
 		[Privilege separation user for bgpd to use]),
-	PRIVSEP_USER="$withval",
-	PRIVSEP_USER="_bgpd"
+	BGPD_USER="$withval",
+	BGPD_USER="_bgpd"
 )
-AC_DEFINE_UNQUOTED(BGPD_USER, "$PRIVSEP_USER", [Unprivileged user])
-AC_SUBST(PRIVSEP_USER)
+AC_DEFINE_UNQUOTED(BGPD_USER, "$BGPD_USER", [Unprivileged user])
+AC_SUBST(BGPD_USER)
+
+if test "$enable_bgplgd" = yes; then
+	AC_ARG_WITH([bgplgd-user],
+		AS_HELP_STRING([--with-bgplgd-user=user],
+			[Privilege drop user for bgplgd to use]),
+		BGPLGD_USER="$withval",
+		BGPLGD_USER="_bgplgd"
+	)
+	AC_DEFINE_UNQUOTED(BGPLGD_USER, "$BGPLGD_USER",
+		[bgplgd unprivileged user])
+	AC_SUBST(BGPLGD_USER)
+fi
+
+AM_CONDITIONAL([BUILD_BGPLGD], [test "$enable_bgplgd" = yes])
 
 # workaround the issue that there is no autoconf release supporting
 # runstatedir but many linux distros patched their versions instead
@@ -258,6 +319,7 @@ AC_CONFIG_FILES([
 	compat/Makefile
 	src/bgpctl/Makefile
 	src/bgpd/Makefile
+	src/bgplgd/Makefile
 ])
 
 AC_OUTPUT

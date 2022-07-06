@@ -1,0 +1,80 @@
+From f5ee2b2fa4e19bb6c94dea4430bd2a09b978ada6 Mon Sep 17 00:00:00 2001
+From: Claudio Jeker <claudio@openbsd.org>
+Date: Wed, 6 Jul 2022 12:27:27 +0200
+Subject: [PATCH 6/6] Add placeholders and compat fixes to bgplgd
+
+---
+ src/usr.sbin/bgplgd/bgplgd.8  |  4 ++--
+ src/usr.sbin/bgplgd/slowcgi.c | 12 ++++++++++--
+ 2 files changed, 12 insertions(+), 4 deletions(-)
+
+diff --git src/usr.sbin/bgplgd/bgplgd.8 src/usr.sbin/bgplgd/bgplgd.8
+index 9670545fdb..9879357a4b 100644
+--- src/usr.sbin/bgplgd/bgplgd.8
++++ src/usr.sbin/bgplgd/bgplgd.8
+@@ -42,7 +42,7 @@ opens a socket at
+ owned by www:www,
+ with permissions 0660.
+ It will then drop privileges to user
+-.Qq _bgplgd ,
++.Qq @BGPLGD_USER@ ,
+ .Xr unveil 2
+ the
+ .Xr bgpctl 8
+@@ -68,7 +68,7 @@ to query
+ Use
+ .Ar socket
+ instead of the default
+-.Pa /var/run/bgpd.rsock
++.Pa @RUNSTATEDIR@/bgpd.rsock
+ to communicate with
+ .Xr bgpd 8 .
+ .It Fl s Ar socket
+diff --git src/usr.sbin/bgplgd/slowcgi.c src/usr.sbin/bgplgd/slowcgi.c
+index c229142a6d..2f667a4fac 100644
+--- src/usr.sbin/bgplgd/slowcgi.c
++++ src/usr.sbin/bgplgd/slowcgi.c
+@@ -45,8 +45,12 @@
+ #include "http.h"
+ 
+ #define TIMEOUT_DEFAULT		 120
++#ifndef	WWW_USER
+ #define WWW_USER		 "www"
++#endif
++#ifndef	BGPLGD_USER
+ #define BGPLGD_USER		 "_bgplgd"
++#endif
+ 
+ #define FCGI_CONTENT_SIZE	 65535
+ #define FCGI_PADDING_SIZE	 255
+@@ -224,7 +228,10 @@ int			debug = 0;
+ int			on = 1;
+ char			*fcgi_socket = "/var/www/run/bgplgd.sock";
+ char			*bgpctlpath = "bgpctl";
+-char			*bgpctlsock = "/var/run/bgpd.rsock";
++#ifndef RUNSTATEDIR
++#define RUNSTATEDIR "/var/run"
++#endif
++char			*bgpctlsock = RUNSTATEDIR "/bgpd.rsock";
+ 
+ 
+ /*
+@@ -423,13 +430,14 @@ accept_reserve(int sockfd, struct sockaddr *addr, socklen_t *addrlen,
+     int reserve, volatile int *counter)
+ {
+ 	int ret;
++#ifdef HAVE_GETDTABLECOUNT
+ 	if (getdtablecount() + reserve +
+ 	    ((*counter + 1) * FD_NEEDED) >= getdtablesize()) {
+ 		ldebug("inflight fds exceeded");
+ 		errno = EMFILE;
+ 		return -1;
+ 	}
+-
++#endif
+ 	if ((ret = accept4(sockfd, addr, addrlen, SOCK_NONBLOCK | SOCK_CLOEXEC))
+ 	    > -1) {
+ 		(*counter)++;
+-- 
+2.37.0
+

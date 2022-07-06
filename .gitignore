@@ -64,7 +64,10 @@ include/vis.h
 
 src/bgpctl/bgpctl
 src/bgpd/bgpd
+src/bgplgd/bgplgd
 src/bgpctl/*.[ch]
 src/bgpctl/*.in
 src/bgpd/*.[ch]
 src/bgpd/*.in
+src/bgplgd/*.[ch]
+src/bgplgd/*.in
