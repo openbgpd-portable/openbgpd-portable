@@ -258,7 +258,7 @@ if test "$enable_bgplgd" = yes; then
 		LIBEVENT_CFLAGS="$withval"
 	)
 	AC_ARG_WITH([event-ldflags],
-		AS_HELP_STRING([--with-libtls-ldflags=STRING],
+		AS_HELP_STRING([--with-event-ldflags=STRING],
 			[Extra flags for linker to link with libevent]),
 		LIBEVENT_LDFLAGS="$withval"
 	)
@@ -279,7 +279,7 @@ fi
 
 AC_ARG_WITH([privsep-user],
 	AS_HELP_STRING([--with-privsep-user=user],
-		[Privilege separation user for bgpd to use]),
+		[Privilege separation user for bgpd]),
 	BGPD_USER="$withval",
 	BGPD_USER="_bgpd"
 )
@@ -289,7 +289,7 @@ AC_SUBST(BGPD_USER)
 if test "$enable_bgplgd" = yes; then
 	AC_ARG_WITH([bgplgd-user],
 		AS_HELP_STRING([--with-bgplgd-user=user],
-			[Privilege drop user for bgplgd to use]),
+			[Privilege drop user for bgplgd]),
 		BGPLGD_USER="$withval",
 		BGPLGD_USER="_bgplgd"
 	)
