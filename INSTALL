@@ -5,6 +5,8 @@ You will need an entropy (randomness) source.  If your OS has arc4random or
 getentropy then that is ideal. Otherwise, you can use the builtin arc4random
 implementation or the one built into LibreSSL.
 
+To build bgplgd libevent is required. The Linux netlink support requires libmnl.
+
 2. Building / Installation
 --------------------------
 
@@ -70,9 +72,19 @@ must be owned by root, and must not be group or world-writable.
 There are a few options to the configure script in addition to the ones
 provided by autoconf itself:
 
---with-privsep-user=[user]
+--with-privsep-user=user
  Specify unprivileged user used for privilege separation.  The default
  is "_bgpd".
+
+--disable-bgplgd
+Skip build of bgplgd. The default is --enable-bgplgd.
+
+--with-bgplgd-user=user
+ Privilege drop user used by bgplgd.  The default is "_bgplgd".
+
+--with-runstatedir=DIR
+ Location for bgpd control socket [LOCALSTATEDIR/run]
+
 
 If you need to pass special options to the compiler or linker, you
 can specify these as environment variables before running ./configure.
