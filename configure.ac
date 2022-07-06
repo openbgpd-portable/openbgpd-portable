@@ -265,11 +265,20 @@ AC_CHECK_FUNCS([event_init event_dispatch], [], [AC_MSG_ERROR([libevent required
 AC_ARG_WITH([privsep-user],
 	AS_HELP_STRING([--with-privsep-user=user],
 		[Privilege separation user for bgpd to use]),
-	PRIVSEP_USER="$withval",
-	PRIVSEP_USER="_bgpd"
+	BGPD_USER="$withval",
+	BGPD_USER="_bgpd"
 )
-AC_DEFINE_UNQUOTED(BGPD_USER, "$PRIVSEP_USER", [Unprivileged user])
-AC_SUBST(PRIVSEP_USER)
+AC_DEFINE_UNQUOTED(BGPD_USER, "$BGPD_USER", [Unprivileged user])
+AC_SUBST(BGPD_USER)
+
+AC_ARG_WITH([bgplgd-user],
+	AS_HELP_STRING([--with-bgplgd-user=user],
+		[Privilege drop user for bgplgd to use]),
+	BGPLGD_USER="$withval",
+	BGPLGD_USER="_bgplgd"
+)
+AC_DEFINE_UNQUOTED(BGPLGD_USER, "$BGPLGD_USER", [bgplgd unprivileged user])
+AC_SUBST(BGPLGD_USER)
 
 # workaround the issue that there is no autoconf release supporting
 # runstatedir but many linux distros patched their versions instead

@@ -1,7 +1,7 @@
-From 0da63ceaadc58905d87ab1e370fe88cd54874073 Mon Sep 17 00:00:00 2001
+From 382af438186719e9e2f3ade2bebe8e74fd78ac72 Mon Sep 17 00:00:00 2001
 From: Claudio Jeker <claudio@openbsd.org>
 Date: Tue, 5 May 2020 09:13:19 +0200
-Subject: [PATCH 5/5] Add placeholders to manual pages
+Subject: [PATCH 5/6] Add placeholders to manual pages
 
 ---
  src/usr.sbin/bgpctl/bgpctl.8  | 8 ++++----
@@ -39,7 +39,7 @@ index a9e6accdf1..c553937e9b 100644
  .Xr bgpd 8
  control socket
 diff --git src/usr.sbin/bgpd/bgpd.8 src/usr.sbin/bgpd/bgpd.8
-index 4dac23a64b..5e4a3fbeda 100644
+index 6bf7f45f9f..36a6ab1408 100644
 --- src/usr.sbin/bgpd/bgpd.8
 +++ src/usr.sbin/bgpd/bgpd.8
 @@ -197,7 +197,7 @@ Use
@@ -68,19 +68,19 @@ index 4dac23a64b..5e4a3fbeda 100644
  .Nm
  control socket, where
 diff --git src/usr.sbin/bgpd/bgpd.conf.5 src/usr.sbin/bgpd/bgpd.conf.5
-index db797c889b..380cbc731a 100644
+index 708ac5c767..c95b600b69 100644
 --- src/usr.sbin/bgpd/bgpd.conf.5
 +++ src/usr.sbin/bgpd/bgpd.conf.5
 @@ -382,7 +382,7 @@ If
  .Ic restricted
- is specified a restricted control socket will be created.
+ is specified, a restricted control socket will be created.
  By default
 -.Pa /var/run/bgpd.sock.<rdomain>
 +.Pa @RUNSTATEDIR@/bgpd.sock.<rdomain>
  is used where
  .Ar <rdomain>
  is the routing domain in which
-@@ -2025,12 +2025,10 @@ For prefixes with equally long paths, the prefix with the larger weight
+@@ -2062,12 +2062,10 @@ For prefixes with equally long paths, the prefix with the larger weight
  is selected.
  .El
  .Sh FILES
@@ -96,5 +96,5 @@ index db797c889b..380cbc731a 100644
  .Sh SEE ALSO
  .Xr strftime 3 ,
 -- 
-2.35.1
+2.37.0
 
