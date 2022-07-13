@@ -9,6 +9,7 @@ noinst_HEADERS += sys/socket.h
 noinst_HEADERS += sys/time.h
 noinst_HEADERS += sys/tree.h
 noinst_HEADERS += sys/types.h
+noinst_HEADERS += sys/wait.h
 noinst_HEADERS += endian.h
 noinst_HEADERS += imsg.h
 noinst_HEADERS += sha2.h
