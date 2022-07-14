@@ -3008,7 +3008,7 @@ dispatch_rtmsg(void)
 	struct if_msghdr	 ifm;
 	struct kroute_full	 kl;
 	struct ktable		*kt;
-	int			 mpath = 0;
+	int			 mpath = 1;
 
 	if ((n = read(kr_state.fd, &buf, sizeof(buf))) == -1) {
 		if (errno == EAGAIN || errno == EINTR)
