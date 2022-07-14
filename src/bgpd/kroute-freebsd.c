@@ -484,6 +484,7 @@ kr4_change(struct ktable *kt, struct kroute_full *kf)
 {
 	struct kroute	*kr;
 	int		 action = RTM_ADD;
+	uint16_t	 labelid;
 
 	/* for blackhole and reject routes nexthop needs to be 127.0.0.1 */
 	if (kf->flags & (F_BLACKHOLE|F_REJECT))
@@ -493,7 +494,7 @@ kr4_change(struct ktable *kt, struct kroute_full *kf)
 	    htonl(INADDR_LOOPBACK & IN_CLASSA_NET))
 		return (0);
 
-	/* Silently ignore route labels, they are not supported */
+	labelid = rtlabel_name2id(kf->label);
 
 	if ((kr = kroute_find(kt, &kf->prefix, kf->prefixlen,
 	    RTP_MINE)) != NULL)
@@ -509,13 +510,17 @@ kr4_change(struct ktable *kt, struct kroute_full *kf)
 		kr->nexthop.s_addr = kf->nexthop.v4.s_addr;
 		kr->flags = kf->flags | F_BGPD;
 		kr->priority = RTP_MINE;
+		kr->labelid = labelid;
 
 		if (kroute_insert(kt, kr) == -1) {
+			rtlabel_unref(kr->labelid);
 			free(kr);
 			return (-1);
 		}
 	} else {
 		kr->nexthop.s_addr = kf->nexthop.v4.s_addr;
+		rtlabel_unref(kr->labelid);
+		kr->labelid = labelid;
 		if (kf->flags & F_BLACKHOLE)
 			kr->flags |= F_BLACKHOLE;
 		else
@@ -543,6 +548,7 @@ kr6_change(struct ktable *kt, struct kroute_full *kf)
 	struct kroute6	*kr6;
 	struct in6_addr	 lo6 = IN6ADDR_LOOPBACK_INIT;
 	int		 action = RTM_ADD;
+	uint16_t	 labelid;
 
 	/* for blackhole and reject routes nexthop needs to be ::1 */
 	if (kf->flags & (F_BLACKHOLE|F_REJECT))
@@ -551,7 +557,7 @@ kr6_change(struct ktable *kt, struct kroute_full *kf)
 	else if (IN6_IS_ADDR_LOOPBACK(&kf->nexthop.v6))
 		return (0);
 
-	/* Silently ignore route labels, they are not supported */
+	labelid = rtlabel_name2id(kf->label);
 
 	if ((kr6 = kroute6_find(kt, &kf->prefix, kf->prefixlen,
 	    RTP_MINE)) != NULL)
@@ -569,14 +575,18 @@ kr6_change(struct ktable *kt, struct kroute_full *kf)
 		kr6->nexthop_scope_id = kf->nexthop.scope_id;
 		kr6->flags = kf->flags | F_BGPD;
 		kr6->priority = RTP_MINE;
+		kr6->labelid = labelid;
 
 		if (kroute6_insert(kt, kr6) == -1) {
+			rtlabel_unref(kr6->labelid);
 			free(kr6);
 			return (-1);
 		}
 	} else {
 		memcpy(&kr6->nexthop, &kf->nexthop.v6, sizeof(struct in6_addr));
 		kr6->nexthop_scope_id = kf->nexthop.scope_id;
+		rtlabel_unref(kr6->labelid);
+		kr6->labelid = labelid;
 		if (kf->flags & F_BLACKHOLE)
 			kr6->flags |= F_BLACKHOLE;
 		else
@@ -1125,10 +1135,12 @@ kr_net_match(struct ktable *kt, struct network_config *net, uint16_t flags,
 				break;
 			continue;
 		case NETWORK_RTLABEL:
-			/* XXX: no route label support */
+			if (net->rtlabel == xn->net.rtlabel)
+				break;
 			continue;
 		case NETWORK_PRIORITY:
-			/* XXX: no real priority support */
+			if (net->priority == xn->net.priority)
+				break;
 			continue;
 		case NETWORK_MRTCLONE:
 		case NETWORK_PREFIXSET:
@@ -1210,6 +1222,7 @@ kr_redistribute(int type, struct ktable *kt, struct kroute *kr)
 	net.prefix.aid = AID_INET;
 	net.prefix.v4.s_addr = kr->prefix.s_addr;
 	net.prefixlen = kr->prefixlen;
+	net.rtlabel = kr->labelid;
 	net.priority = kr->priority;
 
 	/* shortcut for removals */
@@ -1256,6 +1269,7 @@ kr_redistribute6(int type, struct ktable *kt, struct kroute6 *kr6)
 	memcpy(&net.prefix.v6, &kr6->prefix, sizeof(struct in6_addr));
 	net.prefix.scope_id = kr6->prefix_scope_id;
 	net.prefixlen = kr6->prefixlen;
+	net.rtlabel = kr6->labelid;
 	net.priority = kr6->priority;
 
 	/* shortcut for removals */
@@ -1393,11 +1407,13 @@ kr_tofull(struct kroute *kr)
 	kf.prefix.v4.s_addr = kr->prefix.s_addr;
 	kf.nexthop.aid = AID_INET;
 	kf.nexthop.v4.s_addr = kr->nexthop.s_addr;
+	strlcpy(kf.label, rtlabel_id2name(kr->labelid), sizeof(kf.label));
 	kf.flags = kr->flags;
 	kf.ifindex = kr->ifindex;
 	kf.prefixlen = kr->prefixlen;
 	kf.priority = kr->priority == RTP_MINE ?
 	    kr_state.fib_prio : kr->priority;
+	kf.mplslabel = kr->mplslabel;
 
 	return (&kf);
 }
@@ -1421,6 +1437,7 @@ kr6_tofull(struct kroute6 *kr6)
 	kf.prefixlen = kr6->prefixlen;
 	kf.priority = kr6->priority == RTP_MINE ?
 	    kr_state.fib_prio : kr6->priority;
+	kf.mplslabel = kr6->mplslabel;
 
 	return (&kf);
 }
@@ -1697,9 +1714,12 @@ kroute_remove(struct ktable *kt, struct kroute *kr)
 
 	if (kr->flags & F_CONNECTED)
 		if (kif_kr_remove(kr) == -1) {
+			rtlabel_unref(kr->labelid);
 			free(kr);
 			return (-1);
 		}
+
+	rtlabel_unref(kr->labelid);
 
 	free(kr);
 	return (0);
@@ -1850,9 +1870,12 @@ kroute6_remove(struct ktable *kt, struct kroute6 *kr)
 
 	if (kr->flags & F_CONNECTED)
 		if (kif_kr6_remove(kr) == -1) {
+			rtlabel_unref(kr->labelid);
 			free(kr);
 			return (-1);
 		}
+
+	rtlabel_unref(kr->labelid);
 
 	free(kr);
 	return (0);
