@@ -73,6 +73,15 @@ AC_ARG_ENABLE(bgplgd,
 		*) enable_bgplgd=yes;; esac],
 	enable_bgplgd=yes)
 
+AC_ARG_ENABLE(netlink,
+	AS_HELP_STRING([--enable-netlink],
+		[ build with netlink support [default=disabled]]),
+	[case $enableval in
+		yes) enable_netlink=yes;;
+		no) enable_netlink=no;;
+		*) enable_netlink=no;; esac],
+	enable_netlink=no)
+
 AC_ARG_ENABLE(warnings,
 	AS_HELP_STRING([--disable-warnings],
 		[ enable compiler warnings [default=enabled]]),
@@ -112,8 +121,23 @@ AM_LDFLAGS="$LDFLAGS $CLANG_FLAGS"
 AC_SUBST(AM_CFLAGS)
 AC_SUBST(AM_LDFLAGS)
 
+# check for headers
+AC_CHECK_HEADERS([endian.h])
+AC_CHECK_HEADERS([netinet/ip_ipsp.h], [], [], [[#include <sys/socket.h>]])
+AC_CHECK_HEADERS([linux/in6.h])
+
+# check auxiliary libraries that might contain other functions
+AC_SEARCH_LIBS([arc4random], [crypto])
+AC_SEARCH_LIBS([clock_gettime],[rt posix4])
+AC_SEARCH_LIBS([ibuf_open], [util])
+AC_SEARCH_LIBS([SHA512Init], [md])
+AC_SEARCH_LIBS([inet_net_pton],[resolv])
+AC_SEARCH_LIBS([fmt_scaled], [util])
+
 # check functions that are expected to be in libc
-AC_CHECK_FUNCS([arc4random asprintf explicit_bzero])
+AC_CHECK_FUNCS([arc4random clock_gettime ibuf_open SHA512Init])
+AC_CHECK_FUNCS([inet_net_pton fmt_scaled])
+AC_CHECK_FUNCS([asprintf explicit_bzero])
 AC_CHECK_FUNCS([getentropy reallocarray recallocarray freezero])
 AC_CHECK_FUNCS([setproctitle setgroups])
 AC_CHECK_FUNCS([setregid setresgid setreuid setresuid])
@@ -159,24 +183,13 @@ static void sighandler(int sig) { _exit(1); }
  )
 fi
 
-
-AC_CHECK_HEADERS([endian.h])
-AC_CHECK_HEADERS([netinet/ip_ipsp.h], [], [], [[#include <sys/socket.h>]])
-AC_CHECK_HEADERS([linux/in6.h])
-
-# check auxiliary libraries that might contain other functions
-AC_SEARCH_LIBS([arc4random], [crypto])
-AC_SEARCH_LIBS([clock_gettime],[rt posix4])
-AC_SEARCH_LIBS([ibuf_open], [util])
-AC_SEARCH_LIBS([SHA512Init], [md])
-AC_SEARCH_LIBS([inet_net_pton],[resolv])
-AC_SEARCH_LIBS([fmt_scaled], [util])
-
-# check for libmnl
-AC_SEARCH_LIBS([mnl_socket_recvfrom], [mnl])
-
-AC_CHECK_FUNCS([arc4random clock_gettime ibuf_open SHA512Init])
-AC_CHECK_FUNCS([inet_net_pton fmt_scaled])
+if test "$enable_netlink" = yes; then
+	# check for libmnl
+	AC_CHECK_LIB([mnl], [mnl_socket_recvfrom], [],
+		[AC_MSG_ERROR([libmnl required])])
+	AC_CHECK_FUNCS([mnl_socket_recvfrom], [],
+		[AC_MSG_ERROR([libmnl required])])
+fi
 
 # Share test results with automake
 AM_CONDITIONAL([HAVE_ARC4RANDOM], [test "x$ac_cv_func_arc4random" = xyes])
@@ -211,7 +224,7 @@ AM_CONDITIONAL([HAVE_STRNVIS], [test "x$ac_cv_func_strnvis" = xyes])
 AM_CONDITIONAL([BROKEN_STRNVIS], [test "x$ac_cv_broken_strnvis" = xyes])
 AM_CONDITIONAL([HAVE_INET_NET_PTON], [test "x$ac_cv_func_inet_net_pton" = xyes])
 AM_CONDITIONAL([HAVE_FMT_SCALED], [test "x$ac_cv_func_fmt_scaled" = xyes])
-AM_CONDITIONAL([HAVE_MNL], [test "x$ac_cv_search_mnl_socket_recvfrom" = "x-lmnl"])
+AM_CONDITIONAL([HAVE_MNL], [test "x$ac_cv_func_mnl_socket_recvfrom" = "xyes"])
 
 # overrides for arc4random implementations with known issues
 AM_CONDITIONAL([HAVE_ARC4RANDOM],
