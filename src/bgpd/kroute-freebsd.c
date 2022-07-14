@@ -72,6 +72,8 @@ struct kroute6 {
 	struct kroute6		*next;
 	struct in6_addr		 prefix;
 	struct in6_addr		 nexthop;
+	uint32_t		 prefix_scope_id;	/* because ... */
+	uint32_t		 nexthop_scope_id;
 	uint32_t		 mplslabel;
 	uint16_t		 flags;
 	uint16_t		 labelid;
@@ -478,22 +480,22 @@ kr_change(u_int rtableid, struct kroute_full *kl)
 }
 
 int
-kr4_change(struct ktable *kt, struct kroute_full *kl)
+kr4_change(struct ktable *kt, struct kroute_full *kf)
 {
 	struct kroute	*kr;
 	int		 action = RTM_ADD;
 
 	/* for blackhole and reject routes nexthop needs to be 127.0.0.1 */
-	if (kl->flags & (F_BLACKHOLE|F_REJECT))
-		kl->nexthop.v4.s_addr = htonl(INADDR_LOOPBACK);
+	if (kf->flags & (F_BLACKHOLE|F_REJECT))
+		kf->nexthop.v4.s_addr = htonl(INADDR_LOOPBACK);
 	/* nexthop within 127/8 -> ignore silently */
-	else if ((kl->nexthop.v4.s_addr & htonl(IN_CLASSA_NET)) ==
+	else if ((kf->nexthop.v4.s_addr & htonl(IN_CLASSA_NET)) ==
 	    htonl(INADDR_LOOPBACK & IN_CLASSA_NET))
 		return (0);
 
 	/* Silently ignore route labels, they are not supported */
 
-	if ((kr = kroute_find(kt, &kl->prefix, kl->prefixlen,
+	if ((kr = kroute_find(kt, &kf->prefix, kf->prefixlen,
 	    RTP_MINE)) != NULL)
 		action = RTM_CHANGE;
 
@@ -502,10 +504,10 @@ kr4_change(struct ktable *kt, struct kroute_full *kl)
 			log_warn("%s", __func__);
 			return (-1);
 		}
-		kr->prefix.s_addr = kl->prefix.v4.s_addr;
-		kr->prefixlen = kl->prefixlen;
-		kr->nexthop.s_addr = kl->nexthop.v4.s_addr;
-		kr->flags = kl->flags | F_BGPD;
+		kr->prefix.s_addr = kf->prefix.v4.s_addr;
+		kr->prefixlen = kf->prefixlen;
+		kr->nexthop.s_addr = kf->nexthop.v4.s_addr;
+		kr->flags = kf->flags | F_BGPD;
 		kr->priority = RTP_MINE;
 
 		if (kroute_insert(kt, kr) == -1) {
@@ -513,19 +515,19 @@ kr4_change(struct ktable *kt, struct kroute_full *kl)
 			return (-1);
 		}
 	} else {
-		kr->nexthop.s_addr = kl->nexthop.v4.s_addr;
-		if (kl->flags & F_BLACKHOLE)
+		kr->nexthop.s_addr = kf->nexthop.v4.s_addr;
+		if (kf->flags & F_BLACKHOLE)
 			kr->flags |= F_BLACKHOLE;
 		else
 			kr->flags &= ~F_BLACKHOLE;
-		if (kl->flags & F_REJECT)
+		if (kf->flags & F_REJECT)
 			kr->flags |= F_REJECT;
 		else
 			kr->flags &= ~F_REJECT;
 	}
 
 	/* check if there is already a kernel, higher prio route */
-	if (kroute_find(kt, &kl->prefix, kl->prefixlen, RTP_KERN) !=
+	if (kroute_find(kt, &kf->prefix, kf->prefixlen, RTP_KERN) !=
 	    NULL)
 		return (0);
 
@@ -536,22 +538,22 @@ kr4_change(struct ktable *kt, struct kroute_full *kl)
 }
 
 int
-kr6_change(struct ktable *kt, struct kroute_full *kl)
+kr6_change(struct ktable *kt, struct kroute_full *kf)
 {
 	struct kroute6	*kr6;
 	struct in6_addr	 lo6 = IN6ADDR_LOOPBACK_INIT;
 	int		 action = RTM_ADD;
 
 	/* for blackhole and reject routes nexthop needs to be ::1 */
-	if (kl->flags & (F_BLACKHOLE|F_REJECT))
-		bcopy(&lo6, &kl->nexthop.v6, sizeof(kl->nexthop.v6));
+	if (kf->flags & (F_BLACKHOLE|F_REJECT))
+		bcopy(&lo6, &kf->nexthop.v6, sizeof(kf->nexthop.v6));
 	/* nexthop to loopback -> ignore silently */
-	else if (IN6_IS_ADDR_LOOPBACK(&kl->nexthop.v6))
+	else if (IN6_IS_ADDR_LOOPBACK(&kf->nexthop.v6))
 		return (0);
 
 	/* Silently ignore route labels, they are not supported */
 
-	if ((kr6 = kroute6_find(kt, &kl->prefix, kl->prefixlen,
+	if ((kr6 = kroute6_find(kt, &kf->prefix, kf->prefixlen,
 	    RTP_MINE)) != NULL)
 		action = RTM_CHANGE;
 
@@ -560,11 +562,12 @@ kr6_change(struct ktable *kt, struct kroute_full *kl)
 			log_warn("%s", __func__);
 			return (-1);
 		}
-		memcpy(&kr6->prefix, &kl->prefix.v6, sizeof(struct in6_addr));
-		kr6->prefixlen = kl->prefixlen;
-		memcpy(&kr6->nexthop, &kl->nexthop.v6,
-		    sizeof(struct in6_addr));
-		kr6->flags = kl->flags | F_BGPD;
+		memcpy(&kr6->prefix, &kf->prefix.v6, sizeof(struct in6_addr));
+		kr6->prefix_scope_id = kf->prefix.scope_id;
+		kr6->prefixlen = kf->prefixlen;
+		memcpy(&kr6->nexthop, &kf->nexthop.v6, sizeof(struct in6_addr));
+		kr6->nexthop_scope_id = kf->nexthop.scope_id;
+		kr6->flags = kf->flags | F_BGPD;
 		kr6->priority = RTP_MINE;
 
 		if (kroute6_insert(kt, kr6) == -1) {
@@ -572,20 +575,20 @@ kr6_change(struct ktable *kt, struct kroute_full *kl)
 			return (-1);
 		}
 	} else {
-		memcpy(&kr6->nexthop, &kl->nexthop.v6,
-		    sizeof(struct in6_addr));
-		if (kl->flags & F_BLACKHOLE)
+		memcpy(&kr6->nexthop, &kf->nexthop.v6, sizeof(struct in6_addr));
+		kr6->nexthop_scope_id = kf->nexthop.scope_id;
+		if (kf->flags & F_BLACKHOLE)
 			kr6->flags |= F_BLACKHOLE;
 		else
 			kr6->flags &= ~F_BLACKHOLE;
-		if (kl->flags & F_REJECT)
+		if (kf->flags & F_REJECT)
 			kr6->flags |= F_REJECT;
 		else
 			kr6->flags &= ~F_REJECT;
 	}
 
 	/* check if there is already a kernel, higher prio route */
-	if (kroute6_find(kt, &kl->prefix, kl->prefixlen, RTP_KERN) != NULL)
+	if (kroute6_find(kt, &kf->prefix, kf->prefixlen, RTP_KERN) != NULL)
 		return (0);
 
 	if (send_rt6msg(kr_state.fd, action, kt, kr6))
@@ -1251,6 +1254,7 @@ kr_redistribute6(int type, struct ktable *kt, struct kroute6 *kr6)
 	bzero(&net, sizeof(net));
 	net.prefix.aid = AID_INET6;
 	memcpy(&net.prefix.v6, &kr6->prefix, sizeof(struct in6_addr));
+	net.prefix.scope_id = kr6->prefix_scope_id;
 	net.prefixlen = kr6->prefixlen;
 	net.priority = kr6->priority;
 
@@ -1407,17 +1411,10 @@ kr6_tofull(struct kroute6 *kr6)
 
 	kf.prefix.aid = AID_INET6;
 	memcpy(&kf.prefix.v6, &kr6->prefix, sizeof(struct in6_addr));
-	/* only set scope_id for link-local addresses because IPv6 */
-	if (IN6_IS_ADDR_LINKLOCAL(&kr6->prefix) ||
-	    IN6_IS_ADDR_MC_LINKLOCAL(&kr6->prefix) ||
-	    IN6_IS_ADDR_MC_NODELOCAL(&kr6->prefix))
-		kf.prefix.scope_id = kr6->ifindex;
+	kf.prefix.scope_id = kr6->prefix_scope_id;
 	kf.nexthop.aid = AID_INET6;
 	memcpy(&kf.nexthop.v6, &kr6->nexthop, sizeof(struct in6_addr));
-	if (IN6_IS_ADDR_LINKLOCAL(&kr6->nexthop) ||
-	    IN6_IS_ADDR_MC_LINKLOCAL(&kr6->nexthop) ||
-	    IN6_IS_ADDR_MC_NODELOCAL(&kr6->nexthop))
-		kf.nexthop.scope_id = kr6->ifindex;
+	kf.nexthop.scope_id = kr6->nexthop_scope_id;
 	strlcpy(kf.label, rtlabel_id2name(kr6->labelid), sizeof(kf.label));
 	kf.flags = kr6->flags;
 	kf.ifindex = kr6->ifindex;
@@ -1465,6 +1462,10 @@ kroute6_compare(struct kroute6 *a, struct kroute6 *b)
 		if (a->prefix.s6_addr[i] > b->prefix.s6_addr[i])
 			return (1);
 	}
+	if (a->prefix_scope_id < b->prefix_scope_id)
+		return (-1);
+	if (a->prefix_scope_id > b->prefix_scope_id)
+		return (1);
 
 	if (a->prefixlen < b->prefixlen)
 		return (-1);
@@ -1721,6 +1722,7 @@ kroute6_find(struct ktable *kt, const struct bgpd_addr *prefix,
 	struct kroute6	*kn6, *tmp;
 
 	s.prefix = prefix->v6;
+	s.prefix_scope_id = prefix->scope_id;
 	s.prefixlen = prefixlen;
 	s.priority = prio;
 
@@ -1750,7 +1752,8 @@ kroute6_matchgw(struct kroute6 *kr, struct bgpd_addr *gw)
 	nexthop = gw->v6;
 
 	do {
-		if (memcmp(&kr->nexthop, &nexthop, sizeof(nexthop)) == 0)
+		if (memcmp(&kr->nexthop, &nexthop, sizeof(nexthop)) == 0 &&
+		    kr->nexthop_scope_id == gw->scope_id)
 			return (kr);
 		kr = kr->next;
 	} while (kr);
@@ -2270,11 +2273,13 @@ knexthop_send_update(struct knexthop *kn)
 			n.gateway.aid = AID_INET6;
 			memcpy(&n.gateway.v6, &kr6->nexthop,
 			    sizeof(struct in6_addr));
+			n.gateway.scope_id = kr6->nexthop_scope_id;
 		}
 		if (n.connected) {
 			n.net.aid = AID_INET6;
 			memcpy(&n.net.v6, &kr6->prefix,
 			    sizeof(struct in6_addr));
+			n.net.scope_id = kr6->prefix_scope_id;
 			n.netlen = kr6->prefixlen;
 		}
 		break;
@@ -2902,10 +2907,12 @@ fetchtable(struct ktable *kt)
 				return (-1);
 			}
 			kr6->prefix = kl.prefix.v6;
+			kr6->prefix_scope_id = kl.prefix.scope_id;
 			kr6->prefixlen = kl.prefixlen;
-			if (kl.nexthop.aid == AID_INET6)
+			if (kl.nexthop.aid == AID_INET6) {
 				kr6->nexthop = kl.nexthop.v6;
-			else
+				kr6->nexthop_scope_id = kl.nexthop.scope_id;
+			} else
 				kr6->nexthop = in6addr_any;
 			kr6->flags = kl.flags;
 			kr6->ifindex = kl.ifindex;
@@ -3252,6 +3259,7 @@ kr_fib_change(struct ktable *kt, struct kroute_full *kl, int type, int mpath)
 						changed = 1;
 					kr->nexthop.s_addr =
 					    kl->nexthop.v4.s_addr;
+					kr->ifindex = kl->ifindex;
 				} else {
 					if (kr->nexthop.s_addr != 0)
 						changed = 1;
@@ -3316,9 +3324,13 @@ add4:
 				if (kl->nexthop.aid == AID_INET6) {
 					if (memcmp(&kr6->nexthop,
 					    &kl->nexthop.v6,
-					    sizeof(struct in6_addr)))
+					    sizeof(struct in6_addr)) ||
+					    kr6->nexthop_scope_id !=
+					    kl->nexthop.scope_id)
 						changed = 1;
 					kr6->nexthop = kl->nexthop.v6;
+					kr6->nexthop_scope_id =
+					    kl->nexthop.scope_id;
 					kr6->ifindex = kl->ifindex;
 				} else {
 					if (memcmp(&kr6->nexthop,
@@ -3326,6 +3338,7 @@ add4:
 					    sizeof(struct in6_addr)))
 						changed = 1;
 					kr6->nexthop = in6addr_any;
+					kr6->nexthop_scope_id = 0;
 					kr6->ifindex = kl->ifindex;
 				}
 
@@ -3360,10 +3373,12 @@ add6:
 				return (-1);
 			}
 			kr6->prefix = kl->prefix.v6;
+			kr6->prefix_scope_id = kl->prefix.scope_id;
 			kr6->prefixlen = kl->prefixlen;
-			if (kl->nexthop.aid == AID_INET6)
+			if (kl->nexthop.aid == AID_INET6) {
 				kr6->nexthop = kl->nexthop.v6;
-			else
+				kr6->nexthop_scope_id = kl->nexthop.scope_id;
+			} else
 				kr6->nexthop = in6addr_any;
 			kr6->flags = flags;
 			kr6->ifindex = kl->ifindex;
