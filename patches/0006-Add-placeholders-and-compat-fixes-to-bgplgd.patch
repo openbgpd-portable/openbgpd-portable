@@ -1,4 +1,4 @@
-From f5ee2b2fa4e19bb6c94dea4430bd2a09b978ada6 Mon Sep 17 00:00:00 2001
+From 3b9758416bbf595541a2422cb70937ce9648cfa3 Mon Sep 17 00:00:00 2001
 From: Claudio Jeker <claudio@openbsd.org>
 Date: Wed, 6 Jul 2022 12:27:27 +0200
 Subject: [PATCH 6/6] Add placeholders and compat fixes to bgplgd
@@ -9,7 +9,7 @@ Subject: [PATCH 6/6] Add placeholders and compat fixes to bgplgd
  2 files changed, 12 insertions(+), 4 deletions(-)
 
 diff --git src/usr.sbin/bgplgd/bgplgd.8 src/usr.sbin/bgplgd/bgplgd.8
-index 9670545fdb..9879357a4b 100644
+index 5ee6c266ae..b06efd1b7b 100644
 --- src/usr.sbin/bgplgd/bgplgd.8
 +++ src/usr.sbin/bgplgd/bgplgd.8
 @@ -42,7 +42,7 @@ opens a socket at
@@ -31,13 +31,13 @@ index 9670545fdb..9879357a4b 100644
  .Xr bgpd 8 .
  .It Fl s Ar socket
 diff --git src/usr.sbin/bgplgd/slowcgi.c src/usr.sbin/bgplgd/slowcgi.c
-index c229142a6d..2f667a4fac 100644
+index 02ef8a8d30..7185c30e39 100644
 --- src/usr.sbin/bgplgd/slowcgi.c
 +++ src/usr.sbin/bgplgd/slowcgi.c
-@@ -45,8 +45,12 @@
+@@ -46,8 +46,12 @@
  #include "http.h"
  
- #define TIMEOUT_DEFAULT		 120
+ #define TIMEOUT_DEFAULT		 30
 +#ifndef	WWW_USER
  #define WWW_USER		 "www"
 +#endif
@@ -47,7 +47,7 @@ index c229142a6d..2f667a4fac 100644
  
  #define FCGI_CONTENT_SIZE	 65535
  #define FCGI_PADDING_SIZE	 255
-@@ -224,7 +228,10 @@ int			debug = 0;
+@@ -227,7 +231,10 @@ int			debug = 0;
  int			on = 1;
  char			*fcgi_socket = "/var/www/run/bgplgd.sock";
  char			*bgpctlpath = "bgpctl";
@@ -59,7 +59,7 @@ index c229142a6d..2f667a4fac 100644
  
  
  /*
-@@ -423,13 +430,14 @@ accept_reserve(int sockfd, struct sockaddr *addr, socklen_t *addrlen,
+@@ -426,13 +433,14 @@ accept_reserve(int sockfd, struct sockaddr *addr, socklen_t *addrlen,
      int reserve, volatile int *counter)
  {
  	int ret;
@@ -76,5 +76,5 @@ index c229142a6d..2f667a4fac 100644
  	    > -1) {
  		(*counter)++;
 -- 
-2.37.0
+2.37.1
 
