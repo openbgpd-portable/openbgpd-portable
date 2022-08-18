@@ -14,12 +14,12 @@ Platform Requirements
 At the time of writing the portable version is known to build and work on:
 
  - OpenBSD
- - Alpine 3.15
- - Debian 9, 10
+ - Alpine 3.15, 3.16, edge
+ - Debian 9, 10, 11
  - Fedora 34, 35, 36, 37
  - CentOS/RHEL/Rocky 7, 8, 9
  - Ubuntu 20.04 LTS
- - FreeBSD 12
+ - FreeBSD 12, 13
 
 OpenBGPD may work on other operating systems, newer and older, but the above
 ones are tested regularly by the developer.
