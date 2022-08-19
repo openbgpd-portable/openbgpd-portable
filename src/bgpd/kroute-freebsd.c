@@ -1537,7 +1537,7 @@ kroute_insert(struct ktable *kt, struct kroute_full *kf)
 
 		/* check if a  kernel route exists */
 		if ((kf->flags & F_BGPD) &&
-		    kroute_find(kt, &kf->prefix, kf->prefixlen, RTP_KERN)) ==
+		    kroute_find(kt, &kf->prefix, kf->prefixlen, RTP_KERN) ==
 		    NULL)
 			if (send_rtmsg(RTM_ADD, kt, kf))
 				kr->flags |= F_BGPD_INSERTED;
@@ -1577,7 +1577,7 @@ kroute_insert(struct ktable *kt, struct kroute_full *kf)
 
 		/* check if a kernel route exists */
 		if ((kf->flags & F_BGPD) &&
-		    kroute6_find(kt, &kf->prefix, kf->prefixlen, RTP_KERN)) ==
+		    kroute6_find(kt, &kf->prefix, kf->prefixlen, RTP_KERN) ==
 		    NULL)
 			if (send_rtmsg(RTM_ADD, kt, kf))
 				kr6->flags |= F_BGPD_INSERTED;
@@ -2037,11 +2037,15 @@ knexthop_true_nexthop(struct ktable *kt, struct kroute_full *kf)
 	switch (kn->nexthop.aid) {
 	case AID_INET:
 		kr = kn->kroute;
+		if (kr->flags & F_CONNECTED)
+			return 1;
 		gateway.aid = AID_INET;
 		gateway.v4.s_addr = kr->nexthop.s_addr;
 		break;
 	case AID_INET6:
 		kr6 = kn->kroute;
+		if (kr6->flags & F_CONNECTED)
+			return 1;
 		gateway.aid = AID_INET6;
 		gateway.v6 = kr6->nexthop;
 		gateway.scope_id = kr6->nexthop_scope_id;
@@ -2428,7 +2432,7 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 
 	fib = get_fib(kif->ifname);
 	log_info("%s: %s: rdomain %u %s, %s, %s, %s",
-	    __func__, kif->ifname, ifd->ifi_rdomain,
+	    __func__, kif->ifname, fib,
 	    flags & IFF_UP ? "UP" : "DOWN",
 	    get_media_descr(ift2ifm(ifd->ifi_type)),
 	    get_linkstate(ifd->ifi_type, ifd->ifi_link_state),
@@ -2437,7 +2441,7 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 	kif->flags = flags;
 	kif->link_state = ifd->ifi_link_state;
 	kif->if_type = ifd->ifi_type;
-	kif->rdomain = fib
+	kif->rdomain = fib;
 	kif->baudrate = ifd->ifi_baudrate;
 	kif->depend_state = kif_depend_state(kif);
 
@@ -2670,7 +2674,7 @@ int
 fetchifs(int ifindex)
 {
 	size_t			 len;
-	int			 mib[6];
+	int			 mib[6], fib;
 	char			*buf, *next, *lim;
 	struct if_msghdr	 ifm;
 	struct kif		*kif;
@@ -2925,7 +2929,7 @@ kr_fib_delete(struct ktable *kt, struct kroute_full *kf, int mpath)
 		if ((kr6 = kroute6_find(kt, &kf->prefix, kf->prefixlen,
 		    RTP_MINE)) != NULL) {
 			if (send_rtmsg(RTM_ADD, kt, kf))
-				kr->flags |= F_BGPD_INSERTED;
+				kr6->flags |= F_BGPD_INSERTED;
 		}
 		break;
 	}
