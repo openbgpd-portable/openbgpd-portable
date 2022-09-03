@@ -341,6 +341,7 @@ AC_CONFIG_FILES([
 	src/bgpctl/Makefile
 	src/bgpd/Makefile
 	src/bgplgd/Makefile
+	src/bgplgsh/Makefile
 ])
 
 AC_OUTPUT
