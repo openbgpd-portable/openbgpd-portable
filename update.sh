@@ -64,7 +64,6 @@ ${CP_LIBC} "${libc_src}/stdlib/strtonum.c" compat
 ${CP_LIBC} "${libc_src}/crypt/arc4random.c" compat
 ${CP_LIBC} "${libc_src}/crypt/arc4random_uniform.c" compat
 ${CP_LIBC} "${libc_src}/crypt/chacha_private.h" compat
-${CP_LIBC} "${libc_src}/hash/md5.c" compat
 ${CP_LIBC} "${libc_src}/hash/sha2.c" compat
 ${CP_LIBC} "${libc_src}/gen/vis.c" compat
 ${CP_LIBC} "${libc_src}/net/inet_net_pton.c" compat
