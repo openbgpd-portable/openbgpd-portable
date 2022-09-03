@@ -48,7 +48,6 @@ compat/md5.c
 compat/reallocarray.c
 compat/recallocarray.c
 compat/sha2.c
-compat/siphash.c
 compat/strlcat.c
 compat/strlcpy.c
 compat/strndup.c
@@ -58,7 +57,6 @@ compat/vis.c
 
 include/imsg.h
 include/sha2_openbsd.h
-include/siphash.h
 include/util.h
 include/vis.h
 

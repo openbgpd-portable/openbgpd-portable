@@ -50,10 +50,6 @@ if !HAVE_SETPROCTITLE
 libcompat_la_SOURCES += setproctitle.c
 endif
 
-if !HAVE_SIPHASH
-libcompat_la_SOURCES += siphash.c
-endif
-
 if !HAVE_STRLCAT
 libcompat_la_SOURCES += strlcat.c
 endif
