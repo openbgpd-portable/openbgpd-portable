@@ -73,7 +73,7 @@ AC_ARG_ENABLE(bgplgd,
 		*) enable_bgplgd=yes;; esac],
 	enable_bgplgd=yes)
 
-AC_ARG_ENABLE(bgplgd,
+AC_ARG_ENABLE(bgplgsh,
 	AS_HELP_STRING([--enable-bgplgsh],
 		[ build bgplgsh [default=disabled]]),
 	[case $enableval in
