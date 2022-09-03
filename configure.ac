@@ -73,6 +73,15 @@ AC_ARG_ENABLE(bgplgd,
 		*) enable_bgplgd=yes;; esac],
 	enable_bgplgd=yes)
 
+AC_ARG_ENABLE(bgplgd,
+	AS_HELP_STRING([--enable-bgplgsh],
+		[ build bgplgsh [default=disabled]]),
+	[case $enableval in
+		yes) enable_bgplgsh=yes;;
+		no) enable_bgplgsh=no;;
+		*) enable_bgplgsh=no;; esac],
+	enable_bgplgsh=no)
+
 AC_ARG_ENABLE(netlink,
 	AS_HELP_STRING([--enable-netlink],
 		[ build with netlink support [default=disabled]]),
@@ -310,6 +319,7 @@ if test "$enable_bgplgd" = yes; then
 fi
 
 AM_CONDITIONAL([BUILD_BGPLGD], [test "$enable_bgplgd" = yes])
+AM_CONDITIONAL([BUILD_BGPLGSH], [test "$enable_bgplgsh" = yes])
 
 # workaround the issue that there is no autoconf release supporting
 # runstatedir but many linux distros patched their versions instead

@@ -17,6 +17,9 @@ SUBDIRS = include compat src/bgpd src/bgpctl
 if BUILD_BGPLGD
 SUBDIRS += src/bgplgd
 endif
+if BUILD_BGPLGSH
+SUBDIRS += src/bgplgsh
+endif
 
 ACLOCAL_AMFLAGS = -I m4
 

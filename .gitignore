@@ -67,4 +67,6 @@ src/bgpctl/*.in
 src/bgpd/*.[ch]
 src/bgpd/*.in
 src/bgplgd/*.[ch]
+src/bgplgsh/*.in
+src/bgplgsh/*.[ch]
 src/bgplgd/*.in

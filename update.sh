@@ -32,6 +32,7 @@ libc_src="${dir}/openbsd/src/lib/libc"
 arc4random_src="${dir}/openbsd/src/lib/libcrypto/arc4random"
 libutil_src="${dir}/openbsd/src/lib/libutil"
 sbin_src="${dir}/openbsd/src/usr.sbin"
+bin_src="${dir}/openbsd/src/usr.bin"
 
 do_cp_libc() {
 	sed "/DEF_WEAK/d" < "${1}" > "${2}"/`basename "${1}"`
@@ -82,6 +83,15 @@ for j in bgpd bgpctl bgplgd ; do
 	done
 done
 
+for j in bgplgsh ; do
+	for i in `awk '/SOURCES|HEADERS|MANS/ { print $3 }' src/$j/Makefile.am |grep -v top_srcdir` ; do
+		src=bgplg
+		[ ! -f $bin_src/$src/$i ] && continue
+		echo Copying $i to $j
+		$CP $bin_src/$src/$i src/$j/$i
+	done
+done
+
 grep BGPD_VERSION "src/bgpd/version.h" | cut -d '"' -f 2 > VERSION
 
 if [ -n "$(ls -A patches/*.patch 2>/dev/null)" ]; then
@@ -92,7 +102,7 @@ if [ -n "$(ls -A patches/*.patch 2>/dev/null)" ]; then
 fi
 
 # after patching rename man-page so that configure can adjust placeholders
-for j in bgpd bgpctl bgplgd ; do
+for j in bgpd bgpctl bgplgd bgplgsh ; do
 	for i in `awk '/MANS (\+)?=/ { print $3 }' src/$j/Makefile.am |grep -v top_srcdir` ; do
 		${MV} src/$j/$i src/$j/$i.in
 	done
