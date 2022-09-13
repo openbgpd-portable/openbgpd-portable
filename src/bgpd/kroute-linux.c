@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.292 2022/08/17 15:15:26 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.298 2022/08/30 16:00:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -18,8 +18,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/tree.h>
 #include <sys/types.h>
+#include <sys/tree.h>
 #include <sys/socket.h>
 #include <ifaddrs.h>
 #include <stdlib.h>
@@ -2240,11 +2240,11 @@ knexthop_send_update(struct knexthop *kn)
 		kr = kn->kroute;
 		n.valid = kroute_validate(kr);
 		n.connected = kr->flags & F_CONNECTED;
-		if (kr->nexthop.s_addr != 0) {
+		if (!n.connected) {
 			n.gateway.aid = AID_INET;
 			n.gateway.v4.s_addr = kr->nexthop.s_addr;
-		}
-		if (n.connected) {
+		} else {
+			n.gateway = n.nexthop;
 			n.net.aid = AID_INET;
 			n.net.v4.s_addr = kr->prefix.s_addr;
 			n.netlen = kr->prefixlen;
@@ -2254,13 +2254,12 @@ knexthop_send_update(struct knexthop *kn)
 		kr6 = kn->kroute;
 		n.valid = kroute6_validate(kr6);
 		n.connected = kr6->flags & F_CONNECTED;
-		if (memcmp(&kr6->nexthop, &in6addr_any,
-		    sizeof(struct in6_addr)) != 0) {
+		if (!n.connected) {
 			n.gateway.aid = AID_INET6;
 			n.gateway.v6 = kr6->nexthop;
 			n.gateway.scope_id = kr6->nexthop_scope_id;
-		}
-		if (n.connected) {
+		} else {
+			n.gateway = n.nexthop;
 			n.net.aid = AID_INET6;
 			n.net.v6 = kr6->prefix;
 			n.net.scope_id = kr6->prefix_scope_id;
