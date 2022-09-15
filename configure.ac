@@ -135,21 +135,17 @@ AC_CHECK_FUNCS([strlcat strlcpy strtonum sysconf])
 AC_CHECK_FUNCS([pledge unveil])
 AC_CHECK_FUNCS([getdtablecount getrtable])
 AC_CHECK_FUNCS([strnvis])
+AC_CHECK_FUNCS([arc4random])
 
 # check auxiliary libraries that might contain other functions
 AC_SEARCH_LIBS([clock_gettime],[rt posix4])
-AC_SEARCH_LIBS([SHA512Init], [md])
 AC_SEARCH_LIBS([inet_net_pton],[resolv])
-AC_CHECK_FUNCS([clock_gettime SHA512Init inet_net_pton])
+AC_CHECK_FUNCS([clock_gettime inet_net_pton])
 
 # check needed libutil functions
 AC_SEARCH_LIBS([ibuf_open], [util])
 AC_SEARCH_LIBS([fmt_scaled], [util])
 AC_CHECK_FUNCS([ibuf_open fmt_scaled])
-
-# look for a version of arc4random
-AC_SEARCH_LIBS([arc4random], [crypto])
-AC_CHECK_FUNCS([arc4random])
 
 dnl NetBSD added an strnvis and unfortunately made it incompatible with the
 dnl existing one in OpenBSD and Linux's libbsd (the former having existed
@@ -214,7 +210,6 @@ AM_CONDITIONAL([HAVE_SETGROUPS], [test "x$ac_cv_func_setgroups" = xyes])
 AM_CONDITIONAL([HAVE_SETRESGID], [test "x$ac_cv_func_setresgid" = xyes])
 AM_CONDITIONAL([HAVE_SETRESUID], [test "x$ac_cv_func_setresuid" = xyes])
 AM_CONDITIONAL([HAVE_SETPROCTITLE], [test "x$ac_cv_func_setproctitle" = xyes])
-AM_CONDITIONAL([HAVE_SHA512], [test "x$ac_cv_func_SHA512Init" = xyes])
 AM_CONDITIONAL([HAVE_STRLCAT], [test "x$ac_cv_func_strlcat" = xyes])
 AM_CONDITIONAL([HAVE_STRLCPY], [test "x$ac_cv_func_strlcpy" = xyes])
 AM_CONDITIONAL([HAVE_STRTONUM], [test "x$ac_cv_func_strtonum" = xyes])
@@ -236,7 +231,7 @@ AM_CONDITIONAL([HAVE_ARC4RANDOM],
 	   -a "x$HOST_OS" != xnetbsd \
 	   -a "x$ac_cv_func_arc4random" = xyes])
 
-AC_CHECK_HEADERS([err.h sha2.h])
+AC_CHECK_HEADERS([err.h])
 
 AC_CHECK_MEMBERS([struct sockaddr_in.sin_len], , ,
 	[ #include <netdb.h>
