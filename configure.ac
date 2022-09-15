@@ -126,17 +126,7 @@ AC_CHECK_HEADERS([endian.h])
 AC_CHECK_HEADERS([netinet/ip_ipsp.h], [], [], [[#include <sys/socket.h>]])
 AC_CHECK_HEADERS([linux/in6.h])
 
-# check auxiliary libraries that might contain other functions
-AC_SEARCH_LIBS([arc4random], [crypto])
-AC_SEARCH_LIBS([clock_gettime],[rt posix4])
-AC_SEARCH_LIBS([ibuf_open], [util])
-AC_SEARCH_LIBS([SHA512Init], [md])
-AC_SEARCH_LIBS([inet_net_pton],[resolv])
-AC_SEARCH_LIBS([fmt_scaled], [util])
-
 # check functions that are expected to be in libc
-AC_CHECK_FUNCS([arc4random clock_gettime ibuf_open SHA512Init])
-AC_CHECK_FUNCS([inet_net_pton fmt_scaled])
 AC_CHECK_FUNCS([asprintf explicit_bzero])
 AC_CHECK_FUNCS([getentropy reallocarray recallocarray freezero])
 AC_CHECK_FUNCS([setproctitle setgroups])
@@ -145,6 +135,21 @@ AC_CHECK_FUNCS([strlcat strlcpy strtonum sysconf])
 AC_CHECK_FUNCS([pledge unveil])
 AC_CHECK_FUNCS([getdtablecount getrtable])
 AC_CHECK_FUNCS([strnvis])
+
+# check auxiliary libraries that might contain other functions
+AC_SEARCH_LIBS([clock_gettime],[rt posix4])
+AC_SEARCH_LIBS([SHA512Init], [md])
+AC_SEARCH_LIBS([inet_net_pton],[resolv])
+AC_CHECK_FUNCS([clock_gettime SHA512Init inet_net_pton])
+
+# check needed libutil functions
+AC_SEARCH_LIBS([ibuf_open], [util])
+AC_SEARCH_LIBS([fmt_scaled], [util])
+AC_CHECK_FUNCS([ibuf_open fmt_scaled])
+
+# look for a version of arc4random
+AC_SEARCH_LIBS([arc4random], [crypto])
+AC_CHECK_FUNCS([arc4random])
 
 dnl NetBSD added an strnvis and unfortunately made it incompatible with the
 dnl existing one in OpenBSD and Linux's libbsd (the former having existed
