@@ -189,6 +189,8 @@ if test "$enable_netlink" = yes; then
 		[AC_MSG_ERROR([libmnl required])])
 	AC_CHECK_FUNCS([mnl_socket_recvfrom], [],
 		[AC_MSG_ERROR([libmnl required])])
+	AC_CHECK_FUNCS([mnl_socket_open2], [],
+		[AC_MSG_ERROR([libmnl >= 1.0.4 required])])
 fi
 
 # Share test results with automake
