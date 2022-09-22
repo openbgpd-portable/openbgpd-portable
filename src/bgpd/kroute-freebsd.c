@@ -42,6 +42,7 @@
 #include "bgpd.h"
 #include "log.h"
 
+#define	RTP_ANY		0x0
 #define	RTP_KERN	0x01
 #define	RTP_MINE	0xff
 
@@ -248,6 +249,20 @@ kr_init(int *fd, uint8_t fib_prio)
 
 	*fd = kr_state.fd;
 	return (0);
+}
+
+int
+kr_default_prio(void)
+{
+	return 3;
+}
+
+int
+kr_check_prio(long long prio)
+{
+	if (prio < 1 || prio > 3)
+		return 0;
+	return 1;
 }
 
 int
@@ -2503,19 +2518,26 @@ get_mpe_config(const char *name, u_int *rdomain, u_int *label)
 static int
 prio2flags(uint8_t fib_prio)
 {
-	/* XXX this needs to be configurable */
-	return RTF_PROTO3;
+	switch (fib_prio) {
+	case 1:
+		return RTF_PROTO1;
+	case 2:
+		return RTF_PROTO2;
+	default:
+	case 3:
+		return RTF_PROTO3;
+	}
 }
 
 static uint8_t
 flags2prio(int flags)
 {
 	uint8_t	prio = RTP_KERN;
+	int prioflag;
 
 	/* Everything from the kernel is one prio unless it is a bgpd route */
-	/* XXX this needs to be configurable */
-
-	if (flags & RTF_PROTO3)
+	prioflag = prio2flags(kr_state.fib_prio);
+	if ((flags & prioflag) == prioflag)
 		prio = RTP_MINE;
 
 	return prio;

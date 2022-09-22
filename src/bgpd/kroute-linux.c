@@ -33,6 +33,7 @@
 #include "bgpd.h"
 #include "log.h"
 
+#define	RTP_ANY		0x0
 #define	RTP_MINE	0xff
 
 enum {
@@ -231,6 +232,20 @@ kr_init(int *fd, uint8_t fib_prio)
 
 	*fd = mnl_socket_get_fd(kr_state.nl);
 	return (0);
+}
+
+int
+kr_default_prio(void)
+{
+	return RTPROTO_BGP;
+}
+
+int
+kr_check_prio(long long prio)
+{
+	if (prio <= RTPROT_STATIC || prio >= UCHAR_MAX)
+		return 0;
+	return 1;
 }
 
 int
