@@ -369,6 +369,20 @@ kr_init(int *fd, uint8_t fib_prio)
 	return (0);
 }
 
+int
+kr_default_prio(void)
+{
+	return 2;
+}
+
+int
+kr_check_prio(long long prio)
+{
+	if (prio != kr_default_prio())
+		return 0;
+	return 1;
+}
+
 void
 kr_shutdown(void)
 {
