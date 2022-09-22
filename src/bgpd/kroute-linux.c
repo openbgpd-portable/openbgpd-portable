@@ -237,7 +237,7 @@ kr_init(int *fd, uint8_t fib_prio)
 int
 kr_default_prio(void)
 {
-	return RTPROTO_BGP;
+	return RTPROT_BGP;
 }
 
 int
