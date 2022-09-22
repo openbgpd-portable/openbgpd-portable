@@ -43,7 +43,10 @@
 #include "log.h"
 
 #define	RTP_ANY		0x0
-#define	RTP_KERN	0x01
+#define	RTP_KERN	0x1
+#define	RTP_PROTO1	0x11
+#define	RTP_PROTO2	0x12
+#define	RTP_PROTO3	0x13
 #define	RTP_MINE	0xff
 
 struct ktable		**krt;
@@ -254,13 +257,13 @@ kr_init(int *fd, uint8_t fib_prio)
 int
 kr_default_prio(void)
 {
-	return 3;
+	return RTP_PROTO3;
 }
 
 int
 kr_check_prio(long long prio)
 {
-	if (prio < 1 || prio > 3)
+	if (prio < RTP_PROTO1 || prio > RTP_PROTO3)
 		return 0;
 	return 1;
 }
@@ -2519,12 +2522,12 @@ static int
 prio2flags(uint8_t fib_prio)
 {
 	switch (fib_prio) {
-	case 1:
+	case RTP_PROTO1:
 		return RTF_PROTO1;
-	case 2:
+	case RTP_PROTO2:
 		return RTF_PROTO2;
 	default:
-	case 3:
+	case RTP_PROTO3:
 		return RTF_PROTO3;
 	}
 }
