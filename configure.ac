@@ -125,6 +125,7 @@ AC_SUBST(AM_LDFLAGS)
 AC_CHECK_HEADERS([endian.h])
 AC_CHECK_HEADERS([netinet/ip_ipsp.h], [], [], [[#include <sys/socket.h>]])
 AC_CHECK_HEADERS([linux/in6.h])
+AC_CHECK_HEADERS([linux/if.h])
 
 # check functions that are expected to be in libc
 AC_CHECK_FUNCS([asprintf explicit_bzero])
