@@ -233,14 +233,6 @@ AM_CONDITIONAL([HAVE_ARC4RANDOM],
 	   -a "x$HOST_OS" != xnetbsd \
 	   -a "x$ac_cv_func_arc4random" = xyes])
 
-AC_CHECK_HEADERS([err.h])
-
-AC_CHECK_MEMBERS([struct sockaddr_in.sin_len], , ,
-	[ #include <netdb.h>
-	  #include <netinet/in.h>
-	  #include <sys/socket.h> ]
-)
-
 AC_CHECK_MEMBERS([struct tcp_md5sig.tcpm_key], , ,
 	[ #include <sys/socket.h>
 	  #include <netinet/in.h>
