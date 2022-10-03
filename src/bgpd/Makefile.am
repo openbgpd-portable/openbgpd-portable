@@ -45,6 +45,9 @@ bgpd_SOURCES += rde_rib.c
 bgpd_SOURCES += rde_decide.c
 bgpd_SOURCES += rde_prefix.c
 bgpd_SOURCES += mrt.c
+if DISABLE_FIB
+bgpd_SOURCES += kroute-disabled.c
+else
 if HOST_OPENBSD
 bgpd_SOURCES += kroute.c
 else
@@ -55,6 +58,7 @@ if HAVE_MNL
 bgpd_SOURCES += kroute-linux.c
 else
 bgpd_SOURCES += kroute-disabled.c
+endif
 endif
 endif
 endif

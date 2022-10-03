@@ -73,14 +73,14 @@ AC_ARG_ENABLE(bgplgd,
 		*) enable_bgplgd=yes;; esac],
 	enable_bgplgd=yes)
 
-AC_ARG_ENABLE(netlink,
-	AS_HELP_STRING([--enable-netlink],
-		[ build with netlink support [default=disabled]]),
+AC_ARG_ENABLE(fib-support,
+	AS_HELP_STRING([--disable-fib-support],
+		[ build without fib support [default=enabled]]),
 	[case $enableval in
-		yes) enable_netlink=yes;;
-		no) enable_netlink=no;;
-		*) enable_netlink=no;; esac],
-	enable_netlink=no)
+		yes) disable_fib=no;;
+		no) disable_fib=yes;;
+		*) disable_fib=no;; esac],
+	disable_fib=no)
 
 AC_ARG_ENABLE(warnings,
 	AS_HELP_STRING([--disable-warnings],
@@ -184,14 +184,13 @@ static void sighandler(int sig) { _exit(1); }
  )
 fi
 
-if test "$enable_netlink" = yes; then
+if test "$disable_fib" = no; then
 	# check for libmnl
-	AC_CHECK_LIB([mnl], [mnl_socket_recvfrom], [],
-		[AC_MSG_ERROR([libmnl required])])
-	AC_CHECK_FUNCS([mnl_socket_recvfrom], [],
-		[AC_MSG_ERROR([libmnl required])])
-	AC_CHECK_FUNCS([mnl_socket_open2], [],
-		[AC_MSG_ERROR([libmnl >= 1.0.4 required])])
+	AC_CHECK_LIB([mnl], [mnl_socket_recvfrom], [], [])
+	if test "x$HAVE_LIBMNL" = "x1"; then
+		AC_CHECK_FUNCS([mnl_socket_open2], [],
+			[AC_MSG_ERROR([libmnl >= 1.0.4 required])])
+	fi
 fi
 
 # Share test results with automake
@@ -305,6 +304,8 @@ if test "$enable_bgplgd" = yes; then
 fi
 
 AM_CONDITIONAL([BUILD_BGPLGD], [test "$enable_bgplgd" = yes])
+
+AM_CONDITIONAL([DISABLE_FIB], [test "$disable_fib" = yes])
 
 # workaround the issue that there is no autoconf release supporting
 # runstatedir but many linux distros patched their versions instead
