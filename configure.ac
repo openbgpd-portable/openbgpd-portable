@@ -187,7 +187,7 @@ fi
 if test "$disable_fib" = no; then
 	# check for libmnl
 	AC_CHECK_LIB([mnl], [mnl_socket_recvfrom], [], [])
-	if test "x$HAVE_LIBMNL" = "x1"; then
+	if test "x$ac_cv_lib_mnl_mnl_socket_recvfrom" = "xyes"; then
 		AC_CHECK_FUNCS([mnl_socket_open2], [],
 			[AC_MSG_ERROR([libmnl >= 1.0.4 required])])
 	fi
@@ -224,7 +224,7 @@ AM_CONDITIONAL([HAVE_STRNVIS], [test "x$ac_cv_func_strnvis" = xyes])
 AM_CONDITIONAL([BROKEN_STRNVIS], [test "x$ac_cv_broken_strnvis" = xyes])
 AM_CONDITIONAL([HAVE_INET_NET_PTON], [test "x$ac_cv_func_inet_net_pton" = xyes])
 AM_CONDITIONAL([HAVE_FMT_SCALED], [test "x$ac_cv_func_fmt_scaled" = xyes])
-AM_CONDITIONAL([HAVE_MNL], [test "x$ac_cv_func_mnl_socket_recvfrom" = "xyes"])
+AM_CONDITIONAL([HAVE_MNL], [test "x$ac_cv_func_mnl_socket_open2" = "xyes"])
 
 # overrides for arc4random implementations with known issues
 AM_CONDITIONAL([HAVE_ARC4RANDOM],
