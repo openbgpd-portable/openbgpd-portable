@@ -34,8 +34,10 @@ bgpctl_LDADD += $(top_builddir)/compat/libcompat.la
 bgpctl_LDADD += $(top_builddir)/compat/libcompatnoopt.la
 
 bgpctl_SOURCES = bgpctl.c
+bgpctl_SOURCES += ometric.c
 bgpctl_SOURCES += output.c
 bgpctl_SOURCES += output_json.c
+bgpctl_SOURCES += output_ometric.c
 bgpctl_SOURCES += parser.c
 bgpctl_SOURCES += mrtparser.c
 bgpctl_SOURCES += util.c
@@ -46,6 +48,7 @@ bgpctl_DEPENDENCIES = $(man_MANS)
 noinst_HEADERS = bgpctl.h
 noinst_HEADERS += json.h
 noinst_HEADERS += mrtparser.h
+noinst_HEADERS += ometric.h
 noinst_HEADERS += parser.h
 
 bgpctl.8: bgpctl.8.in
