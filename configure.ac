@@ -162,6 +162,30 @@ AC_COMPILE_IFELSE(
  [AC_MSG_RESULT([no])]
 )
 
+# check if pftable code can be used
+AC_CHECK_HEADERS([net/pfvar.h], [
+ AC_MSG_CHECKING([for working pftable])
+ AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[
+ #include <sys/socket.h>
+ #include <net/if.h>
+ #include <sys/ioctl.h>
+ #include <net/pfvar.h>
+ ]], [[
+   struct pfioc_table tio;
+   struct pfr_astats dummy;
+   struct pfr_addr pfa;
+   int a = DIOCRCLRADDRS, b = DIOCRGETASTATS,
+       c = DIOCRDELADDRS, d = DIOCRADDADDRS;
+ ]])],
+  [AC_MSG_RESULT([yes])
+   ac_cv_have_pftable="yes" ],
+  [AC_MSG_RESULT([no])]
+ )], [], [[
+#include <sys/socket.h>
+#include <net/if.h>
+]])
+
 dnl NetBSD added an strnvis and unfortunately made it incompatible with the
 dnl existing one in OpenBSD and Linux's libbsd (the former having existed
 dnl for over ten years). Despite this incompatibility being reported during
@@ -239,6 +263,7 @@ AM_CONDITIONAL([BROKEN_STRNVIS], [test "x$ac_cv_broken_strnvis" = xyes])
 AM_CONDITIONAL([HAVE_INET_NET_PTON], [test "x$ac_cv_func_inet_net_pton" = xyes])
 AM_CONDITIONAL([HAVE_FMT_SCALED], [test "x$ac_cv_func_fmt_scaled" = xyes])
 AM_CONDITIONAL([HAVE_MNL], [test "x$ac_cv_func_mnl_socket_open2" = "xyes"])
+AM_CONDITIONAL([HAVE_PFTABLE], [test "x$ac_cv_have_pftable" = "xyes"])
 
 # overrides for arc4random implementations with known issues
 AM_CONDITIONAL([HAVE_ARC4RANDOM],
