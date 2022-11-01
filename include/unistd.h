@@ -34,4 +34,9 @@ int setresgid(gid_t rgid, gid_t egid, gid_t sgid);
 int setresuid(uid_t ruid, uid_t euid, uid_t suid);
 #endif
 
+#ifndef HAVE_HOST_NAME_MAX
+#include <limits.h>
+#define HOST_NAME_MAX _POSIX_HOST_NAME_MAX
+#endif
+
 #endif
