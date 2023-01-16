@@ -83,6 +83,7 @@ bgpd_SOURCES += printconf.c
 bgpd_SOURCES += rde_filter.c
 bgpd_SOURCES += rde_sets.c
 bgpd_SOURCES += rde_trie.c
+bgpd_SOURCES += rde_aspa.c
 if HAVE_PFTABLE
 bgpd_SOURCES += pftable.c
 else
