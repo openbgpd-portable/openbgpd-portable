@@ -2735,6 +2735,50 @@ struct cb_attr {
 	unsigned char family;
 };
 
+static const char *
+log_mnltype(int type, int islink)
+{
+	static char buf[16];
+
+	if (islink == 0) {
+		switch (type) {
+		case RTA_TABLE:
+			return "RTA_TABLE";
+		case RTA_OIF:
+			return "RTA_OIF";
+		case RTA_FLOW:
+			return "RTA_FLOW";
+		case RTA_PRIORITY:
+			return "RTA_PRIORITY";
+		case RTA_METRICS:
+			return "RTA_METRICS";
+		case RTA_DST:
+			return "RTA_DST";
+		case RTA_SRC:
+			return "RTA_SRC";
+		case RTA_PREFSRC:
+			return "RTA_PREFSRC";
+		case RTA_GATEWAY:
+			return "RTA_GATEWAY";
+		default:
+			snprintf(buf, sizeof(buf), "#%d", type);
+			return buf;
+		}
+	} else {
+		switch (type) {
+		case IFLA_MTU:
+			return "IFLA_MTU";
+		case IFLA_LINK:
+			return "IFLA_LINK";
+		case IFLA_IFNAME:
+			return "IFLA_IFNAME";
+		default:
+			snprintf(buf, sizeof(buf), "#%d", type);
+			return buf;
+		}
+	}
+}
+
 static int
 rtmsg_attr_cb(const struct nlattr *attr, void *data)
 {
@@ -2752,7 +2796,8 @@ rtmsg_attr_cb(const struct nlattr *attr, void *data)
 	case RTA_PRIORITY:
 	case RTA_METRICS:
 		if (mnl_attr_validate(attr, MNL_TYPE_U32) < 0) {
-			log_warnx("mnl_attr_validate failed.");
+			log_warnx("mnl_attr_validate for %s failed.",
+			   log_mnltype(type, 0));
 			return MNL_CB_ERROR;
 		}
 		break;
@@ -2763,14 +2808,16 @@ rtmsg_attr_cb(const struct nlattr *attr, void *data)
 		switch (my->family) {
 		case AF_INET:
 			if (mnl_attr_validate(attr, MNL_TYPE_U32) < 0) {
-				log_warnx("mnl_attr_validate failed.");
+				log_warnx("mnl_attr_validate for %s failed.",
+				   log_mnltype(type, 0));
 				return MNL_CB_ERROR;
 			}
 			break;
 		case AF_INET6:
 			if (mnl_attr_validate2(attr, MNL_TYPE_BINARY,
 			    sizeof(struct in6_addr)) < 0) {
-				log_warnx("mnl_attr_validate2 failed.");
+				log_warnx("mnl_attr_validate2 for %s failed.",
+				   log_mnltype(type, 0));
 				return MNL_CB_ERROR;
 			}
 			break;
@@ -2802,13 +2849,15 @@ link_attr_cb(const struct nlattr *attr, void *data)
 	case IFLA_MTU:
 	case IFLA_LINK:
 		if (mnl_attr_validate(attr, MNL_TYPE_U32) < 0) {
-			log_warnx("mnl_attr_validate failed.");
+			log_warnx("mnl_attr_validate for %s failed.",
+			   log_mnltype(type, 1));
 			return MNL_CB_ERROR;
 		}
 		break;
 	case IFLA_IFNAME:
 		if (mnl_attr_validate(attr, MNL_TYPE_STRING) < 0) {
-			log_warnx("mnl_attr_validate failed.");
+			log_warnx("mnl_attr_validate for %s failed.",
+			   log_mnltype(type, 1));
 			return MNL_CB_ERROR;
 		}
 		break;
@@ -2903,7 +2952,7 @@ dispatch_rtmsg(void)
 		case MNL_CB_STOP:
 			return (0);
 		case MNL_CB_ERROR:
-			log_warn("mnl_cb_run error");
+			log_warnx("mnl_cb_run error");
 			return (-1);
 		}
 		ret = mnl_socket_recvfrom(kr_state.nl, buf, sizeof buf);
