@@ -100,6 +100,7 @@ bgpd_SOURCES += timer.c
 bgpd_SOURCES += rde_peer.c
 bgpd_SOURCES += rtr.c
 bgpd_SOURCES += rtr_proto.c
+bgpd_SOURCES += flowspec.c
 
 bgpd_DEPENDENCIES = $(man_MANS)
 

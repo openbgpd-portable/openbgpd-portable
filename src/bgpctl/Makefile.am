@@ -42,6 +42,7 @@ bgpctl_SOURCES += parser.c
 bgpctl_SOURCES += mrtparser.c
 bgpctl_SOURCES += util.c
 bgpctl_SOURCES += json.c
+bgpctl_SOURCES += flowspec.c
 
 bgpctl_DEPENDENCIES = $(man_MANS)
 
