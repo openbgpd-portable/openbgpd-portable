@@ -2,6 +2,7 @@ noinst_HEADERS =
 noinst_HEADERS += linux/rtnetlink.h
 noinst_HEADERS += netinet/icmp6.h
 noinst_HEADERS += netinet/in.h
+noinst_HEADERS += netinet/ip.h
 noinst_HEADERS += netinet/ip_icmp.h
 noinst_HEADERS += netinet/ip_ipsp.h
 noinst_HEADERS += sys/_null.h
