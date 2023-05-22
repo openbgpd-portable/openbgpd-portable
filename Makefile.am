@@ -26,6 +26,9 @@ install-data-hook:
 	@if [ ! -d "$(DESTDIR)$(runstatedir)" ]; then \
 		$(INSTALL) -m 755 -d "$(DESTDIR)$(runstatedir)"; \
 	fi
+	@if [ X"$(wwwrunstatedir)" != X -a ! -d "$(DESTDIR)$(wwwrunstatedir)" ]; then \
+		$(INSTALL) -m 755 -d "$(DESTDIR)$(wwwrunstatedir)"; \
+	fi
 	@if [ ! -d "$(DESTDIR)$(sysconfdir)" ]; then \
 		$(INSTALL) -m 755 -d "$(DESTDIR)$(sysconfdir)"; \
 	fi

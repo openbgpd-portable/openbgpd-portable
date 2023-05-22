@@ -1,0 +1,32 @@
+From 917867d67aacd8963083f572a54e9a01dc0ff01a Mon Sep 17 00:00:00 2001
+From: Claudio Jeker <claudio@openbsd.org>
+Date: Wed, 6 Jul 2022 12:27:27 +0200
+Subject: [PATCH 6/6] Add compat fixes to bgplgd
+
+---
+ src/usr.sbin/bgplgd/slowcgi.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git src/usr.sbin/bgplgd/slowcgi.c src/usr.sbin/bgplgd/slowcgi.c
+index 78d1424573..c59fa2bf11 100644
+--- src/usr.sbin/bgplgd/slowcgi.c
++++ src/usr.sbin/bgplgd/slowcgi.c
+@@ -438,13 +438,14 @@ accept_reserve(int sockfd, struct sockaddr *addr, socklen_t *addrlen,
+     int reserve, volatile int *counter)
+ {
+ 	int ret;
++#ifdef HAVE_GETDTABLECOUNT
+ 	if (getdtablecount() + reserve +
+ 	    ((*counter + 1) * FD_NEEDED) >= getdtablesize()) {
+ 		ldebug("inflight fds exceeded");
+ 		errno = EMFILE;
+ 		return -1;
+ 	}
+-
++#endif
+ 	if ((ret = accept4(sockfd, addr, addrlen, SOCK_NONBLOCK | SOCK_CLOEXEC))
+ 	    > -1) {
+ 		(*counter)++;
+-- 
+2.40.1
+

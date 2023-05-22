@@ -1,4 +1,4 @@
-From 317fd9256f8dabf32eb4575e0c89b9c7a1f7e814 Mon Sep 17 00:00:00 2001
+From a28f356aa04cef410e40fb9a94271196d5cbfd8e Mon Sep 17 00:00:00 2001
 From: Claudio Jeker <claudio@openbsd.org>
 Date: Thu, 11 Apr 2019 17:02:57 +0200
 Subject: [PATCH 3/6] Special handle IPV6_MINHOPCOUNT and IP_MINTTL since only
@@ -9,10 +9,10 @@ Subject: [PATCH 3/6] Special handle IPV6_MINHOPCOUNT and IP_MINTTL since only
  1 file changed, 10 insertions(+)
 
 diff --git src/usr.sbin/bgpd/session.c src/usr.sbin/bgpd/session.c
-index f80b6f79b1..73d63b5946 100644
+index c8debdb4d1..a3af34f4fb 100644
 --- src/usr.sbin/bgpd/session.c
 +++ src/usr.sbin/bgpd/session.c
-@@ -1140,6 +1140,7 @@ session_setup_socket(struct peer *p)
+@@ -1134,6 +1134,7 @@ session_setup_socket(struct peer *p)
  			 * 1=direct n=multihop with ttlsec, we always use 255
  			 */
  			if (p->conf.ttlsec) {
@@ -20,7 +20,7 @@ index f80b6f79b1..73d63b5946 100644
  				ttl = 256 - p->conf.distance;
  				if (setsockopt(p->fd, IPPROTO_IP, IP_MINTTL,
  				    &ttl, sizeof(ttl)) == -1) {
-@@ -1149,6 +1150,10 @@ session_setup_socket(struct peer *p)
+@@ -1143,6 +1144,10 @@ session_setup_socket(struct peer *p)
  					return (-1);
  				}
  				ttl = 255;
@@ -31,7 +31,7 @@ index f80b6f79b1..73d63b5946 100644
  			}
  
  			if (setsockopt(p->fd, IPPROTO_IP, IP_TTL, &ttl,
-@@ -1166,6 +1171,7 @@ session_setup_socket(struct peer *p)
+@@ -1160,6 +1165,7 @@ session_setup_socket(struct peer *p)
  			 * 1=direct n=multihop with ttlsec, we always use 255
  			 */
  			if (p->conf.ttlsec) {
@@ -39,7 +39,7 @@ index f80b6f79b1..73d63b5946 100644
  				ttl = 256 - p->conf.distance;
  				if (setsockopt(p->fd, IPPROTO_IPV6,
  				    IPV6_MINHOPCOUNT, &ttl, sizeof(ttl))
-@@ -1176,6 +1182,10 @@ session_setup_socket(struct peer *p)
+@@ -1170,6 +1176,10 @@ session_setup_socket(struct peer *p)
  					return (-1);
  				}
  				ttl = 255;
@@ -51,5 +51,5 @@ index f80b6f79b1..73d63b5946 100644
  			if (setsockopt(p->fd, IPPROTO_IPV6, IPV6_UNICAST_HOPS,
  			    &ttl, sizeof(ttl)) == -1) {
 -- 
-2.37.1
+2.40.1
 

@@ -1,4 +1,4 @@
-From e8b7572cb929623b274d4cdb62964d1d6d5cf283 Mon Sep 17 00:00:00 2001
+From 6282e85285f4831a5dfcb093f44003fe191cf524 Mon Sep 17 00:00:00 2001
 From: Claudio Jeker <claudio@openbsd.org>
 Date: Thu, 14 Feb 2019 11:51:05 +0100
 Subject: [PATCH 1/6] depend on carp requieres HAVE_CARP
@@ -8,10 +8,10 @@ Subject: [PATCH 1/6] depend on carp requieres HAVE_CARP
  1 file changed, 6 insertions(+)
 
 diff --git src/usr.sbin/bgpd/parse.y src/usr.sbin/bgpd/parse.y
-index cb78e0f8f4..2983c56216 100644
+index b6a182040c..c72ce4ff54 100644
 --- src/usr.sbin/bgpd/parse.y
 +++ src/usr.sbin/bgpd/parse.y
-@@ -1857,6 +1857,7 @@ peeropts	: REMOTEAS as4number	{
+@@ -2253,6 +2253,7 @@ peeropts	: REMOTEAS as4number	{
  			free($3);
  		}
  		| DEMOTE STRING		{
@@ -19,7 +19,7 @@ index cb78e0f8f4..2983c56216 100644
  			if (strlcpy(curpeer->conf.demote_group, $2,
  			    sizeof(curpeer->conf.demote_group)) >=
  			    sizeof(curpeer->conf.demote_group)) {
-@@ -1873,6 +1874,11 @@ peeropts	: REMOTEAS as4number	{
+@@ -2269,6 +2270,11 @@ peeropts	: REMOTEAS as4number	{
  				    curpeer->conf.demote_group);
  				YYERROR;
  			}
@@ -32,5 +32,5 @@ index cb78e0f8f4..2983c56216 100644
  		| TRANSPARENT yesno	{
  			if ($2 == 1)
 -- 
-2.37.1
+2.40.1
 

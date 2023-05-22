@@ -26,6 +26,7 @@ CLEANFILES = $(man_MANS)
 bgplgd_CFLAGS = $(AM_CFLAGS)
 bgplgd_CFLAGS += -DSYSCONFDIR=\"$(sysconfdir)\"
 bgplgd_CFLAGS += -DRUNSTATEDIR=\"$(runstatedir)\"
+bgplgd_CFLAGS += -DWWWRUNSTATEDIR=\"$(wwwrunstatedir)\"
 
 bgplgd_LDADD = $(PLATFORM_LDADD) $(PROG_LDADD) -lutil -lm
 bgplgd_LDADD += $(top_builddir)/compat/libcompat.la
@@ -45,6 +46,8 @@ bgplgd.8: bgplgd.8.in
 	$(SED) \
 		-e 's|@BGPD_USER[@]|$(BGPD_USER)|g' \
 		-e 's|@BGPLGD_USER[@]|$(BGPLGD_USER)|g' \
+		-e 's|@WWW_USER[@]|$(WWW_USER)|g' \
 		-e 's|@SYSCONFDIR[@]|$(sysconfdir)|g' \
 		-e 's|@RUNSTATEDIR[@]|$(runstatedir)|g' \
+		-e 's|@WWWRUNSTATEDIR[@]|$(wwwrunstatedir)|g' \
 		'$(srcdir)/bgplgd.8.in' >$@

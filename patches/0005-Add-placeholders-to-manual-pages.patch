@@ -1,16 +1,17 @@
-From 272ed11d85bd44222b044d8d4c2b9d58bf43b032 Mon Sep 17 00:00:00 2001
+From 7736565e843b0b0cf605842569464438575cc4ac Mon Sep 17 00:00:00 2001
 From: Claudio Jeker <claudio@openbsd.org>
 Date: Tue, 5 May 2020 09:13:19 +0200
 Subject: [PATCH 5/6] Add placeholders to manual pages
 
 ---
- src/usr.sbin/bgpctl/bgpctl.8  | 8 ++++----
- src/usr.sbin/bgpd/bgpd.8      | 8 ++++----
- src/usr.sbin/bgpd/bgpd.conf.5 | 8 +++-----
- 3 files changed, 11 insertions(+), 13 deletions(-)
+ src/usr.sbin/bgpctl/bgpctl.8  |  8 ++++----
+ src/usr.sbin/bgpd/bgpd.8      |  8 ++++----
+ src/usr.sbin/bgpd/bgpd.conf.5 |  8 +++-----
+ src/usr.sbin/bgplgd/bgplgd.8  | 12 ++++++------
+ 4 files changed, 17 insertions(+), 19 deletions(-)
 
 diff --git src/usr.sbin/bgpctl/bgpctl.8 src/usr.sbin/bgpctl/bgpctl.8
-index a9e6accdf1..c553937e9b 100644
+index 4f344f4d00..eace482e4d 100644
 --- src/usr.sbin/bgpctl/bgpctl.8
 +++ src/usr.sbin/bgpctl/bgpctl.8
 @@ -49,7 +49,7 @@ Use
@@ -22,7 +23,7 @@ index a9e6accdf1..c553937e9b 100644
  where
  .Ar <rdomain>
  is the routing domain
-@@ -458,12 +458,12 @@ in a terse format.
+@@ -485,12 +485,12 @@ in a terse format.
  Show a list of all currently loaded fib routing tables.
  .El
  .Sh FILES
@@ -39,7 +40,7 @@ index a9e6accdf1..c553937e9b 100644
  .Xr bgpd 8
  control socket
 diff --git src/usr.sbin/bgpd/bgpd.8 src/usr.sbin/bgpd/bgpd.8
-index bfe7a5f38c..37e068d078 100644
+index 6b304442b4..b91b67ad25 100644
 --- src/usr.sbin/bgpd/bgpd.8
 +++ src/usr.sbin/bgpd/bgpd.8
 @@ -197,7 +197,7 @@ Use
@@ -68,7 +69,7 @@ index bfe7a5f38c..37e068d078 100644
  .Nm
  control socket, where
 diff --git src/usr.sbin/bgpd/bgpd.conf.5 src/usr.sbin/bgpd/bgpd.conf.5
-index 58d9ad9038..38ebdfacab 100644
+index b4dd58f677..5979758f2b 100644
 --- src/usr.sbin/bgpd/bgpd.conf.5
 +++ src/usr.sbin/bgpd/bgpd.conf.5
 @@ -382,7 +382,7 @@ If
@@ -80,7 +81,7 @@ index 58d9ad9038..38ebdfacab 100644
  is used where
  .Ar <rdomain>
  is the routing domain in which
-@@ -2119,12 +2119,10 @@ For prefixes with equally long paths, the prefix with the larger weight
+@@ -2284,12 +2284,10 @@ For prefixes with equally long paths, the prefix with the larger weight
  is selected.
  .El
  .Sh FILES
@@ -95,6 +96,47 @@ index 58d9ad9038..38ebdfacab 100644
  .El
  .Sh SEE ALSO
  .Xr strftime 3 ,
+diff --git src/usr.sbin/bgplgd/bgplgd.8 src/usr.sbin/bgplgd/bgplgd.8
+index a6a1a184bf..3ed19d2630 100644
+--- src/usr.sbin/bgplgd/bgplgd.8
++++ src/usr.sbin/bgplgd/bgplgd.8
+@@ -38,11 +38,11 @@ is a simple server that implements a simple web API to query
+ .Pp
+ .Nm
+ opens a socket at
+-.Pa /var/www/run/bgplgd.sock ,
+-owned by www:www,
++.Pa @WWWRUNSTATEDIR@/bgplgd.sock ,
++owned by @WWW_USER@,
+ with permissions 0660.
+ It will then drop privileges to user
+-.Qq _bgplgd ,
++.Qq @BGPLGD_USER@ ,
+ .Xr unveil 2
+ the
+ .Xr bgpctl 8
+@@ -68,7 +68,7 @@ to query
+ Use
+ .Ar socket
+ instead of the default
+-.Pa /var/run/bgpd.rsock
++.Pa @RUNSTATEDIR@/bgpd.rsock
+ to communicate with
+ .Xr bgpd 8 .
+ .It Fl s Ar socket
+@@ -76,10 +76,10 @@ Create and bind to alternative local socket at
+ .Ar socket .
+ .It Fl U Ar user
+ Change the owner of
+-.Pa /var/www/run/bgplgd.sock
++.Pa @WWWRUNSTATEDIR@/bgplgd.sock
+ to
+ .Ar user
+-and its primary group instead of the default www:www.
++and its primary group instead of the default @WWW_USER@.
+ .El
+ .Pp
+ .Nm
 -- 
-2.37.1
+2.40.1
 

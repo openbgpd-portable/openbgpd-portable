@@ -340,6 +340,26 @@ if test "$enable_bgplgd" = yes; then
 	AC_DEFINE_UNQUOTED(BGPLGD_USER, "$BGPLGD_USER",
 		[bgplgd unprivileged user])
 	AC_SUBST(BGPLGD_USER)
+
+	AC_ARG_WITH([www-user],
+		AS_HELP_STRING([--with-www-user=user],
+			[Owner of the FastCGI socket used by bgplgd]),
+		WWW_USER="$withval",
+		WWW_USER="www"
+	)
+	AC_DEFINE_UNQUOTED(WWW_USER, "$WWW_USER",
+		[www unprivileged user])
+	AC_SUBST(WWW_USER)
+
+	AC_ARG_WITH([wwwrunstatedir],
+		AS_HELP_STRING([--with-wwwrunstatedir=DIR],
+			[Location for bgplgd FastCGI socket [LOCALSTATEDIR/www/run]]),
+		wwwrunstatedir="$withval"
+	)
+	if test "x$runstatedir" = x; then
+		wwwrunstatedir='${localstatedir}/www/run'
+		AC_SUBST(wwwrunstatedir)
+fi
 fi
 
 AM_CONDITIONAL([BUILD_BGPLGD], [test "$enable_bgplgd" = yes])
