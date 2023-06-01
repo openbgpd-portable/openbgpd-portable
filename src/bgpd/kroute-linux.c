@@ -1841,7 +1841,7 @@ kroute6_remove(struct ktable *kt, struct kroute_full *kf, int any)
 	}
 
 	/* check whether a nexthop depends on this kroute */
-	if (kr->flags & F_NEXTHOP) {
+	if (krm->flags & F_NEXTHOP) {
 		RB_FOREACH(n, knexthop_tree, KT2KNT(kt)) {
 			if (n->kroute == krm)
 				knexthop_validate(kt, n);
