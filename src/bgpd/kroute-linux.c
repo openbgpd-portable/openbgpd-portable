@@ -2794,7 +2794,6 @@ rtmsg_attr_cb(const struct nlattr *attr, void *data)
 	case RTA_OIF:
 	case RTA_FLOW:
 	case RTA_PRIORITY:
-	case RTA_METRICS:
 		if (mnl_attr_validate(attr, MNL_TYPE_U32) < 0) {
 			log_warnx("mnl_attr_validate for %s failed.",
 			   log_mnltype(type, 0));
@@ -2827,6 +2826,7 @@ rtmsg_attr_cb(const struct nlattr *attr, void *data)
 			return MNL_CB_ERROR;
 		}
 		break;
+	case RTA_METRICS:	/* ignored, also size is not fixed */
 	default:
 		attr = NULL;
 		break;
