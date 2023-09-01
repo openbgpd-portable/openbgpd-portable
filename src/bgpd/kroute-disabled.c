@@ -649,7 +649,7 @@ kr_show_route(struct imsg *imsg)
 		}
 		break;
 	default:	/* nada */
-		code = CTL_RES_DENIED /* XXX */;
+		code = CTL_RES_OPNOTSUPP;
 		send_imsg_session(IMSG_CTL_RESULT, imsg->hdr.pid,
 		    &code, sizeof(code));
 		return;
