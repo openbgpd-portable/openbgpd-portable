@@ -8,6 +8,7 @@
 #ifndef LIBCOMPAT_STDLIB_H
 #define LIBCOMPAT_STDLIB_H
 
+#include <sys/time.h>
 #include <stdint.h>
 
 #ifndef HAVE_ARC4RANDOM_
