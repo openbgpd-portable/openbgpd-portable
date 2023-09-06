@@ -25,9 +25,55 @@ case $host_os in
 	*darwin*)
 		HOST_OS=darwin
 		AC_DEFINE([SPT_TYPE], [SPT_REUSEARGV])
+		#
+		# Don't use arc4random on systems before 10.12 because of
+		# weak seed on failure to open /dev/random, based on latest
+		# public source:
+		# http://www.opensource.apple.com/source/Libc/Libc-997.90.3/gen/FreeBSD/arc4random.c
+		#
+		# We use the presence of getentropy() to detect 10.12. The
+		# following check take into account that:
+		#
+		#   - iOS <= 10.1 fails because of missing getentropy and
+		#     hence they miss sys/random.h
+		#
+		#   - in macOS 10.12 getentropy is not tagged as introduced in
+		#     10.12 so we cannot use it for target < 10.12
+		#
+		AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <AvailabilityMacros.h>
+#include <unistd.h>
+#include <sys/random.h>  /* Systems without getentropy() should die here */
+
+/* Based on: https://gitweb.torproject.org/tor.git/commit/?id=16fcbd21 */
+#ifndef MAC_OS_X_VERSION_10_12
+#  define MAC_OS_X_VERSION_10_12 101200
+#endif
+#if defined(MAC_OS_X_VERSION_MIN_REQUIRED)
+#  if MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_12
+#    error "Running on Mac OSX 10.11 or earlier"
+#  endif
+#endif
+                       ]], [[
+char buf[1]; getentropy(buf, 1);
+					   ]])],
+                       [ USE_BUILTIN_ARC4RANDOM=no ],
+                       [ USE_BUILTIN_ARC4RANDOM=yes ]
+		)
+		AC_MSG_CHECKING([whether to use builtin arc4random])
+		AC_MSG_RESULT([$USE_BUILTIN_ARC4RANDOM])
 		;;
 	*freebsd*)
 		HOST_OS=freebsd
+		AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <sys/param.h>
+#if __FreeBSD_version < 1200000
+        undefined
+#endif
+                       ]], [[]])],
+                       [ USE_BUILTIN_ARC4RANDOM=no ],
+                       [ USE_BUILTIN_ARC4RANDOM=yes ]
+		)
 		;;
 	*linux*)
 		HOST_OS=linux
@@ -36,6 +82,15 @@ case $host_os in
 		;;
 	*netbsd*)
 		HOST_OS=netbsd
+		AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <sys/param.h>
+#if __NetBSD_Version__ < 700000001
+        undefined
+#endif
+                       ]], [[]])],
+                       [ USE_BUILTIN_ARC4RANDOM=no ],
+                       [ USE_BUILTIN_ARC4RANDOM=yes ]
+		)
 		;;
 	*openbsd*)
 		HOST_OS=openbsd
@@ -129,7 +184,7 @@ AC_CHECK_HEADERS([linux/if.h])
 
 # check functions that are expected to be in libc
 AC_CHECK_FUNCS([asprintf explicit_bzero])
-AC_CHECK_FUNCS([getentropy reallocarray recallocarray freezero])
+AC_CHECK_FUNCS([reallocarray recallocarray freezero])
 AC_CHECK_FUNCS([setproctitle setgroups])
 AC_CHECK_FUNCS([setregid setresgid setreuid setresuid])
 AC_CHECK_FUNCS([strlcat strlcpy strtonum sysconf])
@@ -137,6 +192,50 @@ AC_CHECK_FUNCS([pledge unveil])
 AC_CHECK_FUNCS([getdtablecount getrtable])
 AC_CHECK_FUNCS([strnvis])
 AC_CHECK_FUNCS([arc4random])
+
+AC_CACHE_CHECK([for getentropy], ac_cv_func_getentropy, [
+	AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include <sys/types.h>
+#include <unistd.h>
+
+/*
+ * Explanation:
+ *
+ *   - iOS <= 10.1 fails because of missing sys/random.h
+ *
+ *   - in macOS 10.12 getentropy is not tagged as introduced in
+ *     10.12 so we cannot use it for target < 10.12
+ */
+#ifdef __APPLE__
+#  include <AvailabilityMacros.h>
+#  include <TargetConditionals.h>
+
+# if (TARGET_OS_IPHONE || TARGET_OS_SIMULATOR)
+#  include <sys/random.h> /* Not available as of iOS <= 10.1 */
+# else
+
+#  include <sys/random.h> /* Pre 10.12 systems should die here */
+
+/* Based on: https://gitweb.torproject.org/tor.git/commit/?id=16fcbd21 */
+#  ifndef MAC_OS_X_VERSION_10_12
+#    define MAC_OS_X_VERSION_10_12 101200 /* Robustness */
+#  endif
+#  if defined(MAC_OS_X_VERSION_MIN_REQUIRED)
+#    if MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_12
+#      error "Targeting on Mac OSX 10.11 or earlier"
+#    endif
+#  endif
+
+# endif
+#endif /* __APPLE__ */
+		]], [[
+	char buffer;
+	(void)getentropy(&buffer, sizeof (buffer));
+]])],
+	[ ac_cv_func_getentropy="yes" ],
+	[ ac_cv_func_getentropy="no"
+	])
+])
 
 # check auxiliary libraries that might contain other functions
 AC_SEARCH_LIBS([clock_gettime],[rt posix4])
@@ -232,7 +331,6 @@ if test "$disable_fib" = no; then
 fi
 
 # Share test results with automake
-AM_CONDITIONAL([HAVE_ARC4RANDOM], [test "x$ac_cv_func_arc4random" = xyes])
 AM_CONDITIONAL([HAVE_ASPRINTF], [test "x$ac_cv_func_asprintf" = xyes])
 AM_CONDITIONAL([HAVE_CLOSEFROM], [test "x$ac_cv_func_closefrom" = xyes])
 AM_CONDITIONAL([HAVE_CLOCK_GETRES], [test "x$ac_cv_func_clock_getres" = xyes])
@@ -267,9 +365,7 @@ AM_CONDITIONAL([HAVE_PFTABLE], [test "x$ac_cv_have_pftable" = "xyes"])
 
 # overrides for arc4random implementations with known issues
 AM_CONDITIONAL([HAVE_ARC4RANDOM],
-	[test "x$HOST_OS" != xdarwin \
-	   -a "x$HOST_OS" != xfreebsd \
-	   -a "x$HOST_OS" != xnetbsd \
+	[test "x$USE_BUILTIN_ARC4RANDOM" != xyes \
 	   -a "x$ac_cv_func_arc4random" = xyes])
 
 AC_CHECK_MEMBERS([struct tcp_md5sig.tcpm_key], , ,
