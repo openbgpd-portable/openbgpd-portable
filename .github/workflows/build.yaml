@@ -15,7 +15,7 @@ jobs:
       matrix:
         compiler: [cc, clang, gcc-12]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: install missing deps
         run: sudo apt-get install libevent-dev
       - name: autogen
