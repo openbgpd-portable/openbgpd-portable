@@ -1,4 +1,4 @@
-From 917867d67aacd8963083f572a54e9a01dc0ff01a Mon Sep 17 00:00:00 2001
+From d186a2798fc095d31b35f1459e4555459fefa6ae Mon Sep 17 00:00:00 2001
 From: Claudio Jeker <claudio@openbsd.org>
 Date: Wed, 6 Jul 2022 12:27:27 +0200
 Subject: [PATCH 6/6] Add compat fixes to bgplgd
@@ -8,7 +8,7 @@ Subject: [PATCH 6/6] Add compat fixes to bgplgd
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git src/usr.sbin/bgplgd/slowcgi.c src/usr.sbin/bgplgd/slowcgi.c
-index 78d1424573..c59fa2bf11 100644
+index db9e620431..1446c8c9b7 100644
 --- src/usr.sbin/bgplgd/slowcgi.c
 +++ src/usr.sbin/bgplgd/slowcgi.c
 @@ -438,13 +438,14 @@ accept_reserve(int sockfd, struct sockaddr *addr, socklen_t *addrlen,
@@ -28,5 +28,5 @@ index 78d1424573..c59fa2bf11 100644
  	    > -1) {
  		(*counter)++;
 -- 
-2.40.1
+2.42.0
 

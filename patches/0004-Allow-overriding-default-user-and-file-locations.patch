@@ -1,4 +1,4 @@
-From 8be5a1c380aa0ce8181d442889d9d3849775fdf8 Mon Sep 17 00:00:00 2001
+From c154204e41bb8d74448d509cfffcdb67e390a043 Mon Sep 17 00:00:00 2001
 From: Claudio Jeker <claudio@openbsd.org>
 Date: Fri, 12 Apr 2019 17:17:08 +0200
 Subject: [PATCH 4/6] Allow overriding default user and file locations
@@ -9,7 +9,7 @@ Subject: [PATCH 4/6] Allow overriding default user and file locations
  2 files changed, 27 insertions(+), 6 deletions(-)
 
 diff --git src/usr.sbin/bgpd/bgpd.h src/usr.sbin/bgpd/bgpd.h
-index 181746b7ac..e690ed6c5f 100644
+index c19e2acfcc..223b12cba7 100644
 --- src/usr.sbin/bgpd/bgpd.h
 +++ src/usr.sbin/bgpd/bgpd.h
 @@ -35,8 +35,6 @@
@@ -26,24 +26,24 @@ index 181746b7ac..e690ed6c5f 100644
  #define	BGPD_LOG_UPDATES		0x0001
  
 -#define	SOCKET_NAME			"/var/run/bgpd.sock"
-+#ifndef BGPD_USER
++#ifndef	BGPD_USER
 +#define	BGPD_USER			"_bgpd"
 +#endif
 +
-+#ifndef SYSCONFDIR
-+#define SYSCONFDIR			"/etc"
++#ifndef	SYSCONFDIR
++#define	SYSCONFDIR			"/etc"
 +#endif
 +#define	CONFFILE			SYSCONFDIR "/bgpd.conf"
 +
-+#ifndef RUNSTATEDIR
-+#define RUNSTATEDIR			"/var/run"
++#ifndef	RUNSTATEDIR
++#define	RUNSTATEDIR			"/var/run"
 +#endif
 +#define	SOCKET_NAME			RUNSTATEDIR "/bgpd.sock"
  
  #define	F_BGPD			0x0001
  #define	F_BGPD_INSERTED		0x0002
 diff --git src/usr.sbin/bgplgd/slowcgi.c src/usr.sbin/bgplgd/slowcgi.c
-index f20eb8afdd..78d1424573 100644
+index f20eb8afdd..db9e620431 100644
 --- src/usr.sbin/bgplgd/slowcgi.c
 +++ src/usr.sbin/bgplgd/slowcgi.c
 @@ -45,9 +45,20 @@
@@ -51,10 +51,10 @@ index f20eb8afdd..78d1424573 100644
  #include "http.h"
  
 -#define TIMEOUT_DEFAULT		 30
-+#ifndef	WWW_USER
++#ifndef WWW_USER
  #define WWW_USER		 "www"
 +#endif
-+#ifndef	BGPLGD_USER
++#ifndef BGPLGD_USER
  #define BGPLGD_USER		 "_bgplgd"
 +#endif
 +#ifndef RUNSTATEDIR
@@ -81,5 +81,5 @@ index f20eb8afdd..78d1424573 100644
  
  /*
 -- 
-2.40.1
+2.42.0
 
