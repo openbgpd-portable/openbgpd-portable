@@ -20,6 +20,8 @@ At the time of writing the portable version is known to build and work on:
  - CentOS/RHEL/Rocky 7, 8, 9
  - Ubuntu 20.04 LTS
  - FreeBSD 12, 13
+ - openSUSE
+ - SLE 15
 
 OpenBGPD may work on other operating systems, newer and older, but the above
 ones are tested regularly by the developer.
