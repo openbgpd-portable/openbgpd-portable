@@ -71,7 +71,7 @@ const u_int	 krt_size = 1;
 
 struct ktable	*ktable_get(u_int);
 
-static uint8_t	mask2prefixlen(in_addr_t);
+static uint8_t	mask2prefixlen4(struct sockaddr_in *);
 static uint8_t	mask2prefixlen6(struct sockaddr_in6 *);
 
 static inline int
@@ -321,7 +321,7 @@ knexthop_send_update(struct knexthop *kn)
 			if (m4 == NULL)
 				plen = 32;
 			else
-				plen = mask2prefixlen(m4->sin_addr.s_addr);
+				plen = mask2prefixlen4(m4);
 			break;
 		case AF_INET6:
 			m6 = (struct sockaddr_in6 *)ifa->ifa_netmask;
@@ -761,8 +761,11 @@ get_mpe_config(const char *name, u_int *rdomain, u_int *label)
 }
 
 static uint8_t
-mask2prefixlen(in_addr_t ina)
+mask2prefixlen4(struct sockaddr_in *sa_in)
 {
+	in_addr_t ina;
+
+	ina = sa_in->sin_addr.s_addr;
 	if (ina == 0)
 		return (0);
 	else
@@ -822,4 +825,17 @@ mask2prefixlen6(struct sockaddr_in6 *sa_in6)
 	if (l > sizeof(struct in6_addr) * 8)
 		fatalx("%s: prefixlen %d out of bound", __func__, l);
 	return (l);
+}
+
+uint8_t
+mask2prefixlen(sa_family_t af, struct sockaddr *mask)
+{
+	switch (af) {
+	case AF_INET:
+		return mask2prefixlen4((struct sockaddr_in *)mask);
+	case AF_INET6:
+		return mask2prefixlen6((struct sockaddr_in6 *)mask);
+	default:
+		fatalx("%s: unsupported af", __func__);
+	}
 }

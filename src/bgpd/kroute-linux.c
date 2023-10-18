@@ -174,8 +174,8 @@ struct kroute6	*kroute6_match(struct ktable *, struct bgpd_addr *, int);
 void		 kroute_detach_nexthop(struct ktable *, struct knexthop *);
 
 uint8_t		prefixlen_classful(in_addr_t);
-uint8_t		mask2prefixlen(in_addr_t);
-uint8_t		mask2prefixlen6(struct sockaddr_in6 *);
+static uint8_t	mask2prefixlen4(struct sockaddr_in *);
+static uint8_t	mask2prefixlen6(struct sockaddr_in6 *);
 #ifdef NOTYET
 uint64_t	ift2ifm(uint8_t);
 const char	*get_media_descr(uint64_t);
@@ -2398,16 +2398,19 @@ prefixlen_classful(in_addr_t ina)
 		return (8);
 }
 
-uint8_t
-mask2prefixlen(in_addr_t ina)
+static uint8_t
+mask2prefixlen4(struct sockaddr_in *sa_in)
 {
+	in_addr_t ina;
+
+	ina = sa_in->sin_addr.s_addr;
 	if (ina == 0)
 		return (0);
 	else
 		return (33 - ffs(ntohl(ina)));
 }
 
-uint8_t
+static uint8_t
 mask2prefixlen6(struct sockaddr_in6 *sa_in6)
 {
 	uint8_t	*ap, *ep;
@@ -2457,6 +2460,19 @@ mask2prefixlen6(struct sockaddr_in6 *sa_in6)
 	if (l > sizeof(struct in6_addr) * 8)
 		fatalx("%s: prefixlen %d out of bound", __func__, l);
 	return (l);
+}
+
+uint8_t
+mask2prefixlen(sa_family_t af, struct sockaddr *mask)
+{
+	switch (af) {
+	case AF_INET:
+		return mask2prefixlen4((struct sockaddr_in *)mask);
+	case AF_INET6:
+		return mask2prefixlen6((struct sockaddr_in6 *)mask);
+	default:
+		fatalx("%s: unsupported af", __func__);
+	}
 }
 
 #ifdef NOTYET
