@@ -2920,7 +2920,7 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct kroute_full *kf)
 		sa_in6 = (struct sockaddr_in6 *)rti_info[RTAX_NETMASK];
 		if (rtm->rtm_flags & RTF_HOST)
 			kf->prefixlen = 128;
-		else if (sa_in6 != NULL) {
+		else if (sa_in6 != NULL)
 			kf->prefixlen = mask2prefixlen6(sa_in6);
 		else
 			fatalx("in6 net addr without netmask");
