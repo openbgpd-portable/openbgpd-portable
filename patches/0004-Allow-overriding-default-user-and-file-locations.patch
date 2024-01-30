@@ -1,4 +1,4 @@
-From c154204e41bb8d74448d509cfffcdb67e390a043 Mon Sep 17 00:00:00 2001
+From 6cd15b9c75a26d5933ca00598de4babcfb03e15d Mon Sep 17 00:00:00 2001
 From: Claudio Jeker <claudio@openbsd.org>
 Date: Fri, 12 Apr 2019 17:17:08 +0200
 Subject: [PATCH 4/6] Allow overriding default user and file locations
@@ -9,7 +9,7 @@ Subject: [PATCH 4/6] Allow overriding default user and file locations
  2 files changed, 27 insertions(+), 6 deletions(-)
 
 diff --git src/usr.sbin/bgpd/bgpd.h src/usr.sbin/bgpd/bgpd.h
-index c19e2acfcc..223b12cba7 100644
+index fd18f830f7..59730605c7 100644
 --- src/usr.sbin/bgpd/bgpd.h
 +++ src/usr.sbin/bgpd/bgpd.h
 @@ -35,8 +35,6 @@
@@ -43,12 +43,12 @@ index c19e2acfcc..223b12cba7 100644
  #define	F_BGPD			0x0001
  #define	F_BGPD_INSERTED		0x0002
 diff --git src/usr.sbin/bgplgd/slowcgi.c src/usr.sbin/bgplgd/slowcgi.c
-index f20eb8afdd..db9e620431 100644
+index ffe51bd54f..3c83fc3be0 100644
 --- src/usr.sbin/bgplgd/slowcgi.c
 +++ src/usr.sbin/bgplgd/slowcgi.c
-@@ -45,9 +45,20 @@
- #include "bgplgd.h"
+@@ -46,9 +46,20 @@
  #include "http.h"
+ #include "version.h"
  
 -#define TIMEOUT_DEFAULT		 30
 +#ifndef WWW_USER
@@ -68,7 +68,7 @@ index f20eb8afdd..db9e620431 100644
  
  #define FCGI_CONTENT_SIZE	 65535
  #define FCGI_PADDING_SIZE	 255
-@@ -226,9 +237,9 @@ struct timeval		kill_timeout = { 5, 0 };
+@@ -227,9 +238,9 @@ struct timeval		kill_timeout = { 5, 0 };
  struct slowcgi_proc	slowcgi_proc;
  int			debug = 0;
  int			on = 1;
@@ -81,5 +81,5 @@ index f20eb8afdd..db9e620431 100644
  
  /*
 -- 
-2.42.0
+2.43.0
 

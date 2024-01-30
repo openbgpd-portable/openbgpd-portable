@@ -1,4 +1,4 @@
-From c00078632e0dd52f90b53fd8f083b50ac17f401a Mon Sep 17 00:00:00 2001
+From 7d8155eb4faa50352cec783eed31bb956f616023 Mon Sep 17 00:00:00 2001
 From: Claudio Jeker <claudio@openbsd.org>
 Date: Tue, 5 May 2020 09:13:19 +0200
 Subject: [PATCH 5/6] Add placeholders to manual pages
@@ -69,7 +69,7 @@ index 6b304442b4..b91b67ad25 100644
  .Nm
  control socket, where
 diff --git src/usr.sbin/bgpd/bgpd.conf.5 src/usr.sbin/bgpd/bgpd.conf.5
-index b007b31aa3..1c2b2e9877 100644
+index 6dc0fba5df..1da0b9ece1 100644
 --- src/usr.sbin/bgpd/bgpd.conf.5
 +++ src/usr.sbin/bgpd/bgpd.conf.5
 @@ -382,7 +382,7 @@ If
@@ -97,10 +97,10 @@ index b007b31aa3..1c2b2e9877 100644
  .Sh SEE ALSO
  .Xr strftime 3 ,
 diff --git src/usr.sbin/bgplgd/bgplgd.8 src/usr.sbin/bgplgd/bgplgd.8
-index a6a1a184bf..3ed19d2630 100644
+index 2b62b77853..dd17b52a7f 100644
 --- src/usr.sbin/bgplgd/bgplgd.8
 +++ src/usr.sbin/bgplgd/bgplgd.8
-@@ -38,11 +38,11 @@ is a simple server that implements a simple web API to query
+@@ -39,11 +39,11 @@ is a simple server that implements a simple web API to query
  .Pp
  .Nm
  opens a socket at
@@ -115,7 +115,7 @@ index a6a1a184bf..3ed19d2630 100644
  .Xr unveil 2
  the
  .Xr bgpctl 8
-@@ -68,7 +68,7 @@ to query
+@@ -69,7 +69,7 @@ to query
  Use
  .Ar socket
  instead of the default
@@ -124,7 +124,7 @@ index a6a1a184bf..3ed19d2630 100644
  to communicate with
  .Xr bgpd 8 .
  .It Fl s Ar socket
-@@ -76,10 +76,10 @@ Create and bind to alternative local socket at
+@@ -77,10 +77,10 @@ Create and bind to alternative local socket at
  .Ar socket .
  .It Fl U Ar user
  Change the owner of
@@ -134,9 +134,9 @@ index a6a1a184bf..3ed19d2630 100644
  .Ar user
 -and its primary group instead of the default www:www.
 +and its primary group instead of the default @WWW_USER@.
+ .It Fl V
+ Show the version and exit.
  .El
- .Pp
- .Nm
 -- 
-2.42.0
+2.43.0
 
