@@ -82,6 +82,7 @@ char buf[1]; getentropy(buf, 1);
 		;;
 	*netbsd*)
 		HOST_OS=netbsd
+		AM_CFLAGS="-D_OPENBSD_SOURCE"
 		AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <sys/param.h>
 #if __NetBSD_Version__ < 700000001
