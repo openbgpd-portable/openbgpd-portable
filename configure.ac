@@ -402,12 +402,14 @@ if test "$enable_bgplgd" = yes; then
 			[Extra flags for linker to link with libevent]),
 		LIBEVENT_LDFLAGS="$withval"
 	)
-	AC_SUBST(LIBEVENT_CFLAGS)
-	AC_SUBST(LIBEVENT_LDFLAGS)
 
-	CFLAGS="$CFLAGS $LIBEVENT_CFLAGS"
-	CPPFLAGS="$CPPFLAGS $LIBEVENT_CFLAGS"
-	LDFLAGS="$LDFLAGS $LIBEVENT_LDFLAGS"
+	AM_CFLAGS="$AM_CFLAGS $LIBEVENT_CFLAGS"
+	AM_LDFLAGS="$AM_LDFLAGS $LIBEVENT_LDFLAGS"
+
+	save_cflags="$CFLAGS"
+	save_ldflags="$LDFLAGS"
+	CFLAGS="$AM_CFLAGS $CFLAGS"
+	LDFLAGS="$AM_LDFLAGS $LDFLAGS"
 
 	AC_CHECK_HEADERS([event.h], [],
 		[AC_MSG_ERROR([libevent headers required])])
@@ -415,6 +417,9 @@ if test "$enable_bgplgd" = yes; then
 		[AC_MSG_ERROR([libevent required])])
 	AC_CHECK_FUNCS([event_init event_dispatch], [],
 		[AC_MSG_ERROR([libevent required])])
+
+	CFLAGS="$save_cflags"
+	LDFLAGS="$save_ldflags"
 fi
 
 AC_ARG_WITH([privsep-user],
@@ -474,6 +479,9 @@ if test "x$runstatedir" = x; then
 	runstatedir='${localstatedir}/run'
 	AC_SUBST(runstatedir)
 fi
+
+AC_SUBST(AM_CFLAGS)
+AC_SUBST(AM_LDFLAGS)
 
 AC_CONFIG_FILES([
 	Makefile
