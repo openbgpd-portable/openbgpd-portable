@@ -40,6 +40,16 @@
 #define		ICMP_PHOTURIS_DECRYPT_FAILED	3	/* decrypt failed */
 #endif
 
+#ifndef ICMP_UNREACH_FILTER_PROHIB
+#define		ICMP_UNREACH_FILTER_PROHIB	13	/* precedence violat'n*/
+#endif
+#ifndef ICMP_UNREACH_HOST_PRECEDENCE
+#define		ICMP_UNREACH_HOST_PRECEDENCE	14	/* precedence violat'n*/
+#endif
+#ifndef ICMP_UNREACH_PRECEDENCE_CUTOFF
+#define		ICMP_UNREACH_PRECEDENCE_CUTOFF	15	/* precedence cutoff */
+#endif
+
 #ifndef ICMP_ROUTERADVERT_NORMAL
 #define		ICMP_ROUTERADVERT_NORMAL		0	/* normal advertisement */
 #endif
