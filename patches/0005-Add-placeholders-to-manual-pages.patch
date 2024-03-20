@@ -1,4 +1,4 @@
-From 7d8155eb4faa50352cec783eed31bb956f616023 Mon Sep 17 00:00:00 2001
+From 82ffc019f7cc17c7f33c0748f9bda2868a4af9e6 Mon Sep 17 00:00:00 2001
 From: Claudio Jeker <claudio@openbsd.org>
 Date: Tue, 5 May 2020 09:13:19 +0200
 Subject: [PATCH 5/6] Add placeholders to manual pages
@@ -69,7 +69,7 @@ index 6b304442b4..b91b67ad25 100644
  .Nm
  control socket, where
 diff --git src/usr.sbin/bgpd/bgpd.conf.5 src/usr.sbin/bgpd/bgpd.conf.5
-index 6dc0fba5df..1da0b9ece1 100644
+index a52227b8e5..ded31814ad 100644
 --- src/usr.sbin/bgpd/bgpd.conf.5
 +++ src/usr.sbin/bgpd/bgpd.conf.5
 @@ -382,7 +382,7 @@ If
@@ -81,7 +81,7 @@ index 6dc0fba5df..1da0b9ece1 100644
  is used where
  .Ar <rdomain>
  is the routing domain in which
-@@ -2283,12 +2283,10 @@ For prefixes with equally long paths, the prefix with the larger weight
+@@ -2285,12 +2285,10 @@ For prefixes with equally long paths, the prefix with the larger weight
  is selected.
  .El
  .Sh FILES
