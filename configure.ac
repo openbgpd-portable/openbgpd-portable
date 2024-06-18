@@ -76,6 +76,7 @@ char buf[1]; getentropy(buf, 1);
 		)
 		;;
 	*linux*)
+		AC_USE_SYSTEM_EXTENSIONS
 		HOST_OS=linux
 		AM_CFLAGS="-D_DEFAULT_SOURCE -D_BSD_SOURCE -D_GNU_SOURCE"
 		AC_DEFINE([SPT_TYPE], [SPT_REUSEARGV])
