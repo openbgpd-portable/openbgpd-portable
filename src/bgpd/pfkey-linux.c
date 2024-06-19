@@ -121,31 +121,45 @@ tcp_md5_set(int fd, struct peer *p)
 static int
 listener_match_peer(struct listen_addr *la, struct peer *p)
 {
-	struct sockaddr *sa, *la_sa;
-	socklen_t sa_len;
+	struct bgpd_addr listen_addr, *local_addr;
 
-	la_sa = (struct sockaddr *)&la->sa;
+	sa2addr((struct sockaddr *)&la->sa, &listen_addr, NULL);
 
 	/* first check remote_addr to be in same address family as socket */
-	if (aid2af(p->conf.remote_addr.aid) != la_sa->sa_family)
+	if (p->conf.remote_addr.aid != listen_addr.aid)
 		return 0;
+
+	/* check if listening socket uses "wildcard" address */
+	switch (listen_addr.aid) {
+	case AID_INET:
+		if (listen_addr.v4.s_addr == htonl(INADDR_ANY))
+			return 1;
+		break;
+	case AID_INET6:
+		if (IN6_IS_ADDR_UNSPECIFIED(&listen_addr.v6))
+			return 1;
+		break;
+	default:
+		fatalx("%s: %s is unsupported", __func__,
+		    aid2str(listen_addr.aid));
+	}
 
 	switch (p->conf.remote_addr.aid) {
 	case AID_INET:
-		sa = addr2sa(&p->conf.local_addr_v4, BGP_PORT, &sa_len);
+		local_addr = &p->conf.local_addr_v4;
 		break;
 	case AID_INET6:
-		sa = addr2sa(&p->conf.local_addr_v6, BGP_PORT, &sa_len);
+		local_addr = &p->conf.local_addr_v6;
 		break;
 	default:
-		return 0;
+		fatalx("%s: %s is unsupported", __func__,
+		    aid2str(p->conf.remote_addr.aid));
 	}
-	if (sa == NULL)
+	if (local_addr->aid == AID_UNSPEC)
 		/* undefined bind address will match any listener */
 		return 1;
 
-	if (sa_len == la->sa_len &&
-	    memcmp(&sa->sa_data, &la_sa->sa_data, sa_len - 2) == 0)
+	if (memcmp(&listen_addr, local_addr, sizeof(listen_addr)) == 0)
 		return 1;
 	return 0;
 }
