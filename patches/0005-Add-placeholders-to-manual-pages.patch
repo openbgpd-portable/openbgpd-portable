@@ -1,4 +1,4 @@
-From 82ffc019f7cc17c7f33c0748f9bda2868a4af9e6 Mon Sep 17 00:00:00 2001
+From c14bc74ec403554f8707511527bd29183f183f2d Mon Sep 17 00:00:00 2001
 From: Claudio Jeker <claudio@openbsd.org>
 Date: Tue, 5 May 2020 09:13:19 +0200
 Subject: [PATCH 5/6] Add placeholders to manual pages
@@ -7,11 +7,11 @@ Subject: [PATCH 5/6] Add placeholders to manual pages
  src/usr.sbin/bgpctl/bgpctl.8  |  8 ++++----
  src/usr.sbin/bgpd/bgpd.8      |  8 ++++----
  src/usr.sbin/bgpd/bgpd.conf.5 |  8 +++-----
- src/usr.sbin/bgplgd/bgplgd.8  | 12 ++++++------
- 4 files changed, 17 insertions(+), 19 deletions(-)
+ src/usr.sbin/bgplgd/bgplgd.8  | 14 +++++++-------
+ 4 files changed, 18 insertions(+), 20 deletions(-)
 
 diff --git src/usr.sbin/bgpctl/bgpctl.8 src/usr.sbin/bgpctl/bgpctl.8
-index 4f344f4d00..eace482e4d 100644
+index a1bd363674..576c05e221 100644
 --- src/usr.sbin/bgpctl/bgpctl.8
 +++ src/usr.sbin/bgpctl/bgpctl.8
 @@ -49,7 +49,7 @@ Use
@@ -23,7 +23,7 @@ index 4f344f4d00..eace482e4d 100644
  where
  .Ar <rdomain>
  is the routing domain
-@@ -485,12 +485,12 @@ in a terse format.
+@@ -490,12 +490,12 @@ in a terse format.
  Show a list of all currently loaded fib routing tables.
  .El
  .Sh FILES
@@ -69,10 +69,10 @@ index 6b304442b4..b91b67ad25 100644
  .Nm
  control socket, where
 diff --git src/usr.sbin/bgpd/bgpd.conf.5 src/usr.sbin/bgpd/bgpd.conf.5
-index a52227b8e5..ded31814ad 100644
+index d4b3fb71cf..a6fa619e3d 100644
 --- src/usr.sbin/bgpd/bgpd.conf.5
 +++ src/usr.sbin/bgpd/bgpd.conf.5
-@@ -382,7 +382,7 @@ If
+@@ -389,7 +389,7 @@ If
  .Ic restricted
  is specified, a restricted control socket will be created.
  By default
@@ -81,7 +81,7 @@ index a52227b8e5..ded31814ad 100644
  is used where
  .Ar <rdomain>
  is the routing domain in which
-@@ -2285,12 +2285,10 @@ For prefixes with equally long paths, the prefix with the larger weight
+@@ -2306,12 +2306,10 @@ For prefixes with equally long paths, the prefix with the larger weight
  is selected.
  .El
  .Sh FILES
@@ -97,7 +97,7 @@ index a52227b8e5..ded31814ad 100644
  .Sh SEE ALSO
  .Xr strftime 3 ,
 diff --git src/usr.sbin/bgplgd/bgplgd.8 src/usr.sbin/bgplgd/bgplgd.8
-index 2b62b77853..dd17b52a7f 100644
+index ce9a9d3934..7686a1a86d 100644
 --- src/usr.sbin/bgplgd/bgplgd.8
 +++ src/usr.sbin/bgplgd/bgplgd.8
 @@ -39,11 +39,11 @@ is a simple server that implements a simple web API to query
@@ -137,6 +137,15 @@ index 2b62b77853..dd17b52a7f 100644
  .It Fl V
  Show the version and exit.
  .El
+@@ -177,7 +177,7 @@ to have
+ .Xr bgpd 8
+ open a second, restricted, control socket:
+ .Pp
+-.Dl socket \&"/var/run/bgpd.rsock\&" restricted
++.Dl socket \&"@RUNSTATEDIR@/bgpd.rsock\&" restricted
+ .Pp
+ An example setup in
+ .Xr httpd 8
 -- 
-2.43.0
+2.46.0
 
