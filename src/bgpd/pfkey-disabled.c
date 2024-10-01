@@ -28,21 +28,22 @@ pfkey_read(int sd, struct sadb_msg *h)
 }
 
 int
-pfkey_establish(struct peer *p)
+pfkey_establish(struct auth_state *as, struct auth_config *auth,
+    const struct bgpd_addr *local_addr, const struct bgpd_addr *remote_addr)
 {
-	if (!p->auth.method)
+	if (auth->method == AUTH_NONE)
 		return (0);
 	else
 		return (-1);
 }
 
 int
-pfkey_remove(struct peer *p)
+pfkey_remove(struct auth_state *as)
 {
-	if (!p->auth.established)
+	if (as->established == 0)
 		return (0);
-	else
-		return (-1);
+
+	return (-1);
 }
 
 int
@@ -53,13 +54,25 @@ pfkey_init(void)
 }
 
 int
-tcp_md5_check(int fd, struct peer *p)
+pfkey_send_conf(struct imsgbuf *imsgbuf, uint32_t id, struct auth_config *auth)
 {
 	return (0);
 }
 
 int
-tcp_md5_set(int fd, struct peer *p)
+pfkey_recv_conf(struct peer *p, struct imsg *imsg)
+{
+	return (0);
+}
+
+int
+tcp_md5_check(int fd, struct auth_config *auth)
+{
+	return (0);
+}
+
+int
+tcp_md5_set(int fd, struct auth_config *auth, struct bgpd_addr *remote_addr)
 {
 	return (0);
 }

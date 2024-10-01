@@ -34,18 +34,22 @@ pfkey_read(int sd, struct sadb_msg *h)
 }
 
 int
-pfkey_establish(struct peer *p)
+pfkey_establish(struct auth_state *as, struct auth_config *auth,
+    const struct bgpd_addr *local_addr, const struct bgpd_addr *remote_addr)
 {
-	if (!p->auth.method)
+	switch (auth->method) {
+	case AUTH_NONE:
+	case AUTH_MD5SIG:
 		return (0);
-	else
+	default:
 		return (-1);
+	}
 }
 
 int
-pfkey_remove(struct peer *p)
+pfkey_remove(struct auth_state *as)
 {
-	if (!p->auth.established)
+	if (as->established == 0)
 		return (0);
 	else
 		return (-1);
@@ -59,7 +63,23 @@ pfkey_init(void)
 }
 
 int
-tcp_md5_check(int fd, struct peer *p)
+pfkey_send_conf(struct imsgbuf *imsgbuf, uint32_t id, struct auth_config *auth)
+{
+	/* SE needs the full md5 data (and there is no IPSec) */
+	return imsg_compose(imsgbuf, IMSG_RECONF_PEER_AUTH, id, 0, -1,
+	    auth, sizeof(*auth));
+}
+
+int
+pfkey_recv_conf(struct peer *p, struct imsg *imsg)
+{
+	struct auth_config *auth = &p->auth_conf;
+
+	return imsg_get_data(imsg, auth, sizeof(*auth));
+}
+
+int
+tcp_md5_check(int fd, struct auth_config *auth)
 {
 	/*
 	 * No need to do the check on Linux.
@@ -105,15 +125,12 @@ install_tcp_md5(int fd, struct bgpd_addr *addr, char *key, uint8_t key_len)
 }
 
 int
-tcp_md5_set(int fd, struct peer *p)
+tcp_md5_set(int fd, struct auth_config *auth, struct bgpd_addr *remote_addr)
 {
-
-	if (p->conf.auth.method == AUTH_MD5SIG) {
-		if (install_tcp_md5(fd, &p->conf.remote_addr,
-		    p->conf.auth.md5key, p->conf.auth.md5key_len) == -1) {
-			log_peer_warn(&p->conf, "setsockopt md5sig");
+	if (auth->method == AUTH_MD5SIG) {
+		if (install_tcp_md5(fd, remote_addr, auth->md5key,
+		    auth->md5key_len) == -1)
 			return -1;
-		}
 	}
 	return 0;
 }
@@ -170,13 +187,13 @@ tcp_md5_prep_listener(struct listen_addr *la, struct peer_head *peers)
 	struct peer *p;
 
 	RB_FOREACH(p, peer_head, peers) {
-		if (p->conf.auth.method == AUTH_MD5SIG) {
+		if (p->auth_conf.method == AUTH_MD5SIG) {
 			if (listener_match_peer(la, p) == 0)
 				continue;
 
 			if (install_tcp_md5(la->fd, &p->conf.remote_addr,
-			    p->conf.auth.md5key,
-			    p->conf.auth.md5key_len) == -1) {
+			    p->auth_conf.md5key,
+			    p->auth_conf.md5key_len) == -1) {
 				log_peer_warn(&p->conf,
 				   "setsockopt md5sig on listening socket");
 				return -1;
@@ -196,7 +213,7 @@ tcp_md5_add_listener(struct bgpd_config *conf, struct peer *p)
 			continue;
 
 		if (install_tcp_md5(la->fd, &p->conf.remote_addr,
-		    p->conf.auth.md5key, p->conf.auth.md5key_len) == -1)
+		    p->auth_conf.md5key, p->auth_conf.md5key_len) == -1)
 			log_peer_warn(&p->conf,
 			   "failed deletion of md5sig on listening socket");
 	}
