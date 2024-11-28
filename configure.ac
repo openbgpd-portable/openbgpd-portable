@@ -250,7 +250,7 @@ AC_CHECK_FUNCS([clock_gettime inet_net_pton])
 # check needed libutil functions
 AC_SEARCH_LIBS([ibuf_open], [util])
 AC_SEARCH_LIBS([fmt_scaled], [util])
-AC_CHECK_FUNCS([ibuf_open imsg_init fmt_scaled])
+AC_CHECK_FUNCS([ibuf_open imsgbuf_init fmt_scaled])
 
 # check if HOST_NAME_MAX is available
 AC_MSG_CHECKING([for HOST_NAME_MAX])
@@ -343,7 +343,7 @@ AM_CONDITIONAL([HAVE_CLOCK_GETTIME], [test "x$ac_cv_func_clock_gettime" = xyes])
 AM_CONDITIONAL([HAVE_EXPLICIT_BZERO], [test "x$ac_cv_func_explicit_bzero" = xyes])
 AM_CONDITIONAL([HAVE_FREEZERO], [test "x$ac_cv_func_freezero" = xyes])
 AM_CONDITIONAL([HAVE_GETENTROPY], [test "x$ac_cv_func_getentropy" = xyes])
-AM_CONDITIONAL([HAVE_IMSG], [test "x$ac_cv_func_ibuf_open" = xyes -a "x$ac_cv_func_imsg_init" = xyes])
+AM_CONDITIONAL([HAVE_IMSG], [test "x$ac_cv_func_ibuf_open" = xyes -a "x$ac_cv_func_imsgbuf_init" = xyes])
 AM_CONDITIONAL([HAVE_MD5], [test "x$ac_cv_func_MD5Init" = xyes])
 AM_CONDITIONAL([HAVE_MEMMEM], [test "x$ac_cv_func_memmem" = xyes])
 AM_CONDITIONAL([HAVE_POLL], [test "x$ac_cv_func_poll" = xyes])

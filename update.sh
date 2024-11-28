@@ -53,7 +53,6 @@ ${CP_INC} "${libutil_src}/imsg.h" include/
 ${CP} "${libutil_src}/fmt_scaled.c" compat/
 ${CP} "${libutil_src}/imsg.c" compat/
 ${CP} "${libutil_src}/imsg-buffer.c" compat/
-(cd compat; ${PATCH} -p0 < "${patches}/patch-imsg.c")
 
 for i in explicit_bzero.c strlcpy.c strlcat.c; do
 	${CP_LIBC} "${libc_src}/string/${i}" compat
