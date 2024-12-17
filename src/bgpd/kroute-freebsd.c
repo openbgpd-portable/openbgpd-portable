@@ -770,6 +770,7 @@ kr_show_route(struct imsg *imsg)
 	struct kroute6		*kr6, *kn6;
 	struct kroute_full	*kf;
 	struct bgpd_addr	 addr;
+	struct ctl_kroute_req	 req;
 	struct ctl_show_nexthop	 snh;
 	struct knexthop		*h;
 	struct kif		*kif;
