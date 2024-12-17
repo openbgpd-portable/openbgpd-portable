@@ -587,14 +587,18 @@ kr_show_route(struct imsg *imsg)
 	struct ctl_show_nexthop	 snh;
 	struct ktable		*kt;
 	struct knexthop		*h;
+	uint32_t		 tableid;
+	pid_t			 pid;
 	int			 code;
 
-	switch (imsg->hdr.type) {
+	tableid = imsg_get_id(imsg);
+	pid = imsg_get_pid(imsg);
+	switch (imsg_get_type(imsg)) {
 	case IMSG_CTL_SHOW_NEXTHOP:
-		kt = ktable_get(imsg->hdr.peerid);
+		kt = ktable_get(tableid);
 		if (kt == NULL) {
 			log_warnx("%s: table %u does not exist", __func__,
-			    imsg->hdr.peerid);
+			    tableid);
 			break;
 		}
 		RB_FOREACH(h, knexthop_tree, KT2KNT(kt)) {
@@ -629,7 +633,7 @@ kr_show_route(struct imsg *imsg)
 			snh.valid = 1;
 			snh.krvalid = 1;
 #endif
-			send_imsg_session(IMSG_CTL_SHOW_NEXTHOP, imsg->hdr.pid,
+			send_imsg_session(IMSG_CTL_SHOW_NEXTHOP, pid,
 			    &snh, sizeof(snh));
 		}
 		break;
@@ -645,17 +649,17 @@ kr_show_route(struct imsg *imsg)
 			TAILQ_INIT(&ktab.krn);
 
 			send_imsg_session(IMSG_CTL_SHOW_FIB_TABLES,
-			    imsg->hdr.pid, &ktab, sizeof(ktab));
+			    pid, &ktab, sizeof(ktab));
 		}
 		break;
 	default:	/* nada */
 		code = CTL_RES_OPNOTSUPP;
-		send_imsg_session(IMSG_CTL_RESULT, imsg->hdr.pid,
+		send_imsg_session(IMSG_CTL_RESULT, pid,
 		    &code, sizeof(code));
 		return;
 	}
 
-	send_imsg_session(IMSG_CTL_END, imsg->hdr.pid, NULL, 0);
+	send_imsg_session(IMSG_CTL_END, pid, NULL, 0);
 }
 
 void
