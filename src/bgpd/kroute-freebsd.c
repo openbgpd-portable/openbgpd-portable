@@ -1492,6 +1492,9 @@ kroute_matchgw(struct kroute *kr, struct kroute_full *kf)
 	in_addr_t	nexthop;
 
 	if (kf->flags & F_CONNECTED) {
+		/* if interface is destroyed, it's loopback */
+		if (!kf->ifindex)
+			return (kr);
 		do {
 			if (kr->ifindex == kf->ifindex)
 				return (kr);
@@ -1839,6 +1842,9 @@ kroute6_matchgw(struct kroute6 *kr, struct kroute_full *kf)
 	struct in6_addr	nexthop;
 
 	if (kf->flags & F_CONNECTED) {
+		/* if interface is destroyed, it's loopback */
+		if (!kf->ifindex)
+			return (kr);
 		do {
 			if (kr->ifindex == kf->ifindex)
 				return (kr);
