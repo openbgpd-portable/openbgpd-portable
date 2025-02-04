@@ -1493,7 +1493,8 @@ kroute_matchgw(struct kroute *kr, struct kroute_full *kf)
 
 	if (kf->flags & F_CONNECTED) {
 		do {
-			if (kr->ifindex == kf->ifindex)
+			if (kr->ifindex == kf->ifindex ||
+			    kf->ifindex == 0)
 				return (kr);
 			kr = kr->next;
 		} while (kr);
@@ -1840,7 +1841,8 @@ kroute6_matchgw(struct kroute6 *kr, struct kroute_full *kf)
 
 	if (kf->flags & F_CONNECTED) {
 		do {
-			if (kr->ifindex == kf->ifindex)
+			if (kr->ifindex == kf->ifindex ||
+			    kf->ifindex == 0)
 				return (kr);
 			kr = kr->next;
 		} while (kr);
