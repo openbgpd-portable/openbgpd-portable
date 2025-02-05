@@ -19,7 +19,7 @@ Platform Requirements
 
 At the time of writing the portable version is known to build and work on actively maintained versions of:
 
- - Alpine incl. edge
+ - Alpine
  - CentOS/RHEL/Rocky
  - Debian
  - Fedora
