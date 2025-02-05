@@ -2994,6 +2994,9 @@ dispatch_rtmsg_addr(const struct nlmsghdr *nlh, const struct rtmsg *rm,
 {
 	memset(kf, 0, sizeof(*kf));
 
+	if (rm->rtm_tos != 0)		/* no support for TOS / DSCP */
+		return (0);
+
 	if (rm->rtm_protocol == RTPROT_STATIC)
 		kf->flags |= F_STATIC;
 	if (rm->rtm_type == RTN_BLACKHOLE)
