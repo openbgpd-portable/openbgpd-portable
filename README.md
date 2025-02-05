@@ -1,7 +1,13 @@
+<h1><a href="https://www.openbgpd.org/"><img src="https://www.openbsd.org/openbgpd/images/openbgpd.gif"></a></h1>
+
 This is a port of OpenBGPD to other operating systems. It is based on
 portability code from the OpenNTPD, OpenSSH, and LibreSSL portable projects.
 
 OpenBGPD has a web site at https://www.openbgpd.org/
+
+<a href="https://repology.org/project/openbgpd/versions">
+    <img src="https://repology.org/badge/vertical-allrepos/openbgpd.svg?exclude_unsupported=1" alt="Packaging status" align="right">
+</a>
 
 The current portable tree can be found at
 https://github.com/openbgpd-portable/openbgpd-portable
@@ -11,17 +17,18 @@ https://github.com/openbgpd-portable/openbgpd-portable
 Platform Requirements
 ---------------------
 
-At the time of writing the portable version is known to build and work on:
+At the time of writing the portable version is known to build and work on actively maintained versions of:
 
+ - Alpine incl. edge
+ - CentOS/RHEL/Rocky
+ - Debian
+ - Fedora
+ - FreeBSD
+ - NetBSD
  - OpenBSD
- - Alpine 3.16, 3.17, edge
- - Debian 9, 10, 11
- - Fedora 36, 37, 38
- - CentOS/RHEL/Rocky 7, 8, 9
- - Ubuntu 20.04 LTS
- - FreeBSD 12, 13
  - openSUSE
- - SLE 15
+ - SLE
+ - Ubuntu
 
 OpenBGPD may work on other operating systems, newer and older, but the above
 ones are tested regularly by the developer.
