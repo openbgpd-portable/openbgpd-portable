@@ -17,13 +17,13 @@ VERSION
 aclocal.m4
 autom4te.cache/
 compile
-config.guess
+config.guess*
 config.log
 config.status
-config.sub
-configure
+config.sub*
+configure*
 depcomp
-install-sh
+install-sh*
 libtool
 ltmain.sh
 m4/l*.m4
