@@ -44,6 +44,7 @@ bgpd_SOURCES += rde.c
 bgpd_SOURCES += rde_rib.c
 bgpd_SOURCES += rde_decide.c
 bgpd_SOURCES += rde_prefix.c
+bgpd_SOURCES += monotime.c
 bgpd_SOURCES += mrt.c
 if DISABLE_FIB
 bgpd_SOURCES += kroute-disabled.c
@@ -106,6 +107,7 @@ bgpd_DEPENDENCIES = $(man_MANS)
 
 noinst_HEADERS = bgpd.h
 noinst_HEADERS += log.h
+noinst_HEADERS += monotime.h
 noinst_HEADERS += mrt.h
 noinst_HEADERS += rde.h
 noinst_HEADERS += session.h

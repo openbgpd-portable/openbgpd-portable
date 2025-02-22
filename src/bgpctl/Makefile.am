@@ -39,6 +39,7 @@ bgpctl_SOURCES += output.c
 bgpctl_SOURCES += output_json.c
 bgpctl_SOURCES += output_ometric.c
 bgpctl_SOURCES += parser.c
+bgpctl_SOURCES += monotime.c
 bgpctl_SOURCES += mrtparser.c
 bgpctl_SOURCES += util.c
 bgpctl_SOURCES += json.c
