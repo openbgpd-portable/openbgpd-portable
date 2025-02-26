@@ -36,6 +36,7 @@ bgpd_LDADD += $(top_builddir)/compat/libcompatnoopt.la
 
 bgpd_SOURCES = bgpd.c
 bgpd_SOURCES += session.c
+bgpd_SOURCES += session_bgp.c
 bgpd_SOURCES += log.c
 bgpd_SOURCES += logmsg.c
 bgpd_SOURCES += parse.y
