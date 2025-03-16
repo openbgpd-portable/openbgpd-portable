@@ -21,6 +21,7 @@
 #include <sys/types.h>
 #include <sys/tree.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 #include <limits.h>
 #include <ifaddrs.h>
 #include <stdlib.h>
