@@ -29,8 +29,9 @@ jobs:
         languages: ${{ matrix.language }}
     - name: Build Application using script
       run: |
-        ./autogen.sh
+        sudo apt-get update
         sudo apt-get install libevent-dev
+        ./autogen.sh
         ./configure
         make
     - name: Perform CodeQL Analysis
