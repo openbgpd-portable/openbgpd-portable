@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.70 2024/10/01 18:28:17 claudio Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.73 2025/09/12 11:48:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -463,13 +463,15 @@ pfkey_reply(int sd, uint32_t *spi)
 
 	if (hdr.sadb_msg_errno != 0) {
 		errno = hdr.sadb_msg_errno;
-		if (errno == ESRCH || errno == EEXIST)
+
+		/* discard error message */
+		if (read(sd, &hdr, sizeof(hdr)) == -1)
+			log_warn("pfkey read");
+
+		if (errno == ESRCH || errno == EEXIST))
 			return (0);
 		else {
 			log_warn("pfkey");
-			/* discard error message */
-			if (read(sd, &hdr, sizeof(hdr)) == -1)
-				log_warn("pfkey read");
 			return (-1);
 		}
 	}
@@ -777,13 +779,13 @@ fail_key:
 	log_warn("failed to remove ipsec key");
 	return (-1);
 fail_flow:
-	log_warn("failed to remove flow");
+	log_warn("failed to remove ipsec flow");
 	return (-1);
 }
 #endif
 
 int
-pfkey_establish(struct auth_state *as, struct auth_config *auth, 
+pfkey_establish(struct auth_state *as, struct auth_config *auth,
     const struct bgpd_addr *local_addr, const struct bgpd_addr *remote_addr)
 {
 	switch (auth->method) {
