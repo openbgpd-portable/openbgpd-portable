@@ -468,7 +468,7 @@ pfkey_reply(int sd, uint32_t *spi)
 		if (read(sd, &hdr, sizeof(hdr)) == -1)
 			log_warn("pfkey read");
 
-		if (errno == ESRCH || errno == EEXIST))
+		if (errno == ESRCH || errno == EEXIST)
 			return (0);
 		else {
 			log_warn("pfkey");
