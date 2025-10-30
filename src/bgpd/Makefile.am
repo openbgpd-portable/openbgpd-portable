@@ -35,6 +35,7 @@ bgpd_LDADD += $(top_builddir)/compat/libcompat.la
 bgpd_LDADD += $(top_builddir)/compat/libcompatnoopt.la
 
 bgpd_SOURCES = bgpd.c
+bgpd_SOURCES += chash.c
 bgpd_SOURCES += session.c
 bgpd_SOURCES += session_bgp.c
 bgpd_SOURCES += log.c
@@ -107,6 +108,7 @@ bgpd_SOURCES += flowspec.c
 bgpd_DEPENDENCIES = $(man_MANS)
 
 noinst_HEADERS = bgpd.h
+noinst_HEADERS += chash.h
 noinst_HEADERS += log.h
 noinst_HEADERS += monotime.h
 noinst_HEADERS += mrt.h
