@@ -27,7 +27,7 @@ jobs:
 
       - name: "Download Coverity build tool"
         env:
-          PROJECT: "openbgpd-portable"
+          PROJECT: "openbgpd-portable/openbgpd-portable"
           COVERITY_SCAN_TOKEN: "${{ secrets.COVERITY_SCAN_TOKEN }}"
         run: |
           wget -nv https://scan.coverity.com/download/linux64 --post-data "token=$COVERITY_SCAN_TOKEN&project=$PROJECT" -O coverity_tool.tar.gz
@@ -47,7 +47,7 @@ jobs:
       - name: "Submit build result to Coverity Scan"
         env:
           EMAIL: "job@openbsd.org"
-          PROJECT: "openbgpd-portable"
+          PROJECT: "openbgpd-portable/openbgpd-portable"
           COVERITY_SCAN_TOKEN: "${{ secrets.COVERITY_SCAN_TOKEN }}"
         run: |
           tar czvf cov.tar.gz cov-int
