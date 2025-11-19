@@ -43,6 +43,7 @@ bgpd_SOURCES += logmsg.c
 bgpd_SOURCES += parse.y
 bgpd_SOURCES += config.c
 bgpd_SOURCES += rde.c
+bgpd_SOURCES += rde_adjout.c
 bgpd_SOURCES += rde_rib.c
 bgpd_SOURCES += rde_decide.c
 bgpd_SOURCES += rde_prefix.c
