@@ -15,7 +15,7 @@ jobs:
       matrix:
         compiler: [cc, clang, gcc-14]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: install missing deps
         run: |
           sudo apt-get update
