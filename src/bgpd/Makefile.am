@@ -35,6 +35,7 @@ bgpd_LDADD += $(top_builddir)/compat/libcompat.la
 bgpd_LDADD += $(top_builddir)/compat/libcompatnoopt.la
 
 bgpd_SOURCES = bgpd.c
+bgpd_SOURCES += bgpd_imsg.c
 bgpd_SOURCES += bitmap.c
 bgpd_SOURCES += chash.c
 bgpd_SOURCES += session.c
