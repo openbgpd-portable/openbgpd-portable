@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-./update.sh
+./update.sh "$1"
 mkdir -p m4
 rm -fr autom4te.cache
 autoreconf -i -f
