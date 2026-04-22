@@ -20,7 +20,7 @@ if [ -d openbsd/.git ]; then
 	(cd openbsd
 	 git fetch
 	 git checkout "${openbsd_branch}"
-	 git pull --rebase)
+	 [ "${openbsd_branch}" != master ] || git pull --rebase)
 fi
 
 # setup source paths
