@@ -35,6 +35,7 @@ bgpctl_LDADD += $(top_builddir)/compat/libcompatnoopt.la
 
 bgpctl_SOURCES = bgpctl.c
 bgpctl_SOURCES += bgpd_imsg.c
+bgpctl_SOURCES += log.c
 bgpctl_SOURCES += ometric.c
 bgpctl_SOURCES += output.c
 bgpctl_SOURCES += output_json.c
