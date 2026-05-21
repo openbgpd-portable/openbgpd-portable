@@ -17,9 +17,6 @@
 #ifndef IPTOS_DSCP_AF11
 #define	IPTOS_DSCP_AF11		0x28
 #endif
-#ifndef IPTOS_DSCP_VA
-#define IPTOS_DSCP_VA		0x2c
-#endif
 #ifndef IPTOS_DSCP_AF12
 #define	IPTOS_DSCP_AF12		0x30
 #endif
@@ -64,6 +61,9 @@
 #endif
 #ifndef IPTOS_DSCP_CS5
 #define	IPTOS_DSCP_CS5		0xa0
+#endif
+#ifndef IPTOS_DSCP_VA
+#define IPTOS_DSCP_VA		0xb0
 #endif
 #ifndef IPTOS_DSCP_EF
 #define	IPTOS_DSCP_EF		0xb8
