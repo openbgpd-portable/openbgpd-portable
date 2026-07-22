@@ -499,6 +499,8 @@ pfkey_reply(int sd, uint32_t *spi)
 		    msg->sadb_msg_len * PFKEY2_CHUNK;
 		    ext = (struct sadb_ext *)((uint8_t *)ext +
 		    ext->sadb_ext_len * PFKEY2_CHUNK)) {
+			if (ext->sadb_ext_len == 0)
+				break;
 			if (ext->sadb_ext_type == SADB_EXT_SA) {
 				sa = (struct sadb_sa *) ext;
 				*spi = ntohl(sa->sadb_sa_spi);
