@@ -34,6 +34,13 @@ jobs:
           CC: ${{ matrix.compiler }}
       - name: make
         run: make -k
+      - name: smoke test bgpd config parsing
+        run: |
+          cat > /tmp/bgpd-smoke.conf <<'EOF'
+          AS 65000
+          router-id 192.0.2.1
+          EOF
+          ./src/bgpd/bgpd -n -f /tmp/bgpd-smoke.conf
       - name: make distcheck
         run: make distcheck
         if: matrix.compiler == 'cc'
