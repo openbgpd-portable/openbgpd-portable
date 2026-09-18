@@ -22,6 +22,10 @@ int getentropy(void *, size_t);
 
 #include <grp.h>
 
+#ifndef HAVE_GETEXECPATH
+int getexecpath(char *buf, size_t bufsize);
+#endif
+
 #ifndef HAVE_SETGROUPS
 int setgroups(int, const gid_t *);
 #endif
