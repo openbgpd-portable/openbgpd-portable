@@ -1,7 +1,7 @@
-From 941b910bcd811af131e338cb0e67b7c91fa6a37a Mon Sep 17 00:00:00 2001
+From d4a01450d9a51f4bff816196433c59207d1a3ada Mon Sep 17 00:00:00 2001
 From: Claudio Jeker <claudio@openbsd.org>
 Date: Fri, 12 Apr 2019 17:17:08 +0200
-Subject: [PATCH 4/7] Allow overriding default user and file locations
+Subject: [PATCH 4/6] Allow overriding default user and file locations
 
 ---
  src/usr.sbin/bgpd/bgpd.h      | 16 +++++++++++++---
@@ -9,10 +9,10 @@ Subject: [PATCH 4/7] Allow overriding default user and file locations
  2 files changed, 27 insertions(+), 6 deletions(-)
 
 diff --git src/usr.sbin/bgpd/bgpd.h src/usr.sbin/bgpd/bgpd.h
-index f0b1e289cc..4dc0be8ac5 100644
+index c558d636b4..07afabc14d 100644
 --- src/usr.sbin/bgpd/bgpd.h
 +++ src/usr.sbin/bgpd/bgpd.h
-@@ -36,8 +36,6 @@
+@@ -37,8 +37,6 @@
  #define	RTR_DEFAULT_VERSION		1
  #define	BGP_PORT			179
  #define	RTR_PORT			323
@@ -21,7 +21,7 @@ index f0b1e289cc..4dc0be8ac5 100644
  #define	PEER_DESCR_LEN			64
  #define	REASON_LEN			256	/* includes NUL terminator */
  #define	PFTABLE_LEN			32
-@@ -76,7 +74,19 @@
+@@ -74,7 +72,19 @@
  
  #define	BGPD_LOG_UPDATES		0x0001
  
@@ -43,7 +43,7 @@ index f0b1e289cc..4dc0be8ac5 100644
  #define	F_BGPD			0x0001
  #define	F_BGPD_INSERTED		0x0002
 diff --git src/usr.sbin/bgplgd/slowcgi.c src/usr.sbin/bgplgd/slowcgi.c
-index 80979a0257..5a9927ebb9 100644
+index ffe51bd54f..3c83fc3be0 100644
 --- src/usr.sbin/bgplgd/slowcgi.c
 +++ src/usr.sbin/bgplgd/slowcgi.c
 @@ -46,9 +46,20 @@
@@ -81,5 +81,5 @@ index 80979a0257..5a9927ebb9 100644
  
  /*
 -- 
-2.55.0
+2.46.0
 
