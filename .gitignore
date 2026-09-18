@@ -46,7 +46,7 @@ compat/imsg.c
 compat/inet_net_pton.c
 compat/reallocarray.c
 compat/recallocarray.c
-compat/sha2.c
+compat/sha256.c
 compat/siphash.c
 compat/strlcat.c
 compat/strlcpy.c
