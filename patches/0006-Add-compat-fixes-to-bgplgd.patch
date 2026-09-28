@@ -1,7 +1,7 @@
-From a14f4749eb9e0ec008ce7c72835ace67177250f5 Mon Sep 17 00:00:00 2001
+From fb3dd15458b210c0d00613a52adff158c60867f7 Mon Sep 17 00:00:00 2001
 From: Claudio Jeker <claudio@openbsd.org>
 Date: Wed, 6 Jul 2022 12:27:27 +0200
-Subject: [PATCH 6/7] Add compat fixes to bgplgd
+Subject: [PATCH 6/6] Add compat fixes to bgplgd
 
 ---
  src/usr.sbin/bgplgd/slowcgi.c | 3 ++-

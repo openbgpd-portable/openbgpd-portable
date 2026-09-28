@@ -1,7 +1,7 @@
-From 618d556255697bb662aa4ac595fb5c61f4f98d81 Mon Sep 17 00:00:00 2001
+From 7255850241e2ef6fd69e7a1209707554014a40e3 Mon Sep 17 00:00:00 2001
 From: Claudio Jeker <claudio@openbsd.org>
 Date: Tue, 5 May 2020 09:13:19 +0200
-Subject: [PATCH 5/7] Add placeholders to manual pages
+Subject: [PATCH 5/6] Add placeholders to manual pages
 
 ---
  src/usr.sbin/bgpctl/bgpctl.8  |  8 ++++----

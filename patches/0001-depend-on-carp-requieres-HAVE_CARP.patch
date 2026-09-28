@@ -1,7 +1,7 @@
-From 84077b62a37817c2857303f78eee856a716d8d04 Mon Sep 17 00:00:00 2001
+From a03aeef0017bdbf6f8504577e8fa23c0a20e6edf Mon Sep 17 00:00:00 2001
 From: Claudio Jeker <claudio@openbsd.org>
 Date: Thu, 14 Feb 2019 11:51:05 +0100
-Subject: [PATCH 1/7] depend on carp requieres HAVE_CARP
+Subject: [PATCH 1/6] depend on carp requieres HAVE_CARP
 
 ---
  src/usr.sbin/bgpd/parse.y | 6 ++++++
